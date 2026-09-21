@@ -1,0 +1,1371 @@
+=================================================================
+Building NearChuckle (Far Cry) for Android
+  ABI:         arm64-v8a
+  Build Type:  Release
+  NDK Path:    /opt/hostedtoolcache/ndk/r25c/x64
+  Deps Prefix: /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/installed/arm64-v8a
+=================================================================
+--> Building SDL3 for arm64-v8a...
+Cloning into '/tmp/nearchuckle_deps/SDL'...
+Applying SDL3 16MB thread stack patch...
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /usr/local/share/cmake-3.31/Modules/CMakeDetermineSystem.cmake:146 (include)
+  CMakeLists.txt:8 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /usr/local/share/cmake-3.31/Modules/CMakeDetermineSystem.cmake:146 (include)
+  CMakeLists.txt:8 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  CMakeLists.txt:8 (project)
+
+
+-- The C compiler identification is Clang 14.0.7
+-- Detecting C compiler ABI info
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-dNFGAa/CMakeLists.txt:2 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-dNFGAa/CMakeLists.txt:2 (project)
+
+
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /opt/hostedtoolcache/ndk/r25c/x64/toolchains/llvm/prebuilt/linux-x86_64/bin/clang - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1")
+-- Detecting Target CPU Architecture
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeTmp/SDL_detect_arch/CMakeFiles/CMakeTmp/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeTmp/SDL_detect_arch/CMakeFiles/CMakeTmp/CMakeLists.txt:3 (project)
+
+
+-- Detecting Target CPU Architecture - ARM64
+-- Performing Test HAVE_GCC_WALL
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-Y49YxU/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-Y49YxU/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WALL - Success
+-- Performing Test HAVE_GCC_WUNDEF
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-wXXLTR/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-wXXLTR/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WUNDEF - Success
+-- Performing Test HAVE_GCC_WFLOAT_CONVERSION
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-2uPwgj/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-2uPwgj/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WFLOAT_CONVERSION - Success
+-- Performing Test HAVE_GCC_NO_STRICT_ALIASING
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-GbVhb9/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-GbVhb9/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_NO_STRICT_ALIASING - Success
+-- Performing Test HAVE_GCC_WDOCUMENTATION
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-DaohYD/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-DaohYD/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WDOCUMENTATION - Success
+-- Performing Test HAVE_GCC_WDOCUMENTATION_UNKNOWN_COMMAND
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-6BHgZh/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-6BHgZh/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WDOCUMENTATION_UNKNOWN_COMMAND - Success
+-- Performing Test HAVE_GCC_COMMENT_BLOCK_COMMANDS
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-tQfrKV/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-tQfrKV/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_COMMENT_BLOCK_COMMANDS - Success
+-- Performing Test HAVE_GCC_WSHADOW
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-UeAiWq/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-UeAiWq/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WSHADOW - Success
+-- Performing Test HAVE_GCC_WUNUSED_LOCAL_TYPEDEFS
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-nU1OtN/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-nU1OtN/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WUNUSED_LOCAL_TYPEDEFS - Success
+-- Performing Test HAVE_GCC_WIMPLICIT_FALLTHROUGH
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-7W8muy/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-7W8muy/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_WIMPLICIT_FALLTHROUGH - Success
+-- Performing Test COMPILER_SUPPORTS_FCOLOR_DIAGNOSTICS
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-MGdcG6/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-MGdcG6/CMakeLists.txt:3 (project)
+
+
+-- Performing Test COMPILER_SUPPORTS_FCOLOR_DIAGNOSTICS - Success
+-- Looking for __GLIBC__
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-pcv9yG/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-pcv9yG/CMakeLists.txt:3 (project)
+
+
+-- Looking for __GLIBC__ - not found
+-- Performing Test HAVE_WL_VERSION_SCRIPT
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-8XHh7S/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-8XHh7S/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_WL_VERSION_SCRIPT - Success
+-- Performing Test COMPILER_SUPPORTS_GCC_ATOMICS
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-9Kl4gg/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-9Kl4gg/CMakeLists.txt:3 (project)
+
+
+-- Performing Test COMPILER_SUPPORTS_GCC_ATOMICS - Success
+-- Performing Test HAVE_GCC_FVISIBILITY
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-EtYAcQ/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-EtYAcQ/CMakeLists.txt:3 (project)
+
+
+-- Performing Test HAVE_GCC_FVISIBILITY - Success
+-- Performing Test LINKER_SUPPORTS_WL_NO_UNDEFINED
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-qYVMiB/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-qYVMiB/CMakeLists.txt:3 (project)
+
+
+-- Performing Test LINKER_SUPPORTS_WL_NO_UNDEFINED - Success
+-- Performing Test COMPILER_SUPPORTS_ARMNEON
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-hDz4fN/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-hDz4fN/CMakeLists.txt:3 (project)
+
+
+-- Performing Test COMPILER_SUPPORTS_ARMNEON - Success
+-- Performing Test COMPILER_SUPPORTS_ARMSVE2
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-FactN1/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-FactN1/CMakeLists.txt:3 (project)
+
+
+-- Performing Test COMPILER_SUPPORTS_ARMSVE2 - Success
+-- Looking for alloca.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-vy1tSL/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-vy1tSL/CMakeLists.txt:3 (project)
+
+
+-- Looking for alloca.h - found
+-- Looking for float.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-XY5fvW/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-XY5fvW/CMakeLists.txt:3 (project)
+
+
+-- Looking for float.h - found
+-- Looking for iconv.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-BqDFC4/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-BqDFC4/CMakeLists.txt:3 (project)
+
+
+-- Looking for iconv.h - found
+-- Looking for inttypes.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-7ADo9d/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-7ADo9d/CMakeLists.txt:3 (project)
+
+
+-- Looking for inttypes.h - found
+-- Looking for limits.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-5OucTS/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-5OucTS/CMakeLists.txt:3 (project)
+
+
+-- Looking for limits.h - found
+-- Looking for malloc.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-CDfiLm/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-CDfiLm/CMakeLists.txt:3 (project)
+
+
+-- Looking for malloc.h - found
+-- Looking for math.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-xVVbcL/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-xVVbcL/CMakeLists.txt:3 (project)
+
+
+-- Looking for math.h - found
+-- Looking for memory.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-LAGM8L/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-LAGM8L/CMakeLists.txt:3 (project)
+
+
+-- Looking for memory.h - found
+-- Looking for signal.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-4jiuUk/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-4jiuUk/CMakeLists.txt:3 (project)
+
+
+-- Looking for signal.h - found
+-- Looking for stdarg.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-PKsfMD/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-PKsfMD/CMakeLists.txt:3 (project)
+
+
+-- Looking for stdarg.h - found
+-- Looking for stdbool.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-YQG9Hk/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-YQG9Hk/CMakeLists.txt:3 (project)
+
+
+-- Looking for stdbool.h - found
+-- Looking for stddef.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-npUOMN/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-npUOMN/CMakeLists.txt:3 (project)
+
+
+-- Looking for stddef.h - found
+-- Looking for stdint.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-jEEFUJ/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-jEEFUJ/CMakeLists.txt:3 (project)
+
+
+-- Looking for stdint.h - found
+-- Looking for stdio.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-zWUVue/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-zWUVue/CMakeLists.txt:3 (project)
+
+
+-- Looking for stdio.h - found
+-- Looking for stdlib.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-0R94Vg/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-0R94Vg/CMakeLists.txt:3 (project)
+
+
+-- Looking for stdlib.h - found
+-- Looking for string.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-mhYhiZ/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-mhYhiZ/CMakeLists.txt:3 (project)
+
+
+-- Looking for string.h - found
+-- Looking for strings.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-AzUh3f/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-AzUh3f/CMakeLists.txt:3 (project)
+
+
+-- Looking for strings.h - found
+-- Looking for sys/types.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-ePM6yE/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-ePM6yE/CMakeLists.txt:3 (project)
+
+
+-- Looking for sys/types.h - found
+-- Looking for time.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-2aKr5p/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-2aKr5p/CMakeLists.txt:3 (project)
+
+
+-- Looking for time.h - found
+-- Looking for wchar.h
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-VxDimd/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-VxDimd/CMakeLists.txt:3 (project)
+
+
+-- Looking for wchar.h - found
+-- Looking for pow in m
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-XGlLql/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-XGlLql/CMakeLists.txt:3 (project)
+
+
+-- Looking for pow in m - found
+-- Looking for abs
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-dmlaMe/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-dmlaMe/CMakeLists.txt:3 (project)
+
+
+-- Looking for abs - found
+-- Looking for acos
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-36bKoB/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-36bKoB/CMakeLists.txt:3 (project)
+
+
+-- Looking for acos - found
+-- Looking for acosf
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-57VWwh/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-57VWwh/CMakeLists.txt:3 (project)
+
+
+-- Looking for acosf - found
+-- Looking for asin
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-xmY4f0/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-xmY4f0/CMakeLists.txt:3 (project)
+
+
+-- Looking for asin - found
+-- Looking for asinf
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-R2AIOX/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-R2AIOX/CMakeLists.txt:3 (project)
+
+
+-- Looking for asinf - found
+-- Looking for atan
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-VDoenn/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-VDoenn/CMakeLists.txt:3 (project)
+
+
+-- Looking for atan - found
+-- Looking for atan2
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-kg9Ao7/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-kg9Ao7/CMakeLists.txt:3 (project)
+
+
+-- Looking for atan2 - found
+-- Looking for atan2f
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/NearChuckle-android-edition/NearChuckle-android-edition/build_android/deps/build-sdl3-arm64-v8a/CMakeFiles/CMakeScratch/TryCompile-5jqOuo/CMakeLists.txt:3 (project)
+
+
+CMake Deprecation Warning at /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android-legacy.toolchain.cmake:34 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /opt/hostedtoolcache/ndk/r25c/x64/build/cmake/android.toolchain.cmake:54 (include)
+  /home/runner/work/NearChuckle-android
