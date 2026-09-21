@@ -475,7 +475,17 @@ void CXGame::InitConsoleVars()
 		"Toggles the player's 'always run' setting.\n"
 		"Usage: p_always_run [0/1]\n"
 		"Default is 1 (on). Set to 0 to disable 'always run'.");
-	g_language= pConsole->CreateVariable("g_language","english",VF_DUMPTODISK, //|VF_READONLY,
+	// On Android system.cfg is not loaded, so OpenBasicPaks() may have auto-detected
+	// an installed language pak (e.g. 'russian') when the configured one was missing.
+	// Use that as the cvar default so string tables and voice packs match the opened pak.
+	const char *szDefaultLanguage = "english";
+	const char *szDetectedLanguage = NULL;
+	if (GetISystem()->GetIScriptSystem()->GetGlobalValue("g_language", szDetectedLanguage)
+		&& szDetectedLanguage && szDetectedLanguage[0])
+	{
+		szDefaultLanguage = szDetectedLanguage;
+	}
+	g_language= pConsole->CreateVariable("g_language",szDefaultLanguage,VF_DUMPTODISK, //|VF_READONLY,
 		"Sets the game language.\n"
 		"Usage: g_language [english/other?]\n"
 		"Default is 'english'.");

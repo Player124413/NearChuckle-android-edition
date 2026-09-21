@@ -529,7 +529,8 @@ public:
 	void InitVTuneProfiler();
 
 	void OpenBasicPaks();
-	void OpenLanguagePak( const char *sLanguage );
+	// returns true if the main localized pak (<language>.pak) was opened
+	bool OpenLanguagePak( const char *sLanguage );
 
 	void	Deltree(const char *szFolder, bool bRecurse);
 	void	LoadConfiguration(const string &sFilename);

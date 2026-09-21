@@ -1322,15 +1322,85 @@ void CSystem::OpenBasicPaks()
 	m_pScriptSystem->GetGlobalValue("g_language", szLanguage);
 	//////////////////////////////////////////////////////////////////////////
 	// load language pak
+	bool bLanguagePakOpened = false;
 	if (!szLanguage)
 	{
 		// if the language value cannot be found, let's default to the english pak
-		OpenLanguagePak("english"); 
+		bLanguagePakOpened = OpenLanguagePak("english"); 
 	}
 	else
 	{ 
-		OpenLanguagePak(szLanguage);
+		bLanguagePakOpened = OpenLanguagePak(szLanguage);
 	}
+
+#ifdef __ANDROID__
+	// Android never loads system.cfg (where g_language is normally set on PC),
+	// so the default 'english' doesn't match localized installs (russian.pak,
+	// czech.pak, german1.pak, ...). The default font (languages/fonts/default.xml)
+	// lives INSIDE the localized pak, so a wrong language here aborts the engine
+	// with "Error loading the default font". Auto-detect an installed language
+	// pak instead of failing later.
+	if (!bLanguagePakOpened)
+	{
+		string sDetectedLanguage;
+		{
+			std::vector<string> arrCandidates;
+			struct dirent fd;
+			intptr_t nFindHandle = m_pIPak->FindFirst(DATA_FOLDER "/Localized/*.pak", &fd);
+			if (nFindHandle != -1)
+			{
+				do
+				{
+					string sName(fd.d_name);
+					string::size_type nDotPos = sName.rfind('.');
+					if (nDotPos == string::npos || nDotPos == 0)
+						continue;
+					if (stricmp(sName.c_str() + nDotPos, ".pak") != 0) // FindFirst pattern should already filter this
+						continue;
+					string sBase(sName, 0, nDotPos);
+					// "<language>1.pak"/"<language>2.pak" are patch paks of "<language>"
+					while (!sBase.empty() && sBase[sBase.length() - 1] >= '0' && sBase[sBase.length() - 1] <= '9')
+						sBase.resize(sBase.length() - 1);
+					if (sBase.empty())
+						continue;
+					if (std::find(arrCandidates.begin(), arrCandidates.end(), sBase) == arrCandidates.end())
+						arrCandidates.push_back(sBase);
+				}
+				while (m_pIPak->FindNext(nFindHandle, &fd) == 0);
+				m_pIPak->FindClose(nFindHandle);
+			}
+			// alphabetical order, but keep the historical default 'english' first
+			for (size_t i = 1; i < arrCandidates.size(); ++i)
+				for (size_t j = 0; j + 1 < arrCandidates.size(); ++j)
+					if (strcmp(arrCandidates[j].c_str(), arrCandidates[j + 1].c_str()) > 0)
+						std::swap(arrCandidates[j], arrCandidates[j + 1]);
+			for (size_t i = 0; i < arrCandidates.size(); ++i)
+				if (!stricmp(arrCandidates[i].c_str(), "english"))
+				{
+					if (i > 0)
+						std::swap(arrCandidates[0], arrCandidates[i]);
+					break;
+				}
+			for (size_t i = 0; i < arrCandidates.size() && sDetectedLanguage.empty(); ++i)
+				if (OpenLanguagePak(arrCandidates[i].c_str()))
+					sDetectedLanguage = arrCandidates[i];
+		}
+
+		if (!sDetectedLanguage.empty())
+		{
+			CryLogAlways("Android: no localized pak for language '%s' - auto-detected installed language '%s' in " DATA_FOLDER "/Localized/",
+				szLanguage ? szLanguage : "english", sDetectedLanguage.c_str());
+			// publish the detected language for the rest of the engine: the g_language
+			// cvar (created later in CryGame) uses this global as its default, and the
+			// string tables/voice packs are loaded from LANGUAGES/<g_language>
+			m_pScriptSystem->SetGlobalValue("g_language", sDetectedLanguage.c_str());
+		}
+		else
+		{
+			CryLogAlways("Android: no language pak found in " DATA_FOLDER "/Localized/ - the game data looks incomplete, the default font will not be loadable.");
+		}
+	}
+#endif
 	
 	string paksFolder = string(DATA_FOLDER)+"/*.pak";
 	// Open all *.pak files in root folder.
@@ -1340,12 +1410,13 @@ void CSystem::OpenBasicPaks()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CSystem::OpenLanguagePak( const char *sLanguage )
+bool CSystem::OpenLanguagePak( const char *sLanguage )
 {	
 	// load language pak
 	char szPakName[_MAX_PATH];
 	sprintf(szPakName,"%s/Localized/%s.pak",DATA_FOLDER,sLanguage );
-	if (!m_pIPak->OpenPack( "",szPakName ))
+	bool bMainPakOpened = m_pIPak->OpenPack( "",szPakName );
+	if (!bMainPakOpened)
 	{
 		// make sure the localized language is found - not really necessary, for TC		
 		CryLogAlways("Localized language content(%s - %s) not available or modified from the original installation.",sLanguage,szPakName);
@@ -1360,6 +1431,8 @@ void CSystem::OpenLanguagePak( const char *sLanguage )
 	memset(szPakName,0,_MAX_PATH);
 	sprintf(szPakName,"%s/Localized/%s2.pak",DATA_FOLDER,sLanguage );
 	m_pIPak->OpenPack("",szPakName);
+
+	return bMainPakOpened;
 }
 
 //////////////////////////////////////////////////////////////////////////
