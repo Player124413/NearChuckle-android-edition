@@ -13,6 +13,10 @@
 #include "IScriptSystem.h"
 
 #include <StlUtils.h>
+#ifdef __ANDROID__
+#include <ICryPak.h>
+#include <unistd.h>
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -278,7 +282,37 @@ bool CEntityClassRegistry::InitRegistry()
 	_SmartScriptObject pLineObj(m_pScriptSystem,true);
 	if (!m_pScriptSystem->GetGlobalValue("EntityClassRegistry",*pTable))
 	{
+#ifndef __ANDROID__
 		CryError("Cannot find EntityClassRegistry table in scripts (wrong working folder?)");
+#else
+		// Give Android users an actionable message instead of the generic
+		// "wrong working folder?" hint: name the working folder and tell
+		// exactly which file is missing or failed to execute.
+		string szErrorText = "Cannot find EntityClassRegistry table in scripts.";
+		char szCwd[_MAX_PATH];
+		if (getcwd(szCwd, sizeof(szCwd)))
+			szErrorText += string(" Working folder: '") + szCwd + "'.";
+		FILE *pRegistryScript = m_pSystem->GetIPak()->FOpen("Scripts/ClassRegistry.lua", "rb");
+		if (pRegistryScript)
+		{
+			m_pSystem->GetIPak()->FClose(pRegistryScript);
+			szErrorText += " Scripts/ClassRegistry.lua exists but failed to execute (check log.txt for Lua errors).";
+		}
+		else
+		{
+			ICryPak::PakInfo *pPakInfo = m_pSystem->GetIPak()->GetPakInfo();
+			int nOpenPaks = pPakInfo ? (int)pPakInfo->numOpenPaks : 0;
+			if (nOpenPaks <= 0)
+				szErrorText += " Scripts/ClassRegistry.lua not found and no .pak files are opened - the selected game folder is empty or unreadable.";
+			else
+				szErrorText += " Scripts/ClassRegistry.lua not found - FCData/Scripts.pak is missing or damaged (incomplete game data copy).";
+			if (pPakInfo)
+				m_pSystem->GetIPak()->FreePakInfo(pPakInfo);
+		}
+		if (m_pSystem->GetILog())
+			m_pSystem->GetILog()->LogToFile(szErrorText.c_str());
+		CryError("%s", szErrorText.c_str());
+#endif
 		return false;
 	}
 	int i=0;

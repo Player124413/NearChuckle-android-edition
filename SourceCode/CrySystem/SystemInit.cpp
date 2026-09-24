@@ -1284,6 +1284,15 @@ bool CSystem::Init( const SSystemInitParams &params )
 	if (ICVar* cvBump = m_pConsole->GetCVar("r_Quality_BumpMapping")) cvBump->Set(3);
 	if (ICVar* cvNV30 = m_pConsole->GetCVar("r_GL_NV30_PS20")) cvNV30->Set(1);
 	if (ICVar* cvFS = m_pConsole->GetCVar("r_Fullscreen")) cvFS->Set(1);
+
+	// Restore the user's saved mobile settings (mobile.cfg, written on exit).
+	// Loaded at the same point as system.cfg on PC: cvars that are not
+	// registered yet (renderer/3DEngine vars) park as Lua globals and get
+	// adopted when the owning subsystem registers them, so quality settings
+	// affect renderer/shader initialization just like on PC. CSystemConfiguration
+	// still ignores the mobile-critical keys (r_Driver, r_Width, r_Height,
+	// r_Fullscreen, r_NoPS20, r_GL_NV30_PS20) coming from the file.
+	LoadConfiguration("mobile.cfg");
 #endif
 
 	//////////////////////////////////////////////////////////////////////////

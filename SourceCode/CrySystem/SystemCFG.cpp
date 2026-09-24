@@ -107,22 +107,22 @@ void CSystem::SaveConfiguration()
 		return;
 
 #ifdef __ANDROID__
-	// Never create or save system.cfg on Android as it corrupts mobile configuration
-	// Delete any existing system.cfg files
+	// Android: system.cfg stays reserved for desktop configs copied into the game
+	// folder (they get cleaned up), the engine's own cvar dump goes to mobile.cfg.
+	// Without this dump graphics/audio quality settings would reset every launch.
 	remove("system.cfg");
 	remove("System.cfg");
 	remove("SYSTEM.CFG");
 	remove("SystemCfgOverride.Cfg");
 	remove("systemcfgoverride.cfg");
 
-	// Save game.cfg only (keybindings, sensitivity)
 	ICVar *pProfile=m_pConsole->GetCVar("g_playerprofile");
 	if (pProfile)
 	{	
 		const char *sProfileName=pProfile->GetString();
-		m_pGame->SaveConfiguration( "","game.cfg",sProfileName);
+		m_pGame->SaveConfiguration( "mobile.cfg","game.cfg",sProfileName);
 	}
-	m_pGame->SaveConfiguration( "","game.cfg",NULL);
+	m_pGame->SaveConfiguration( "mobile.cfg","game.cfg",NULL);
 	return;
 #else
 	string sSave=m_rDriver->GetString();
@@ -238,11 +238,8 @@ void CSystemConfiguration::ParseSystemConfig()
 							m_pSystem->GetILog()->Log("Android: ignoring system.cfg r_NoPS20=1 (must remain 0)");
 							continue;
 						}
-						if (strcasecmp(strKey.c_str(), "r_Quality_BumpMapping") == 0 && atoi(strValue.c_str()) < 3)
-						{
-							m_pSystem->GetILog()->Log("Android: overriding system.cfg r_Quality_BumpMapping to 3");
-							strValue = "3";
-						}
+						// r_Quality_BumpMapping is a user quality setting - load the saved
+						// value as-is (values below 3 are valid and let weak devices run faster)
 						if (strcasecmp(strKey.c_str(), "r_GL_NV30_PS20") == 0 && atoi(strValue.c_str()) == 0)
 						{
 							continue;
