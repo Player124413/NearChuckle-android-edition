@@ -26,9 +26,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Switch;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,7 +75,6 @@ public class LauncherActivity extends Activity {
     private Spinner spinnerResolution;
     private TextView tvFovLabel;
     private SeekBar seekbarFov;
-    private Switch switchDevmode;
     private EditText editCustomArgs;
     private TextView tvSensLabel;
     private SeekBar seekbarSensitivity;
@@ -149,7 +148,6 @@ public class LauncherActivity extends Activity {
         spinnerResolution = findViewById(R.id.spinner_resolution);
         tvFovLabel = findViewById(R.id.tv_fov_label);
         seekbarFov = findViewById(R.id.seekbar_fov);
-        switchDevmode = findViewById(R.id.switch_devmode);
         editCustomArgs = findViewById(R.id.edit_custom_args);
         tvSensLabel = findViewById(R.id.tv_sensitivity_label);
         seekbarSensitivity = findViewById(R.id.seekbar_sensitivity);
@@ -218,7 +216,6 @@ public class LauncherActivity extends Activity {
         seekbarFov.setProgress(Math.max(0, Math.min(50, fov - 70)));
         tvFovLabel.setText(getString(R.string.label_fov, fov));
 
-        switchDevmode.setChecked(prefs.getBoolean(KEY_DEVMODE, false));
         editCustomArgs.setText(prefs.getString(KEY_CUSTOM_ARGS, ""));
 
         switchGpuTurbo.setChecked(TurnipDriverManager.isTurboEnabled(this));
@@ -239,7 +236,6 @@ public class LauncherActivity extends Activity {
 
         int fov = seekbarFov.getProgress() + 70;
         editor.putInt(KEY_FOV, fov);
-        editor.putBoolean(KEY_DEVMODE, switchDevmode.isChecked());
         editor.putString(KEY_CUSTOM_ARGS, editCustomArgs.getText().toString().trim());
 
         float sens = 0.5f + (seekbarSensitivity.getProgress() / 10.0f);

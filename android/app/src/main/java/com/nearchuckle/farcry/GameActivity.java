@@ -143,11 +143,6 @@ public class GameActivity extends SDLActivity {
         SharedPreferences prefs = getSharedPreferences(LauncherActivity.PREFS_NAME, MODE_PRIVATE);
         List<String> args = new ArrayList<>();
 
-        // Devmode
-        if (prefs.getBoolean(LauncherActivity.KEY_DEVMODE, false)) {
-            args.add("-DEVMODE");
-        }
-
         // Renderer
         args.add("\"r_Driver OpenGL\"");
 
