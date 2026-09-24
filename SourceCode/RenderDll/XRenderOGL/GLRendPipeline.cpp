@@ -3866,31 +3866,6 @@ void CGLRenderer::EF_DrawDetailOverlayPasses()
   if (m_RP.m_ObjFlags & FOB_ZPASS)
     return;
 
-#ifdef __ANDROID__
-  // If the compiled shader cache (GL_Shaders pak) is not installed, the
-  // embedded fallback programs render this pass as an unattenuated multi-layer
-  // multiply, which looks like corrupted/garbled textures on walls.
-  // Skip the pass in that case (same visual as r_DetailTextures=0); once the
-  // real CGRCDetailAtten / CGVProgDetail programs are available from the cache
-  // pak, the pass renders as intended. Only already-created shader instances
-  // are inspected here - no side effects before the state setup below.
-  {
-    int i;
-    for (i = 0; i < CPShader::m_PShaders.Num(); ++i)
-    {
-      CPShader *pPS = CPShader::m_PShaders[i];
-      if (pPS && pPS->m_Name == "CGRCDetailAtten" && pPS->m_bFallbackProgram)
-        return;
-    }
-    for (i = 0; i < CVProgram::m_VPrograms.Num(); ++i)
-    {
-      CVProgram *pVP = CVProgram::m_VPrograms[i];
-      if (pVP && pVP->m_Name == "CGVProgDetail" && pVP->m_bFallbackProgram)
-        return;
-    }
-  }
-#endif
-
   if (!m_RP.m_pShaderResources || !m_RP.m_pShaderResources->m_Textures[EFTT_DETAIL_OVERLAY])
     return;
 

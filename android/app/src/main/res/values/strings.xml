@@ -92,9 +92,6 @@
     <string name="dialog_shaders_failed">Error downloading shaders: </string>
     <string name="dialog_shaders_downloaded_title">Shaders downloaded</string>
     <string name="dialog_shaders_exists_prompt">Shader file already exists (%d KB). Download and replace?</string>
-    <string name="dialog_shader_cache_missing_title">Shader cache not found</string>
-    <string name="dialog_shader_cache_missing_msg">The compiled shader cache (GL_Shaders pak) was not found in FCData. Without it the game renders with simplified fallback shaders, which causes visual artifacts (garbled textures on walls, incorrect detail/lighting).\n\nDownload the shader cache now?</string>
-    <string name="btn_launch_anyway">Launch anyway</string>
     <string name="toast_specify_game_path_first">Specify Far Cry game path first!</string>
     <string name="error_no_game_folder">No game folder</string>
 

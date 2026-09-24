@@ -1778,7 +1778,6 @@ create:
       pbuf = new char[len + 1];
       strcpy(pbuf, s_FallbackVP);
       m_CGProfileType = CG_PROFILE_ARBVP1;
-      m_bFallbackProgram = true;
     }
 
     {
