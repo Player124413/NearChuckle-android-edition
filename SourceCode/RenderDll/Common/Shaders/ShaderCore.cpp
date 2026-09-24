@@ -729,6 +729,51 @@ void CShader::mfInit (void)
     strcpy(m_ShadersPath[1], "Shaders/HWScripts/");
     strcpy(m_ShadersCache, "Shaders/Cache/");
 
+#ifdef __ANDROID__
+	// Log-only diagnostics: report how much of the compiled shader cache
+	// (the GL_Shaders pak in FCData) is actually visible through CryPak.
+	// Lets log.txt tell apart "cache pak missing/broken/wrong layout" from
+	// "cache loaded, but GPU shader translation renders it incorrectly".
+	// No behavior change - pure logging.
+	{
+		static const char *szCacheChecks[] =
+		{
+			"Shaders/Cache/CGPShaders/*.cgps",  // canonical (expected layout)
+			"Shaders/Cache/CGVShaders/*.cgvp",
+			"CGPShaders/*.cgps",                // alternates (wrong-layout paks)
+			"CGVShaders/*.cgvp",
+			"Shaders/CGPShaders/*.cgps",
+			"Shaders/CGVShaders/*.cgvp",
+		};
+		iSystem->GetILog()->Log("Shader cache diagnostics (%s):", m_ShadersCache);
+		for (int i = 0; i < (int)(sizeof(szCacheChecks) / sizeof(szCacheChecks[0])); i++)
+		{
+			struct dirent fd;
+			int nCount = 0;
+			char szSamples[160];
+			szSamples[0] = 0;
+			intptr_t h = iSystem->GetIPak()->FindFirst(szCacheChecks[i], &fd);
+			if (h != -1)
+			{
+				do
+				{
+					if (nCount < 2 && strlen(szSamples) < 100)
+					{
+						if (nCount > 0)
+							strncat(szSamples, ", ", sizeof(szSamples) - strlen(szSamples) - 1);
+						strncat(szSamples, fd.d_name, sizeof(szSamples) - strlen(szSamples) - 1);
+					}
+					nCount++;
+				}
+				while (iSystem->GetIPak()->FindNext(h, &fd) == 0);
+				iSystem->GetIPak()->FindClose(h);
+			}
+			iSystem->GetILog()->Log("  [%s]: %d file(s)%s%s",
+				szCacheChecks[i], nCount, nCount ? " e.g. " : "", szSamples);
+		}
+	}
+#endif
+
     CShader::m_Nums = 0;
     CShader::m_MaxNums = (MAX_SHADERS - 256) - 1;
     CShader::m_FirstCopyNum = MAX_SHADERS - 256;
