@@ -173,6 +173,8 @@ CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int
 	SDL_AudioStream* as = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
 	if (!as)
 	{
+		if (GetISystem() && GetISystem()->GetILog())
+			GetISystem()->GetILog()->LogError("Movie audio: SDL_OpenAudioDeviceStream failed (%d Hz, %d ch): %s", samplerate, channels, SDL_GetError());
 		return nullptr;
 	}
 
@@ -184,6 +186,9 @@ CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int
 	s->chunk = new unsigned char[length];
 	s->stream = as;
 	s->playing = false;
+
+	if (GetISystem() && GetISystem()->GetILog())
+		GetISystem()->GetILog()->Log("Movie audio: stream opened (%d Hz, %d channels, chunk %d bytes)", samplerate, channels, length);
 
 	MovieStream_Register(s);
 	return s;
@@ -257,6 +262,13 @@ void CS_Update()
 		if (s->callback(s, s->chunk, s->length, s->userdata) == 1)
 		{
 			SDL_PutAudioStreamData(s->stream, s->chunk, s->length);
+			static bool bMovieAudioFlowLogged = false;
+			if (!bMovieAudioFlowLogged)
+			{
+				bMovieAudioFlowLogged = true;
+				if (GetISystem() && GetISystem()->GetILog())
+					GetISystem()->GetILog()->Log("Movie audio: first audio chunk delivered to the device");
+			}
 		}
 	}
 }
@@ -354,7 +366,15 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
 					m_player->binkInfo.idealBufferSize, 0,
 					m_player->binkInfo.sampleRate, m_player);
+#ifdef __ANDROID__
+				if (!m_audioStream && GetISystem() && GetISystem()->GetILog())
+					GetISystem()->GetILog()->Log("Movie audio: CS_Stream_Create returned NULL for '%s'", pathToVideo);
+#endif
 			}
+#ifdef __ANDROID__
+			else if (GetISystem() && GetISystem()->GetILog())
+				GetISystem()->GetILog()->Log("Movie audio: video file '%s' has no audio track", pathToVideo);
+#endif
 		}
 	}
 
