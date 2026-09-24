@@ -524,6 +524,7 @@ public:
   ShaderMacro m_Macros;
   string m_Name;
   bool m_bCGType;
+  bool m_bFallbackProgram;
   int m_CGProfileType;
 
 public:
@@ -535,6 +536,7 @@ public:
     m_nMaskGen = 0;
     m_Frame = 0;
     m_bCGType = false;
+    m_bFallbackProgram = false;
   }
   _inline const char * mfGetName()
   {
@@ -636,6 +638,7 @@ public:
   string m_Name;
   bool m_bActive;
   bool m_bCGType;
+  bool m_bFallbackProgram;
   int m_CGProfileType;
 
 public:
@@ -648,6 +651,7 @@ public:
     m_nMaskGen = 0;
     m_Frame = 0;
     m_bCGType = false;
+    m_bFallbackProgram = false;
   }
   virtual ~CPShader() {}
 

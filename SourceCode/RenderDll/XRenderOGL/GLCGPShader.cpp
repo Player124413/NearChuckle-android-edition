@@ -956,7 +956,18 @@ create:
     else
     {
       iLog->LogWarning("Missing fragment shader '%s' - activating embedded fallback ARB fragment program", namedst);
-      const char* s_FallbackFP = 
+      static bool bShaderCacheHintShown = false;
+      if (!bShaderCacheHintShown)
+      {
+        bShaderCacheHintShown = true;
+        iLog->Log("================================================================================");
+        iLog->Log("Compiled shader cache is missing (Shaders/Cache/*.cgps). Graphics are rendered");
+        iLog->Log("with simplified fallback programs, which may look incorrect (detail textures,");
+        iLog->Log("lighting, fog). Install the 'GL_Shaders' pak into FCData via the launcher");
+        iLog->Log("button 'Download GL Shaders (Shader Cache)' to fix visual artifacts.");
+        iLog->Log("================================================================================");
+      }
+      const char* s_FallbackFP =
         "!!ARBfp1.0\n"
         "#var sampler2D Texture0 : $vin.TEXUNIT0 : texunit 0 : 1 : 1\n"
         "#var float4 OUT.color : $vout.COL : COL : -1 : 1\n"
@@ -968,6 +979,7 @@ create:
       pbuf = new char[len + 1];
       strcpy(pbuf, s_FallbackFP);
       m_CGProfileType = CG_PROFILE_ARBFP1;
+      m_bFallbackProgram = true;
     }
 
     {

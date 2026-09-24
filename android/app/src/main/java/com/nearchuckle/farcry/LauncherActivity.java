@@ -362,7 +362,26 @@ public class LauncherActivity extends Activity {
 
     private static final String SHADERS_URL = "https://rohitcodes.fyi/nearchuckle/files/shadercache/GL_Shaders_20260517.pak";
 
+    /** Returns true if a GL_Shaders*.pak shader cache exists in FCData. */
+    private boolean hasShaderCache(String gamePath) {
+        if (gamePath == null || gamePath.trim().isEmpty()) return false;
+        File fcData = new File(gamePath, "FCData");
+        File[] files = fcData.listFiles();
+        if (files == null) return false;
+        for (File f : files) {
+            String name = f.getName().toLowerCase();
+            if (name.startsWith("gl_shaders") && name.endsWith(".pak") && f.isFile() && f.length() > 1024) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void downloadShadersPack() {
+        downloadShadersPack(false);
+    }
+
+    private void downloadShadersPack(final boolean launchAfter) {
         String path = editGamePath.getText().toString().trim();
         if (path.isEmpty()) {
             Toast.makeText(this, R.string.toast_specify_game_path_first, Toast.LENGTH_SHORT).show();
@@ -383,15 +402,19 @@ public class LauncherActivity extends Activity {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.btn_download_shaders)
                     .setMessage(getString(R.string.dialog_shaders_exists_prompt, (int) (targetPak.length() / 1024)))
-                    .setPositiveButton(R.string.yes, (dialog, which) -> startShaderDownload(targetPak))
+                    .setPositiveButton(R.string.yes, (dialog, which) -> startShaderDownload(targetPak, launchAfter))
                     .setNegativeButton(R.string.no, null)
                     .show();
         } else {
-            startShaderDownload(targetPak);
+            startShaderDownload(targetPak, launchAfter);
         }
     }
 
     private void startShaderDownload(File targetFile) {
+        startShaderDownload(targetFile, false);
+    }
+
+    private void startShaderDownload(final File targetFile, final boolean launchAfter) {
         android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
         progress.setTitle(R.string.btn_download_shaders);
         progress.setMessage(getString(R.string.dialog_shaders_downloading));
@@ -435,6 +458,10 @@ public class LauncherActivity extends Activity {
                 runOnUiThread(() -> {
                     progress.dismiss();
                     Toast.makeText(this, R.string.dialog_shaders_success, Toast.LENGTH_LONG).show();
+                    if (launchAfter) {
+                        startGameActivity();
+                        return;
+                    }
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.dialog_shaders_downloaded_title)
                             .setMessage(R.string.dialog_shaders_success)
@@ -852,6 +879,20 @@ public class LauncherActivity extends Activity {
                     .setMessage(getString(R.string.dialog_game_files_missing_msg, gamePath))
                     .setPositiveButton(R.string.btn_launch, (dialog, which) -> startGameActivity())
                     .setNegativeButton(R.string.cancel, null)
+                    .show();
+            return;
+        }
+
+        // Compiled shader cache check: without it the engine renders with
+        // simplified fallback shaders, producing visual artifacts (garbled
+        // detail textures on walls, wrong lighting). Offer a one-tap download,
+        // but let the user skip it and launch as before.
+        if (!hasShaderCache(gamePath)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_shader_cache_missing_title)
+                    .setMessage(R.string.dialog_shader_cache_missing_msg)
+                    .setPositiveButton(R.string.yes, (dialog, which) -> downloadShadersPack(true))
+                    .setNegativeButton(R.string.btn_launch_anyway, (dialog, which) -> startGameActivity())
                     .show();
             return;
         }

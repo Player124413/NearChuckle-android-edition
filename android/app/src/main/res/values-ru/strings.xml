@@ -92,6 +92,9 @@
     <string name="dialog_shaders_failed">Ошибка загрузки шейдеров: </string>
     <string name="dialog_shaders_downloaded_title">Шейдеры скачаны</string>
     <string name="dialog_shaders_exists_prompt">Файл шейдеров уже существует (%d КБ). Скачать заново и заменить?</string>
+    <string name="dialog_shader_cache_missing_title">Кэш шейдеров не найден</string>
+    <string name="dialog_shader_cache_missing_msg">Скомпилированный кэш шейдеров (GL_Shaders pak) не найден в папке FCData. Без него игра рисует упрощёнными фолбэк-шейдерами, из-за чего появляются графические артефакты (испорченные текстуры на стенах, некорректные детали/освещение).\n\nСкачать кэш шейдеров сейчас?</string>
+    <string name="btn_launch_anyway">Всё равно запустить</string>
     <string name="toast_specify_game_path_first">Сначала выберите папку с игрой Far Cry!</string>
     <string name="error_no_game_folder">Папка игры не найдена</string>
 
