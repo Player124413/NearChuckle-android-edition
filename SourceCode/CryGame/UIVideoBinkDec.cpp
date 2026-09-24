@@ -95,6 +95,174 @@ static MoviePlayerData* CreatePlayerData(const char* filename)
 
 #if (defined(__GNUC__) || defined(__clang__)) && !defined(_WIN32)
 extern "C" {
+
+#ifdef __ANDROID__
+
+// ---------------------------------------------------------------------------
+// Real CS_* stream implementation for Android, backed by SDL3 audio.
+//
+// On Windows these entry points come from the CrySound DLL; the Android port
+// ships no such library, so the video player (libbinkdec) had only the weak
+// no-op stubs below and movie playback was silent. This implementation opens
+// an SDL3 device stream and feeds it from CS_Update(), which the video player
+// already calls once per rendered frame. Bink audio blocks are decoded
+// together with the video frame (Bink_GetAudioData only copies the buffered
+// block), so everything stays on the calling thread - no extra threads, no
+// new locking. The embedded callback keeps full control of what is pulled
+// (it silence-fills and skips when no new video frame was decoded).
+// ---------------------------------------------------------------------------
+
+// Completes the opaque 'typedef struct CS_STREAM CS_STREAM;' from CrySound64.h
+struct CS_STREAM
+{
+	CS_STREAMCALLBACK callback;
+	void* userdata;
+	int length;                 // bytes per decoded audio chunk (idealBufferSize)
+	int bytesPerSec;            // raw 16-bit PCM rate, for buffering target
+	unsigned char* chunk;       // scratch for one chunk, silence padded
+	SDL_AudioStream* stream;    // SDL3 device stream (driven without callback)
+	bool playing;
+};
+
+static const int kMaxMovieStreams = 4;
+static CS_STREAM* g_movieStreams[kMaxMovieStreams] = { nullptr, nullptr, nullptr, nullptr };
+
+static void MovieStream_Register(CS_STREAM* s)
+{
+	for (int i = 0; i < kMaxMovieStreams; i++)
+	{
+		if (!g_movieStreams[i])
+		{
+			g_movieStreams[i] = s;
+			return;
+		}
+	}
+}
+
+static void MovieStream_Unregister(CS_STREAM* s)
+{
+	for (int i = 0; i < kMaxMovieStreams; i++)
+	{
+		if (g_movieStreams[i] == s)
+		{
+			g_movieStreams[i] = nullptr;
+			return;
+		}
+	}
+}
+
+CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, void* userdata)
+{
+	(void)mode;
+	MoviePlayerData* player = (MoviePlayerData*)userdata;
+	if (!callback || !player || length <= 0 || samplerate <= 0)
+	{
+		return nullptr;
+	}
+
+	int channels = (int)player->binkInfo.nChannels;
+	if (channels <= 0 || channels > 2)
+		channels = 2;
+
+	SDL_AudioSpec spec;
+	SDL_zero(spec);
+	spec.format = SDL_AUDIO_S16;
+	spec.channels = channels;
+	spec.freq = samplerate;
+
+	SDL_AudioStream* as = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
+	if (!as)
+	{
+		return nullptr;
+	}
+
+	CS_STREAM* s = new CS_STREAM;
+	s->callback = callback;
+	s->userdata = userdata;
+	s->length = length;
+	s->bytesPerSec = channels * 2 * samplerate;
+	s->chunk = new unsigned char[length];
+	s->stream = as;
+	s->playing = false;
+
+	MovieStream_Register(s);
+	return s;
+}
+
+signed char CS_Stream_Close(CS_STREAM* stream)
+{
+	if (!stream)
+	{
+		return 0;
+	}
+	MovieStream_Unregister(stream);
+	if (stream->stream)
+	{
+		SDL_DestroyAudioStream(stream->stream);
+		stream->stream = nullptr;
+	}
+	delete[] stream->chunk;
+	delete stream;
+	return 0;
+}
+
+int CS_Stream_Play(int channel, CS_STREAM* stream)
+{
+	(void)channel;
+	if (!stream || !stream->stream)
+	{
+		return 0;
+	}
+	SDL_ClearAudioStream(stream->stream);
+	SDL_ResumeAudioStreamDevice(stream->stream);
+	stream->playing = true;
+	return 0;
+}
+
+signed char CS_Stream_Stop(CS_STREAM* stream)
+{
+	if (!stream)
+	{
+		return 0;
+	}
+	stream->playing = false;
+	if (stream->stream)
+	{
+		SDL_PauseAudioStreamDevice(stream->stream);
+		SDL_ClearAudioStream(stream->stream);
+	}
+	return 0;
+}
+
+void CS_Update()
+{
+	for (int i = 0; i < kMaxMovieStreams; i++)
+	{
+		CS_STREAM* s = g_movieStreams[i];
+		if (!s || !s->playing)
+		{
+			continue;
+		}
+
+		// keep roughly 120 ms buffered ahead (plus one chunk) so the device
+		// never runs dry between video frames; at most one chunk is decoded
+		// per rendered frame, so audio stays in step with the video
+		const int target = s->bytesPerSec / 8 + s->length;
+		if (SDL_GetAudioStreamAvailable(s->stream) >= target)
+		{
+			continue;
+		}
+
+		memset(s->chunk, 0xFF, s->length); // 16-bit silence padding
+		if (s->callback(s, s->chunk, s->length, s->userdata) == 1)
+		{
+			SDL_PutAudioStreamData(s->stream, s->chunk, s->length);
+		}
+	}
+}
+
+#else // !__ANDROID__ - original weak stubs for other non-Windows platforms
+
 #ifndef LINUX64
 __attribute__((weak)) CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, int userdata)
 #else
@@ -118,6 +286,8 @@ __attribute__((weak)) signed char CS_Stream_Stop(CS_STREAM* stream)
 __attribute__((weak)) void CS_Update()
 {
 }
+
+#endif // __ANDROID__
 }
 #endif
 
