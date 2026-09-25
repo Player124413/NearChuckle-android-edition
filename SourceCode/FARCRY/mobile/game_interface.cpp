@@ -196,6 +196,7 @@ static volatile int impulseHead; // written by the touch thread
 static volatile int impulseTail; // written by the engine thread
 
 static volatile unsigned heldMask;
+static volatile bool sprintToggle;            // run button toggle, on top of a held sprint
 static volatile float stickFwd, stickSide;
 static volatile int digitalFwd, digitalSide;   // dpad, -1/0/+1
 static volatile float yawMouse, pitchMouse;    // pending look, in mouse pixels
@@ -203,7 +204,7 @@ static volatile float yawJoy, pitchJoy;        // held look rate, -1..1
 
 // The touch layer's mouse-mode look is a screen fraction; CryInput turns pixels into
 // degrees at 0.2 per pixel, so 900 makes a full-width swipe about half a turn.
-#define LOOK_MOUSE_YAW_SCALE   900.0f
+#define LOOK_MOUSE_YAW_SCALE   1500.0f
 #define LOOK_MOUSE_PITCH_SCALE 600.0f
 #define LOOK_JOY_PIXELS_PER_SEC 900.0f
 
@@ -235,7 +236,7 @@ extern "C" void FarCry_DrainTouchInput(FarCryTouchInput *out, float frameTime)
 {
     out->moveFwd = clampUnit(stickFwd + (float) digitalFwd);
     out->moveSide = clampUnit(stickSide + (float) digitalSide);
-    out->held = heldMask;
+    out->held = heldMask | (sprintToggle ? 1u << FC_HELD_SPRINT : 0);
 
     out->impulseCount = 0;
     while (impulseTail != impulseHead && out->impulseCount < FC_MAX_IMPULSES)
@@ -451,6 +452,7 @@ int PortableShowKeyboard(void)
 
 bool PortableSetAlwaysRun(bool run)
 {
+    sprintToggle = run;
     return run;
 }
 
