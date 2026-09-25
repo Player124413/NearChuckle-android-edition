@@ -791,41 +791,6 @@ bool CXGame::IsInPause(IProcess *pProcess)
 // Touch input for this frame, drained every frame so nothing stale fires later.
 static FarCryTouchInput s_TouchInput;
 
-// The scope button has no release, and hold-to-aim weapons (no ZoomDeadSwitch) only leave the scope on
-// one; player.lua's ZoomToggle handler takes 2 as "leave" for every weapon.
-static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
-{
-	IScriptSystem* pSS = pSystem->GetIScriptSystem();
-	IEntity* pPlayer = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
-	if (!pSS || !pPlayer)
-		return;
-	static const char szQuery[] = "_fcScopeUp = (ClientStuff and ClientStuff.vlayers and ClientStuff.vlayers:IsActive(\"WeaponScope\")) and 1 or 0";
-	int nUp = 0;
-	pSS->ExecuteBuffer(szQuery, sizeof(szQuery) - 1);
-	pSS->GetGlobalValue("_fcScopeUp", nUp);
-	if (nUp)
-		pPlayer->SendScriptEvent(ScriptEvent_ZoomToggle, 2);
-	else
-		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
-}
-
-static CPlayer* TouchPlayer(CXClient* pClient, ISystem* pSystem)
-{
-	IEntity* pEntity = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
-	IEntityContainer* pCnt = pEntity ? pEntity->GetContainer() : NULL;
-	CPlayer* pPlayer = NULL;
-	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer))
-		return pPlayer;
-	return NULL;
-}
-
-// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
-static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
-{
-	if (CPlayer* pPlayer = TouchPlayer(pClient, pSystem))
-		pPlayer->TouchStance(bHold);
-}
-
 // Turn the drained touch state into client actions by name (docs/porting/phase2.md).
 static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 {
@@ -837,19 +802,9 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 
 	static const XACTIONID held[FC_HELD_COUNT] = {
 		ACTION_FIRE0, ACTION_JUMP, ACTION_MOVEMODE, ACTION_RUNSPRINT, ACTION_WALK,
-		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE, ACTION_SCORE_BOARD };
-	// Sprint changes seat each frame it is held in a vehicle, so there send only its press.
-	static unsigned prevHeld;
-	unsigned heldNow = in.held;
-	if (heldNow & (1u << FC_HELD_SPRINT))
-	{
-		CPlayer* pPlayer = TouchPlayer(pClient, pSystem);
-		if (pPlayer && pPlayer->GetVehicle() && (prevHeld & (1u << FC_HELD_SPRINT)))
-			heldNow &= ~(1u << FC_HELD_SPRINT);
-	}
-	prevHeld = in.held;
+		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE };
 	for (int i = 0; i < FC_HELD_COUNT; i++)
-		if (heldNow & (1u << i))
+		if (in.held & (1u << i))
 			pClient->OnAction(held[i], 1.0f, etHolding);
 
 	for (int i = 0; i < in.impulseCount; i++)
@@ -869,7 +824,7 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			case FC_IMP_PREV_WEAPON:   pClient->OnAction(ACTION_PREV_WEAPON, 1.0f, etPressing); break;
 			case FC_IMP_CROUCH_TOGGLE: pClient->OnAction(ACTION_MOVEMODE_TOGGLE, 1.0f, etPressing); break;
 			case FC_IMP_PRONE:         pClient->OnAction(ACTION_MOVEMODE2, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_TOGGLE:   TouchZoomToggle(pClient, pSystem); break;
+			case FC_IMP_ZOOM_TOGGLE:   pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing); break;
 			case FC_IMP_BINOCULARS:    pClient->OnAction(ACTION_ITEM_0, 1.0f, etPressing); break;
 			case FC_IMP_FIREMODE:      pClient->OnAction(ACTION_FIREMODE, 1.0f, etPressing); break;
 			case FC_IMP_CYCLE_GRENADE: pClient->OnAction(ACTION_CYCLE_GRENADE, 1.0f, etPressing); break;
@@ -878,11 +833,6 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			// Not in the action map; the F5/F6 triggers the client keeps for them.
 			case FC_IMP_QUICKSAVE:     pClient->TriggerQuickSave(1.0f, etPressing); break;
 			case FC_IMP_QUICKLOAD:     pClient->TriggerQuickLoad(1.0f, etPressing); break;
-			case FC_IMP_STANCE_TAP:    TouchStance(pClient, pSystem, false); break;
-			case FC_IMP_STANCE_HOLD:   TouchStance(pClient, pSystem, true); break;
-			case FC_IMP_CRYVISION:     pClient->OnAction(ACTION_ITEM_1, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_IN:       pClient->OnAction(ACTION_ZOOM_IN, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_OUT:      pClient->OnAction(ACTION_ZOOM_OUT, 1.0f, etPressing); break;
 			default: break;
 		}
 	}
@@ -1250,12 +1200,7 @@ bool CXGame::Update()
 			assert(m_pClient);
 #ifdef __ANDROID__
 			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
-			{
-				// Joypad mode runs mouse look through a stick dead zone that eats slow swipes; XPlayer's AnalogMove covers the sticks.
-				if (cl_use_joypad->GetIVal())
-					cl_use_joypad->Set(0);
 				ApplyTouchInput(m_pClient, m_pSystem);
-			}
 #endif
 			m_pClient->Update();
 			
@@ -1874,11 +1819,7 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 #ifdef LINUX
 		DIR *fdir;
 
-#ifdef __ANDROID__
-		fdir = opendir(CryGameRoot() ? (string(CryGameRoot()) + "/" + sLevelFolder).c_str() : sLevelFolder.c_str());
-#else
 		fdir = opendir(sLevelFolder.c_str());
-#endif
 		if (!fdir)
 		{
 			sLevelFolder = GetCorrectedLevelPath(sLevelFolder);
@@ -2456,11 +2397,7 @@ string CXGame::GetPlayerProfilePath()
 		m_pSystem->GetIPak()->MakeDir(szPath); // nested; CopyTree's mkdir is not
 		struct stat st;
 		char szSrc[1024];
-		// The game root when the launcher gave one (secondary storage: no cwd to resolve against, and
-		// both storages are case-insensitive), else a case-corrected path from the cwd.
-		bool bSrc = CryGameRoot() ? (snprintf(szSrc, sizeof(szSrc), "%s/Profiles/Player", CryGameRoot()), stat(szSrc, &st) == 0)
-		                          : casepath("Profiles/Player", szSrc) != 0;
-		if (stat((sProfiles + "default").c_str(), &st) != 0 && bSrc)
+		if (stat((sProfiles + "default").c_str(), &st) != 0 && casepath("Profiles/Player", szSrc))
 		{
 			printf("Seeding player profiles from %s\n", szSrc);
 			CopyTree(szSrc, sProfiles.substr(0, sProfiles.length() - 1));

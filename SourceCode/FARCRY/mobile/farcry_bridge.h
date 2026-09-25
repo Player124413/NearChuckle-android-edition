@@ -18,7 +18,6 @@ enum FarCryHeld
     FC_HELD_LEAN_LEFT,
     FC_HELD_LEAN_RIGHT,
     FC_HELD_GRENADE,
-    FC_HELD_OBJECTIVES, // the scoreboard action, which is the mission box in single player
     FC_HELD_COUNT
 };
 
@@ -40,11 +39,6 @@ enum FarCryImpulse
     FC_IMP_CHANGE_VIEW,
     FC_IMP_QUICKSAVE,
     FC_IMP_QUICKLOAD,
-    FC_IMP_STANCE_TAP,  // crouch button tapped: stand <-> crouch, prone -> crouch
-    FC_IMP_STANCE_HOLD, // crouch button held: prone, or stand up from prone
-    FC_IMP_CRYVISION,
-    FC_IMP_ZOOM_IN,     // one scope zoom step
-    FC_IMP_ZOOM_OUT,
     FC_IMP_WEAPON_0 = 32 // + slot, matches ACTION_WEAPON_0 + slot
 };
 

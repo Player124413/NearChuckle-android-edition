@@ -181,15 +181,12 @@ void SetMasterCDFolder()
 	SetCurrentDirectory( path_buffer );
 	GetCurrentDirectory( sizeof(szMasterCDFolder),szMasterCDFolder );
 #elif defined(__ANDROID__)
-	// The modules live in the APK's native library dir. The game root is the launcher's
-	// -GAMEPATH (a secondary-storage path cannot be chdir()ed into), else the cwd the host set.
+	// The modules live in the APK's native library dir and the host has already
+	// chdir()ed into the game folder, so no "../" hop: cwd is the root.
 	extern const char *nativeLibsPath;
 	string modulePath = string(nativeLibsPath ? nativeLibsPath : ".") + "/";
 	SetModulePath(modulePath.c_str());
-	if (CryGameRoot())
-		snprintf(szMasterCDFolder, sizeof(szMasterCDFolder), "%s", CryGameRoot());
-	else
-		getcwd(szMasterCDFolder, sizeof(szMasterCDFolder));
+	getcwd(szMasterCDFolder, sizeof(szMasterCDFolder));
 #else
 	char* last_slash;
 	char dll_path[_MAX_PATH];

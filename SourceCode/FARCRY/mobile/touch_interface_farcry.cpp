@@ -54,11 +54,10 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(new touchcontrols::Button("attack", touchcontrols::RectF(20, 7, 23, 10), "shoot", KEY_SHOOT, false, false, "Attack!"));
     tc->addControl(new touchcontrols::Button("attack2", touchcontrols::RectF(3, 5, 6, 8), "shoot", KEY_SHOOT, false, true, "Attack! (duplicate)"));
 
+    tc->addControl(new touchcontrols::Button("zoom", touchcontrols::RectF(21, 3, 23, 5), "binocular", PORT_ACT_ZOOM_IN, false, false, "Zoom"));
     tc->addControl(new touchcontrols::Button("reload", touchcontrols::RectF(0, 5, 3, 7), "reload", PORT_ACT_RELOAD, false, false, "Reload"));
     tc->addControl(new touchcontrols::Button("flashlight", touchcontrols::RectF(19, 3, 21, 5), "flashlight", PORT_ACT_FLASH_LIGHT, false, false, "Flashlight"));
     tc->addControl(new touchcontrols::Button("binoculars", touchcontrols::RectF(16, 0, 18, 2), "binocular", PORT_ACT_HELPCOMP, false, false, "Binoculars"));
-    tc->addControl(new touchcontrols::Button("cryvision", touchcontrols::RectF(18, 0, 20, 2), "goggles", PORT_ACT_DF_NIGHT_VISION, false, false, "CryVision"));
-    tc->addControl(new touchcontrols::Button("fire_mode", touchcontrols::RectF(3, 3, 5, 5), "swap", PORT_ACT_TOGGLE_ALT_ATTACK, false, false, "Fire mode"));
 
     tc->addControl(new touchcontrols::Button("quick_save", touchcontrols::RectF(24, 0, 26, 2), "save", PORT_ACT_QUICKSAVE, false, false, "Quick save"));
     tc->addControl(new touchcontrols::Button("quick_load", touchcontrols::RectF(20, 0, 22, 2), "load", PORT_ACT_QUICKLOAD, false, false, "Quick load"));
@@ -68,20 +67,10 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(new touchcontrols::Button("console", touchcontrols::RectF(6, 0, 8, 2), "tild", PORT_ACT_CONSOLE, false, true, "Console"));
 
     tc->addControl(new touchcontrols::Button("jump", touchcontrols::RectF(24, 3, 26, 5), "jump", PORT_ACT_JUMP, false, false, "Jump"));
-    tc->addControl(new touchcontrols::Button("crouch_toggle", touchcontrols::RectF(24, 14, 26, 16), "crouch", PORT_ACT_CROUCH, false, false, "Crouch (hold: prone)"));
+    tc->addControl(new touchcontrols::Button("crouch_toggle", touchcontrols::RectF(24, 14, 26, 16), "crouch", PORT_ACT_CROUCH, false, false, "Crouch"));
     tc->addControl(new touchcontrols::Button("use", touchcontrols::RectF(24, 7, 26, 9), "use", PORT_ACT_USE, false, false, "Use"));
-    tc->addControl(runButton); // Common run button created in touch_interface_base, drives sprint
-    runButton->setHidden(false);
-    tc->addControl(new touchcontrols::Button("grenade", touchcontrols::RectF(22, 5, 24, 7), "shoot_alt", PORT_ACT_ALT_FIRE, false, false, "Grenade (hold)"));
-    tc->addControl(new touchcontrols::Button("grenade_cycle", touchcontrols::RectF(24, 5, 26, 7), "grenade_cycle", PORT_ACT_INVNEXT, false, false, "Change grenade"));
-    tc->addControl(new touchcontrols::Button("objectives", touchcontrols::RectF(14, 0, 16, 2), "notebook", PORT_ACT_MP_SCORES, false, false, "Objectives (hold)"));
-
-    // Delta Touch's fly slider with only up and down: tap for the scope, slide for its zoom steps.
-    touchcontrols::QuadSlide *zoomSlide = new touchcontrols::QuadSlide("zoom_slide", touchcontrols::RectF(21, 3, 23, 5), "zoom", "slide_arrow",
-                                                                      PORT_ACT_MAP_ZOOM_IN, 0, PORT_ACT_MAP_ZOOM_OUT, 0, false, "Scope (tap), zoom in/out (slide)");
-    zoomSlide->setTapValue(PORT_ACT_ZOOM_IN);
-    zoomSlide->signal.connect(sigc::mem_fun(this, &TouchInterface::gameButton));
-    tc->addControl(zoomSlide);
+    tc->addControl(new touchcontrols::Button("sprint", touchcontrols::RectF(3, 9, 6, 12), "sprint", PORT_ACT_SPRINT, false, false, "Sprint"));
+    tc->addControl(new touchcontrols::Button("grenade", touchcontrols::RectF(22, 10, 24, 12), "shoot_alt", PORT_ACT_ALT_FIRE, false, false, "Grenade (hold)"));
     tc->addControl(new touchcontrols::Button("lean_left", touchcontrols::RectF(12, 8, 14, 10), "lean", PORT_ACT_LEAN_LEFT, false, true, "Lean left"));
     tc->addControl(new touchcontrols::Button("lean_right", touchcontrols::RectF(14, 8, 16, 10), "lean", PORT_ACT_LEAN_RIGHT, false, true, "Lean right"));
 
@@ -121,8 +110,6 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
 
 void TouchInterface::createControls(std::string filesPath)
 {
-    isWalking = 1; // run button is sprint: start walking, whatever "Always Run Default" says
-
     tcMenuMain = new touchcontrols::TouchControls("menu", false, true, 10, false);
     tcYesNo = new touchcontrols::TouchControls("yes_no", false, false);
     tcGameMain = new touchcontrols::TouchControls("game", false, true, 1, true);

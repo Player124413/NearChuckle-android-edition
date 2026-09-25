@@ -225,20 +225,6 @@ inline const char* CryUserFile(const char* szRelative, char* szOut, size_t nOut)
 	snprintf(szOut, nOut, "%s/%s", CryUserDir(), szRelative);
 	return szOut;
 }
-// The game folder as an absolute path (FARCRY_GAME_PATH, from the launcher's -GAMEPATH). On secondary storage it is
-// a virtual path that SAFFAL matches by prefix and nothing can chdir() into, so game data is always opened through it.
-inline const char* CryGameRoot()
-{
-	const char* szRoot = getenv("FARCRY_GAME_PATH");
-	return szRoot && szRoot[0] ? szRoot : NULL;
-}
-// Where generated caches go (FARCRY_CACHE_PATH, from the launcher's -CACHEPATH: the app's cache folder).
-// CryPak writes that would land in the game folder are mirrored here instead.
-inline const char* CryCacheRoot()
-{
-	const char* szRoot = getenv("FARCRY_CACHE_PATH");
-	return szRoot && szRoot[0] ? szRoot : NULL;
-}
 // bionic has no __finite
 #define _finite isfinite
 #define __finite isfinite

@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 #include <android/log.h>
 
@@ -17,7 +16,6 @@
 
 #include "game_interface.h"
 #include "farcry_bridge.h"
-#include "LogWritter.h"
 
 #define LOG_TAG "FarCry"
 #define FC_LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
@@ -32,7 +30,7 @@ extern "C" bool SDL_SendKeyboardKey(Uint64 timestamp, SDL_KeyboardID keyboardID,
 // The renderer module creates the window, so TouchInterface::newFrame fills it in.
 extern "C" SDL_Window *window = NULL;
 
-// stdout and stderr (the engine log, SDL, OpenAL, printf) go to logcat and the launcher's log file.
+// The engine logs through iLog into log.txt; SDL, OpenAL and printf land here.
 #define STDIO_PUMP_LINE_MAX 1008
 
 static void *stdio_pump(void *arg)
@@ -53,7 +51,6 @@ static void *stdio_pump(void *arg)
                 {
                     line[len] = 0;
                     FC_LOGI("%s", line);
-                    LogWritter_Write(line);
                     len = 0;
                 }
 
@@ -120,17 +117,6 @@ void PortableInit(int argc, const char **argv)
             continue;
         }
 
-        // -GAMEPATH <dir>: the game folder, absolute (on secondary storage a SAF path nothing can chdir() into).
-        // -SHADERPAK <file>: the shader cache pak the launcher stages on primary storage.
-        // -CACHEPATH <dir>: where generated caches go.
-        if ((!strcmp(argv[i], "-GAMEPATH") || !strcmp(argv[i], "-SHADERPAK") || !strcmp(argv[i], "-CACHEPATH")) && i + 1 < argc)
-        {
-            const char *name = argv[i][1] == 'G' ? "FARCRY_GAME_PATH" : argv[i][1] == 'S' ? "FARCRY_SHADER_PAK" : "FARCRY_CACHE_PATH";
-            setenv(name, argv[++i], 1);
-            FC_LOGI("env %s=%s", name, argv[i]);
-            continue;
-        }
-
         if (strncmp(argv[i], "-ENV:", 5) == 0)
         {
             char *nameValue = strdup(argv[i] + 5);
@@ -147,17 +133,6 @@ void PortableInit(int argc, const char **argv)
         engineArgv[engineArgc++] = argv[i];
     }
     engineArgv[engineArgc] = NULL;
-
-    // Every game-data read is built on -GAMEPATH, so the cwd only catches files the engine writes by bare
-    // name (reports, dumps, logs): make it the user folder so nothing lands in the game data.
-    if (const char *userFiles = getenv("USER_FILES"))
-    {
-        char dir[1024];
-        snprintf(dir, sizeof(dir), "%s/farcry", userFiles);
-        mkdir(dir, 0755);
-        if (chdir(dir) == 0)
-            FC_LOGI("cwd %s", dir);
-    }
 
     FC_LOGI("PortableInit, starting engine");
 
@@ -198,7 +173,6 @@ static volatile int impulseHead; // written by the touch thread
 static volatile int impulseTail; // written by the engine thread
 
 static volatile unsigned heldMask;
-static volatile bool sprintToggle;            // run button toggle, on top of a held sprint
 static volatile float stickFwd, stickSide;
 static volatile int digitalFwd, digitalSide;   // dpad, -1/0/+1
 static volatile float yawMouse, pitchMouse;    // pending look, in mouse pixels
@@ -206,21 +180,11 @@ static volatile float yawJoy, pitchJoy;        // held look rate, -1..1
 
 // The touch layer's mouse-mode look is a screen fraction; CryInput turns pixels into
 // degrees at 0.2 per pixel, so 900 makes a full-width swipe about half a turn.
-#define LOOK_MOUSE_YAW_SCALE   1500.0f
+#define LOOK_MOUSE_YAW_SCALE   900.0f
 #define LOOK_MOUSE_PITCH_SCALE 600.0f
 #define LOOK_JOY_PIXELS_PER_SEC 900.0f
 
 static int farcry_screen_mode = TS_MENU;
-
-// Crouch button: a tap toggles crouch, holding it this long goes prone (fired by the drain while still held).
-#define STANCE_HOLD_MS 350
-static volatile bool stanceDown, stanceHoldFired;
-static volatile Uint64 stanceDownMs;
-
-// Zoom slider: a step as it is slid, then another every ZOOM_REPEAT_MS while it stays there.
-#define ZOOM_REPEAT_MS 300
-static volatile int zoomDir; // +1 in, -1 out
-static volatile Uint64 zoomNextMs;
 
 static void queueImpulse(int impulse)
 {
@@ -248,25 +212,13 @@ extern "C" void FarCry_DrainTouchInput(FarCryTouchInput *out, float frameTime)
 {
     out->moveFwd = clampUnit(stickFwd + (float) digitalFwd);
     out->moveSide = clampUnit(stickSide + (float) digitalSide);
-    out->held = heldMask | (sprintToggle ? 1u << FC_HELD_SPRINT : 0);
+    out->held = heldMask;
 
     out->impulseCount = 0;
     while (impulseTail != impulseHead && out->impulseCount < FC_MAX_IMPULSES)
     {
         out->impulses[out->impulseCount++] = impulseQueue[impulseTail];
         impulseTail = (impulseTail + 1) % IMPULSE_QUEUE_SIZE;
-    }
-    // Added here rather than queued: the ring has the touch thread as its only writer.
-    if (stanceDown && !stanceHoldFired && SDL_GetTicks() - stanceDownMs >= STANCE_HOLD_MS && out->impulseCount < FC_MAX_IMPULSES)
-    {
-        stanceHoldFired = true;
-        out->impulses[out->impulseCount++] = FC_IMP_STANCE_HOLD;
-    }
-    int zoom = zoomDir;
-    if (zoom && SDL_GetTicks() >= zoomNextMs && out->impulseCount < FC_MAX_IMPULSES)
-    {
-        zoomNextMs = SDL_GetTicks() + ZOOM_REPEAT_MS;
-        out->impulses[out->impulseCount++] = zoom > 0 ? FC_IMP_ZOOM_IN : FC_IMP_ZOOM_OUT;
     }
 
     // Look: take what the touch thread accumulated, leaving anything it adds meanwhile.
@@ -385,40 +337,10 @@ void PortableAction(int state, int action)
         case PORT_ACT_SPRINT:     setHeld(FC_HELD_SPRINT, state); return;
         case PORT_ACT_LEAN_LEFT:  setHeld(FC_HELD_LEAN_LEFT, state); return;
         case PORT_ACT_LEAN_RIGHT: setHeld(FC_HELD_LEAN_RIGHT, state); return;
-        case PORT_ACT_MP_SCORES:  setHeld(FC_HELD_OBJECTIVES, state); return;
-
-        // The slider releases its old direction before pressing a new one.
-        case PORT_ACT_MAP_ZOOM_IN:
-        case PORT_ACT_MAP_ZOOM_OUT:
-        {
-            int dir = action == PORT_ACT_MAP_ZOOM_IN ? 1 : -1;
-            if (state)
-            {
-                zoomNextMs = 0;
-                zoomDir = dir;
-            }
-            else if (zoomDir == dir)
-                zoomDir = 0;
-            return;
-        }
 
         // Toggles and one-shots: the game's aamOnPress actions.
         case PORT_ACT_CROUCH:
-            if (state)
-            {
-                stanceHoldFired = false;
-                stanceDownMs = SDL_GetTicks();
-                stanceDown = true;
-            }
-            else if (stanceDown)
-            {
-                stanceDown = false;
-                if (!stanceHoldFired)
-                    queueImpulse(FC_IMP_STANCE_TAP);
-            }
-            return;
         case PORT_ACT_TOGGLE_CROUCH: if (state) queueImpulse(FC_IMP_CROUCH_TOGGLE); return;
-        case PORT_ACT_DF_NIGHT_VISION: if (state) queueImpulse(FC_IMP_CRYVISION); return;
         case PORT_ACT_USE:           if (state) queueImpulse(FC_IMP_USE); return;
         case PORT_ACT_RELOAD:        if (state) queueImpulse(FC_IMP_RELOAD); return;
         case PORT_ACT_FLASH_LIGHT:   if (state) queueImpulse(FC_IMP_FLASHLIGHT); return;
@@ -506,7 +428,6 @@ int PortableShowKeyboard(void)
 
 bool PortableSetAlwaysRun(bool run)
 {
-    sprintToggle = run;
     return run;
 }
 
