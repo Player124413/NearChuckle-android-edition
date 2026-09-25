@@ -1200,7 +1200,12 @@ bool CXGame::Update()
 			assert(m_pClient);
 #ifdef __ANDROID__
 			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
+			{
+				// The player scales speed by stick deflection only in joypad mode (keys still set 1).
+				if (!cl_use_joypad->GetIVal())
+					cl_use_joypad->Set(1);
 				ApplyTouchInput(m_pClient, m_pSystem);
+			}
 #endif
 			m_pClient->Update();
 			
