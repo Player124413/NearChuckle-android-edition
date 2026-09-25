@@ -69,8 +69,9 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(new touchcontrols::Button("jump", touchcontrols::RectF(24, 3, 26, 5), "jump", PORT_ACT_JUMP, false, false, "Jump"));
     tc->addControl(new touchcontrols::Button("crouch_toggle", touchcontrols::RectF(24, 14, 26, 16), "crouch", PORT_ACT_CROUCH, false, false, "Crouch"));
     tc->addControl(new touchcontrols::Button("use", touchcontrols::RectF(24, 7, 26, 9), "use", PORT_ACT_USE, false, false, "Use"));
-    tc->addControl(new touchcontrols::Button("sprint", touchcontrols::RectF(3, 9, 6, 12), "sprint", PORT_ACT_SPRINT, false, false, "Sprint"));
-    tc->addControl(new touchcontrols::Button("grenade", touchcontrols::RectF(22, 10, 24, 12), "shoot_alt", PORT_ACT_ALT_FIRE, false, false, "Grenade (hold)"));
+    tc->addControl(runButton); // Common run button created in touch_interface_base, drives sprint
+    runButton->setHidden(false);
+    tc->addControl(new touchcontrols::Button("grenade", touchcontrols::RectF(22, 5, 24, 7), "shoot_alt", PORT_ACT_ALT_FIRE, false, false, "Grenade (hold)"));
     tc->addControl(new touchcontrols::Button("lean_left", touchcontrols::RectF(12, 8, 14, 10), "lean", PORT_ACT_LEAN_LEFT, false, true, "Lean left"));
     tc->addControl(new touchcontrols::Button("lean_right", touchcontrols::RectF(14, 8, 16, 10), "lean", PORT_ACT_LEAN_RIGHT, false, true, "Lean right"));
 
@@ -110,6 +111,8 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
 
 void TouchInterface::createControls(std::string filesPath)
 {
+    isWalking = 1; // run button is sprint: start walking, whatever "Always Run Default" says
+
     tcMenuMain = new touchcontrols::TouchControls("menu", false, true, 10, false);
     tcYesNo = new touchcontrols::TouchControls("yes_no", false, false);
     tcGameMain = new touchcontrols::TouchControls("game", false, true, 1, true);
