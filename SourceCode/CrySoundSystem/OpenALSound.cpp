@@ -69,6 +69,15 @@ CS_TELLCALLBACK my_ftell;
 
 #define SOURCE_OUT_OF_BOUNDS 0
 
+// FARCRY_SND_DEBUG=1: source/stream dumps and stream play, stop and pause calls on stderr.
+static bool SndDebug()
+{
+	static int n = -1;
+	if (n < 0)
+		n = getenv("FARCRY_SND_DEBUG") != NULL;
+	return n != 0;
+}
+
 ALuint GetSourceOfChannel(int channel)
 {
 	size_t i;
@@ -122,7 +131,9 @@ int audio_next_available_source(void)
 			return -1;
 		}
 		alGetSourcei(sources[i], AL_SOURCE_STATE, &status);
-		if (status != AL_PLAYING)
+		// Not a paused one: its buffer cannot be replaced, so the new play would resume the old sound
+		// (a menu sound over the game's paused ones).
+		if (status == AL_STOPPED || status == AL_INITIAL)
 		{
 			return (ALint)i;
 		}
@@ -226,6 +237,8 @@ DLL_API signed char     F_API CS_SetPriority(int channel, int priority)
 DLL_API signed char     F_API CS_SetPaused(int channel, signed char paused)
 {
 	ALuint source = GetSourceOfChannel(channel);
+	if (channel >= MAX_SOURCES && SndDebug())
+		fprintf(stderr, "SND: SetPaused stream channel %d paused %d\n", channel, (int)paused);
 
 	if (paused)
 	{
@@ -793,6 +806,7 @@ static void RewindOGG(ALStream_t* strm)
 
 DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 {
+	if (SndDebug()) fprintf(stderr, "SND: %s %p\n", __func__, stream);
 	ALStream_t* strm = (ALStream_t*)stream;
 	int i;
 	if (channel != CS_FREE)
@@ -821,6 +835,7 @@ DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 
 DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, CS_DSPUNIT* dsp, signed char startpaused)
 {
+	if (SndDebug()) fprintf(stderr, "SND: %s %p\n", __func__, stream);
 	ALStream_t* strm = (ALStream_t*)stream;
 	int i;
 	ALuint stream_buf;
@@ -835,6 +850,8 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 	alSource3f(strm->source, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
+	if (strm->callback != &StreamOGGCallback)
+		memset(strm->buffer, 0, strm->len);
 	strm->callback((CS_STREAM*)stream, strm->buffer,
 				strm->len, strm->userdata);
 
@@ -872,6 +889,7 @@ DLL_API signed char     F_API CS_Stream_Stop(CS_STREAM* stream)
 	}
 
 	strm = (ALStream_t*)stream;
+	if (SndDebug()) fprintf(stderr, "SND: CS_Stream_Stop %p channel %d\n", stream, strm->channel);
 	strm->channel = CS_FREE;
 	alSourceStop(strm->source);
 	// A stopped file stream plays from the start next time.
@@ -1030,8 +1048,11 @@ static void UpdateStream(ALStream_t* stream)
 	// frame longer than a chunk, and a starved source stops and was never restarted.
 	bool bOgg = stream->callback == &StreamOGGCallback;
 	AL_OGG_Userdata_t* ogg = bOgg ? (AL_OGG_Userdata_t*)(intptr_t)stream->userdata : NULL;
-	// A stopped source reports every queued buffer as processed: refilling an idle file stream decoded two chunks a frame.
-	if (bOgg && stream->channel == CS_FREE && state == AL_STOPPED)
+	// As in FMOD, a stream runs only between CS_Stream_Play and CS_Stream_Stop (every user plays and
+	// stops its streams). A stopped music stream kept being refilled here while its callback, no longer
+	// playing, wrote nothing: the last 100 ms chunk repeated at 10 Hz in the menu after death. A file
+	// stream may still prefill before its first play.
+	if (stream->channel == CS_FREE && !(bOgg && state == AL_INITIAL))
 		return;
 	// Vorbis is decoded on the game thread, so keep file streams' lead short (~0.5 s) and their fills gentle.
 	int target = bOgg ? 6 : MIN_QUEUED_BUFFERS;
@@ -1039,6 +1060,8 @@ static void UpdateStream(ALStream_t* stream)
 	{
 		if (ogg && ogg->ended)
 			break;
+		if (!bOgg)
+			memset(stream->buffer, 0, stream->len); // a callback that writes nothing gives silence, not the last chunk again
 		stream->callback((CS_STREAM*)stream, stream->buffer,
 			stream->len, stream->userdata);
 
@@ -1059,11 +1082,41 @@ static void UpdateStream(ALStream_t* stream)
 		num_queued_buffers++;
 	}
 
-	// Callback streams (music, video) start themselves; file streams only once CS_Stream_Play did.
 	// Restart a starved source only; a paused one stays paused (menu pause, PlayEx's paused start).
-	if ((state == AL_STOPPED || state == AL_INITIAL) && num_queued_buffers > 0 && (!bOgg || stream->channel != CS_FREE))
+	if ((state == AL_STOPPED || state == AL_INITIAL) && num_queued_buffers > 0 && stream->channel != CS_FREE)
 	{
 		alSourcePlay(stream->source);
+	}
+}
+
+// FARCRY_SND_DEBUG=1: every 120 updates, every source that is playing or paused and every stream.
+static void DebugDumpSources()
+{
+	static int nCalls;
+	if (!SndDebug() || ++nCalls % 120)
+		return;
+	for (int i = 0; i < MAX_SOURCES; i++)
+	{
+		ALint state = 0, looping = 0, buf = 0, queued = 0;
+		alGetSourcei(sources[i], AL_SOURCE_STATE, &state);
+		if (state != AL_PLAYING && state != AL_PAUSED)
+			continue;
+		alGetSourcei(sources[i], AL_LOOPING, &looping);
+		alGetSourcei(sources[i], AL_BUFFER, &buf);
+		alGetSourcei(sources[i], AL_BUFFERS_QUEUED, &queued);
+		const char* szName = "?";
+		for (size_t n = 0; n < buffers.size(); n++)
+			if ((ALint)buffers[n]->buf == buf)
+				szName = buffers[n]->filename;
+		fprintf(stderr, "SND: source %d %s loop %d buf %d queued %d %s\n", i, state == AL_PLAYING ? "PLAYING" : "PAUSED", looping, buf, queued, szName);
+	}
+	for (size_t i = 0; i < streams.size(); i++)
+	{
+		ALint state = 0, queued = 0;
+		alGetSourcei(streams[i]->source, AL_SOURCE_STATE, &state);
+		alGetSourcei(streams[i]->source, AL_BUFFERS_QUEUED, &queued);
+		fprintf(stderr, "SND: stream %d %s channel %d state 0x%x queued %d len %d\n", (int)i,
+			streams[i]->callback == &StreamOGGCallback ? "ogg" : "callback", streams[i]->channel, state, queued, streams[i]->len);
 	}
 }
 
@@ -1074,6 +1127,7 @@ DLL_API void            F_API CS_Update()
 	{
 		UpdateStream(streams[i]);
 	}
+	DebugDumpSources();
 }
 
 DLL_API void            F_API CS_SetSpeakerMode(unsigned int speakermode)
@@ -1345,6 +1399,8 @@ DLL_API int             F_API CS_PlaySoundEx(int channel, CS_SAMPLE *sptr, CS_DS
 	}
 
 	alSourcei(src, AL_BUFFER, samp->buf);
+	if (SndDebug())
+		fprintf(stderr, "SND: play source %d buf %d loop %d\n", i, samp->buf, (samp->flags & CS_LOOP_NORMAL) ? 1 : 0);
 	alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
 	alSource3f(src, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(src, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
