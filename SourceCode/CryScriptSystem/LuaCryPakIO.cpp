@@ -8,12 +8,34 @@
 #include <ISystem.h>
 #include <ICryPak.h>
 
+#ifdef __ANDROID__
+#include <unistd.h>
+//////////////////////////////////////////////////////////////////////////
+// Relative names: reads try the user folder (files scripts wrote) then the game root; writes go to the
+// user folder, never into the game data.
+FILE	*LuaAndroidOpen(const char *szFile,const char *szMode)
+{
+	if (!szFile || szFile[0] == '/' || !CryGameRoot())
+		return fopen(szFile, szMode);
+	char szUser[1024], szGame[1024];
+	CryUserFile(szFile, szUser, sizeof(szUser));
+	if (strpbrk(szMode, "wa+"))
+		return fopen(szUser, szMode);
+	if (access(szUser, R_OK) == 0)
+		return fopen(szUser, szMode);
+	snprintf(szGame, sizeof(szGame), "%s/%s", CryGameRoot(), szFile);
+	return fopen(szGame, szMode);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 FILE	*CryPakOpen(const char *szFile,const char *szMode)
 {
 #ifdef USE_CRYPAK
 	ICryPak *pPak=GetISystem()->GetIPak();
 	return pPak->FOpen(szFile,szMode);
+#elif defined(__ANDROID__)
+	return LuaAndroidOpen(szFile,szMode);
 #else
 	return (fopen(szFile,szMode));
 #endif

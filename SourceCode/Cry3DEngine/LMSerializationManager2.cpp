@@ -689,7 +689,13 @@ string CLMSerializationManager2::GetLMPakFilename(const char *pszFileName)
 #ifdef __linux
 	DIR *fdir;
 	struct dirent *d;
+#ifdef __ANDROID__
+	// Scan on the game root (secondary storage has no cwd); the name returned stays relative for CryPak.
+	string strScanDir = (CryGameRoot() && strDirName.c_str()[0] != '/') ? string(CryGameRoot()) + "/" + strDirName : strDirName;
+	fdir = opendir(strScanDir.c_str());
+#else
 	fdir = opendir(strDirName.c_str());
+#endif
 	if (fdir == NULL)
 	{
 		__builtin_trap();

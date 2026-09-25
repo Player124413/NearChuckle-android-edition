@@ -13,6 +13,10 @@ extern "C" {
 #endif
 
 FILE	*CryPakOpen(const char *szFile,const char *szMode);
+#ifdef __ANDROID__
+// Scripts' own file I/O names files relative to the game folder, which has no cwd on secondary storage.
+FILE	*LuaAndroidOpen(const char *szFile,const char *szMode);
+#endif
 int	CryPakClose(FILE	*fp);
 int 	CryPakFFlush(FILE	*fp);
 int   CryPakFSeek(FILE *handle, long seek, int mode);

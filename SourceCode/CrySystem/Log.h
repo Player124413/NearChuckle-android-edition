@@ -68,6 +68,9 @@ private:
 	ISystem	*m_pSystem;
 	char	m_szTemp[MAX_TEMP_LENGTH_SIZE];
 	char	m_szFilename[MAX_FILENAME_SIZE];
+#ifdef __ANDROID__
+	FILE*	m_pFile; // kept open: the desktop reopens the log for every line
+#endif
 		
 	ICVar			*m_pLogWarningsOnly;
 	ICVar			*m_pLogIncludeTime;

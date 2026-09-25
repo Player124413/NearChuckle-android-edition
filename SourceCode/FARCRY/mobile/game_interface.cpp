@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <android/log.h>
 
@@ -117,6 +118,17 @@ void PortableInit(int argc, const char **argv)
             continue;
         }
 
+        // -GAMEPATH <dir>: the game folder, absolute (on secondary storage a SAF path nothing can chdir() into).
+        // -SHADERPAK <file>: the shader cache pak the launcher stages on primary storage.
+        // -CACHEPATH <dir>: where generated caches go.
+        if ((!strcmp(argv[i], "-GAMEPATH") || !strcmp(argv[i], "-SHADERPAK") || !strcmp(argv[i], "-CACHEPATH")) && i + 1 < argc)
+        {
+            const char *name = argv[i][1] == 'G' ? "FARCRY_GAME_PATH" : argv[i][1] == 'S' ? "FARCRY_SHADER_PAK" : "FARCRY_CACHE_PATH";
+            setenv(name, argv[++i], 1);
+            FC_LOGI("env %s=%s", name, argv[i]);
+            continue;
+        }
+
         if (strncmp(argv[i], "-ENV:", 5) == 0)
         {
             char *nameValue = strdup(argv[i] + 5);
@@ -133,6 +145,17 @@ void PortableInit(int argc, const char **argv)
         engineArgv[engineArgc++] = argv[i];
     }
     engineArgv[engineArgc] = NULL;
+
+    // Every game-data read is built on -GAMEPATH, so the cwd only catches files the engine writes by bare
+    // name (reports, dumps, logs): make it the user folder so nothing lands in the game data.
+    if (const char *userFiles = getenv("USER_FILES"))
+    {
+        char dir[1024];
+        snprintf(dir, sizeof(dir), "%s/farcry", userFiles);
+        mkdir(dir, 0755);
+        if (chdir(dir) == 0)
+            FC_LOGI("cwd %s", dir);
+    }
 
     FC_LOGI("PortableInit, starting engine");
 

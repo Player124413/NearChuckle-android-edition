@@ -44,12 +44,19 @@ CLog::CLog( ISystem *pSystem )
 	m_pLogVerbosity = 0;
 	m_pLogFileVerbosity = 0;
 	m_pLogIncludeTime = 0;
+#ifdef __ANDROID__
+	m_pFile = NULL;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////
 CLog::~CLog()
 {
 	Done();
+#ifdef __ANDROID__
+	if (m_pFile)
+		fclose(m_pFile);
+#endif
 }
 
 void CLog::Done()
@@ -440,6 +447,16 @@ void CLog::LogStringToFile( const char *szString,bool bAdd )
 	OutputDebugStringA(szTemp);
 #endif
 
+#ifdef __ANDROID__
+	if (m_pFile)
+	{
+		// Append, or for "add" continue the previous line by overwriting its line ending, as below.
+		fseek(m_pFile, bAdd ? -2 : 0, SEEK_END);
+		fputs(szTemp, m_pFile);
+		fflush(m_pFile);
+		return;
+	}
+#endif
 	if (bAdd)
 	{
 		FILE *fp=fxopen(m_szFilename,"r+t");
@@ -535,7 +552,11 @@ void CLog::SetFileName(const char *command)
 
 	strcpy(m_szFilename,command); 
 
-#ifndef _XBOX
+#if defined(__ANDROID__)
+	if (m_pFile)
+		fclose(m_pFile);
+	m_pFile = fxopen(m_szFilename, "w+t");
+#elif !defined(_XBOX)
 		FILE *fp=fxopen(m_szFilename,"wt");
     if (fp)
 		  fclose(fp);

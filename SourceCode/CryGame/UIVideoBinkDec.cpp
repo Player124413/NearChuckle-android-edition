@@ -1,10 +1,8 @@
 #include <list>
 #include "StdAfx.h"
 #include "ISound.h"
-#include <ICryPak.h>
 #include "UIVideoBinkDec.h"
 #include <BinkDecoder.h>
-#include <stdint.h>
 
 enum EPlayerCmd : int
 {
@@ -37,46 +35,39 @@ static MoviePlayerData* CreatePlayerData(const char* filename)
 	MoviePlayerData* player = new MoviePlayerData();
 	uint32_t w = 0, h = 0;
 	ILog* iLog = GetISystem()->GetILog();
+	ICryPak* iPak = GetISystem()->GetIPak();
+	char* corrected = (char*)alloca(strlen(filename) + 3);
 	player->looping = 0;
-
-	char normalized[1024];
-	strncpy(normalized, filename, sizeof(normalized) - 1);
-	normalized[sizeof(normalized) - 1] = 0;
-	for (char* p = normalized; *p; ++p)
+#ifdef __ANDROID__
+	// Bink opens the file itself: build the full path on the game root (secondary storage has no cwd).
+	char szFull[1024];
+	if (CryGameRoot() && filename[0] != '/')
 	{
-		if (*p == '\\') *p = '/';
+		snprintf(szFull, sizeof(szFull), "%s/%s", CryGameRoot(), filename);
+		for (char* p = szFull; *p; p++)
+			if (*p == '\\')
+				*p = '/';
+		filename = szFull;
+		corrected = (char*)alloca(strlen(filename) + 3);
 	}
-	char* corrected = (char*)alloca(strlen(normalized) + 3);
-	if (casepath(normalized, corrected))
+#endif
+	if (casepath(filename, corrected))
 	{
 		player->binkHandle = Bink_Open( corrected );
-	}
-	if (!player->binkHandle.isValid && GetISystem() && GetISystem()->GetIPak())
-	{
-		char adjusted[1024];
-		const char* pAdj = GetISystem()->GetIPak()->AdjustFileName(normalized, adjusted, ICryPak::FLAGS_PATH_REAL);
-		if (pAdj && pAdj[0])
+		if( !player->binkHandle.isValid )
 		{
-			char* adjCorrected = (char*)alloca(strlen(pAdj) + 3);
-			if (casepath(pAdj, adjCorrected))
-				player->binkHandle = Bink_Open(adjCorrected);
-			if (!player->binkHandle.isValid)
-				player->binkHandle = Bink_Open(pAdj);
+			iLog->LogError("Failed to open video file %s", filename);
+			return nullptr;
 		}
 	}
-	if (!player->binkHandle.isValid)
-	{
-		player->binkHandle = Bink_Open( normalized );
-	}
-	if (!player->binkHandle.isValid)
+	else
 	{
 		player->binkHandle = Bink_Open( filename );
-	}
-	if (!player->binkHandle.isValid)
-	{
-		if (iLog) iLog->LogError("Failed to open video file %s", filename);
-		delete player;
-		return nullptr;
+		if( !player->binkHandle.isValid )
+		{
+			iLog->LogError("Failed to open video file %s", filename);
+			return nullptr;
+		}
 	}
 
 	Bink_GetFrameSize( player->binkHandle, w, h );
@@ -94,34 +85,6 @@ static MoviePlayerData* CreatePlayerData(const char* filename)
 	return player;
 }
 
-#if (defined(__GNUC__) || defined(__clang__)) && !defined(_WIN32)
-extern "C" {
-#ifndef LINUX64
-__attribute__((weak)) CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, int userdata)
-#else
-__attribute__((weak)) CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, void* userdata)
-#endif
-{
-	return nullptr;
-}
-__attribute__((weak)) signed char CS_Stream_Close(CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) int CS_Stream_Play(int channel, CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) signed char CS_Stream_Stop(CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) void CS_Update()
-{
-}
-}
-#endif
-
 CUIVideoBinkDecoder::~CUIVideoBinkDecoder()
 {
 	Terminate();
@@ -132,15 +95,9 @@ CUIVideoBinkDecoder::CUIVideoBinkDecoder(const char* aliasName)
 	m_aliasName = aliasName;
 }
 
-#ifndef LINUX64
-signed char BinkDecAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, int nParam)
-{
-	MoviePlayerData* player = (MoviePlayerData*)(uintptr_t)nParam;
-#else
 signed char BinkDecAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, void* nParam)
 {
 	MoviePlayerData* player = (MoviePlayerData*)nParam;
-#endif
 	int16_t* audioBuffer = (int16_t*)pBuffer;
 	memset(audioBuffer, -1, nLength);
 	if (!player)
@@ -173,7 +130,7 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 		m_frameBuffer = new uint8[w * h * 4];
 		memset(m_frameBuffer, 0, w * h * 4);
 		m_textureId = GetISystem()->GetIRenderer()->DownLoadToVideoMemory(m_frameBuffer,
-			w, h, eTF_RGBA, eTF_RGBA, 0, 0, FILTER_LINEAR, 0, nullptr, FT_DYNAMIC);
+			w, h, eTF_0888, eTF_0888, 0, 0, FILTER_LINEAR, 0, nullptr, FT_DYNAMIC);
 	
 		if (m_textureId < 0)
 		{
@@ -188,15 +145,9 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 			{
 				m_player->trackIndex = 0;
 				m_player->binkInfo = Bink_GetAudioTrackDetails(m_player->binkHandle, m_player->trackIndex);
-#ifndef LINUX64
-				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
-					m_player->binkInfo.idealBufferSize, 0,
-					m_player->binkInfo.sampleRate, (int)(uintptr_t)m_player);
-#else
 				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
 					m_player->binkInfo.idealBufferSize, 0,
 					m_player->binkInfo.sampleRate, m_player);
-#endif
 			}
 		}
 	}
@@ -273,52 +224,27 @@ void CUIVideoBinkDecoder::BinkDecReset()
 	Bink_GotoFrame( m_player->binkHandle, 0 );
 }
 
+// BT.601 YUV 4:2:0 to BGRA in 16.16 fixed point (the float per-texel version was most of the menu's frame).
 void CUIVideoBinkDecoder::DrawYUV(void)
 {
-	MoviePlayerData* player = m_player;
-	if (!player || !m_frameBuffer)
-		return;
-
-	int width = player->vidWidth;
-	int height = player->vidHeight;
-	int yPitch = player->yuvBuffer[0].pitch;
-	int uPitch = player->yuvBuffer[1].pitch;
-	int vPitch = player->yuvBuffer[2].pitch;
-	const uint8_t* yData = player->yuvBuffer[0].data;
-	const uint8_t* uData = player->yuvBuffer[1].data;
-	const uint8_t* vData = player->yuvBuffer[2].data;
-
-	if (!yData || !uData || !vData)
-		return;
-
-	for (int i = 0; i < height; i++)
+	const MoviePlayerData* player = m_player;
+	const int w = player->vidWidth, h = player->vidHeight;
+	for (int i = 0; i < h; i++)
 	{
-		uint8_t* destRow = m_frameBuffer + (i * width * 4);
-		const uint8_t* yRow = yData + (i * yPitch);
-		int si = i / 2;
-		const uint8_t* uRow = uData + (si * uPitch);
-		const uint8_t* vRow = vData + (si * vPitch);
-
-		for (int j = 0; j < width; j++)
+		const uint8_t* py = player->yuvBuffer[0].data + i * player->yuvBuffer[0].pitch;
+		const uint8_t* pu = player->yuvBuffer[1].data + (i >> 1) * player->yuvBuffer[1].pitch;
+		const uint8_t* pv = player->yuvBuffer[2].data + (i >> 1) * player->yuvBuffer[2].pitch;
+		uint8_t* out = m_frameBuffer + i * w * 4;
+		for (int j = 0; j < w; j++, out += 4)
 		{
-			int sj = j / 2;
-			int y = yRow[j];
-			int u = uRow[sj] - 128;
-			int v = vRow[sj] - 128;
-
-			int r = (int)(y + 1.4075f * v);
-			int g = (int)(y - 0.3455f * u - 0.7169f * v);
-			int b = (int)(y + 1.7790f * u);
-
-			if (r < 0) r = 0; else if (r > 255) r = 255;
-			if (g < 0) g = 0; else if (g > 255) g = 255;
-			if (b < 0) b = 0; else if (b > 255) b = 255;
-
-			// RGBA
-			destRow[j * 4 + 0] = (uint8_t)r;
-			destRow[j * 4 + 1] = (uint8_t)g;
-			destRow[j * 4 + 2] = (uint8_t)b;
-			destRow[j * 4 + 3] = 255;
+			const int Y = py[j] << 16, U = pu[j >> 1] - 128, V = pv[j >> 1] - 128;
+			const int R = (Y + 92242 * V) >> 16;
+			const int G = (Y - 22643 * U - 46983 * V) >> 16;
+			const int B = (Y + 116589 * U) >> 16;
+			out[0] = (uint8_t)(B < 0 ? 0 : B > 255 ? 255 : B);
+			out[1] = (uint8_t)(G < 0 ? 0 : G > 255 ? 255 : G);
+			out[2] = (uint8_t)(R < 0 ? 0 : R > 255 ? 255 : R);
+			out[3] = 255;
 		}
 	}
 }
@@ -375,21 +301,21 @@ void CUIVideoBinkDecoder::Present()
 		else
 		{
 			player->hasFrame = false;
-			m_playerCmd = PLAYER_CMD_NONE;
-			if (m_onFinished)
-			{
-				m_onFinished();
-			}
+			m_playerCmd = PLAYER_CMD_NONE; //?
 			return;
 		}
 	}
 
+	bool bNewFrame = !player->hasFrame;
 	while(player->framePos < desiredFrame)
 	{
 		player->framePos = Bink_GetNextFrame(player->binkHandle, player->yuvBuffer);
+		bNewFrame = true;
 	}
 
-	DrawYUV();
+	// The game renders faster than the video plays: convert and upload only frames that changed.
+	if (bNewFrame)
+		DrawYUV();
 
 	if (m_audioStream)
 	{
@@ -398,8 +324,9 @@ void CUIVideoBinkDecoder::Present()
 
 	player->lastFramePos = player->framePos;
 
-	GetISystem()->GetIRenderer()->UpdateTextureInVideoMemory(m_textureId,
-		m_frameBuffer, 0, 0, player->vidWidth, player->vidHeight, eTF_RGBA);
+	if (bNewFrame)
+		GetISystem()->GetIRenderer()->UpdateTextureInVideoMemory(m_textureId,
+			m_frameBuffer, 0, 0, player->vidWidth, player->vidHeight, eTF_8888);
 
 	player->hasFrame = true;
 }

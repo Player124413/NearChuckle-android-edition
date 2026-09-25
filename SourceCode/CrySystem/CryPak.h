@@ -240,6 +240,22 @@ class CCryPak : public ICryPak
 	// that don't have a chance to be called recursively (to avoid deadlocks)
 	CCritSection m_csMain;
 
+#ifdef __ANDROID__
+	// Loose files under the game root, listed once per directory: FOpen probes the disk before the paks,
+	// nearly always for files that only live in a pak, and on secondary storage every probe is a SAF lookup.
+	struct SLooseDir { bool bExists; std::set<string> setNames; }; // lowercased names
+	std::map<string, SLooseDir> m_mapLooseDirs;                     // lowercased directory path
+	CCritSection m_csLoose;
+	const SLooseDir& LooseDir(const string& strPath, size_t nRoot);
+public:
+	bool LooseFileMayExist(const char* szFullPath);
+	bool LooseDirMayExist(const char* szFullPath);
+	bool LooseFileUnder(const char* szFullPath, const char* szRoot);
+	bool CacheMirror(const char* szFullPath, char* szOut, size_t nOut);
+	void ForgetLooseFiles();
+private:
+#endif
+
 	// open zip cache objects that can be reused. They're self-[un]registered
 	// they're sorted by the path and 
 	typedef std::vector<ICryArchive*> ArchiveArray;

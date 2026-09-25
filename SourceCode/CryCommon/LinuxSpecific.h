@@ -232,24 +232,6 @@ inline const char* CryGameRoot()
 	const char* szRoot = getenv("FARCRY_GAME_PATH");
 	return szRoot && szRoot[0] ? szRoot : NULL;
 }
-// Files the engine names by bare relative path (reports, dumps, logs; sixty-odd call sites) belong to the user
-// folder, which can be a SAF path on secondary storage that nothing can chdir() into: every fopen() in the
-// engine goes through here. Writes go to the user folder; reads try it, then the game folder.
-#include <unistd.h>
-inline FILE* CryAndroidFopen(const char* szPath, const char* szMode)
-{
-	if (!szPath || !szPath[0] || szPath[0] == '/' || !getenv("USER_FILES"))
-		return fopen(szPath, szMode);
-	char szUser[1024];
-	CryUserFile(szPath, szUser, sizeof(szUser));
-	if (strpbrk(szMode, "wa+") || access(szUser, R_OK) == 0 || !CryGameRoot())
-		return fopen(szUser, szMode);
-	char szGame[1024];
-	snprintf(szGame, sizeof(szGame), "%s/%s", CryGameRoot(), szPath);
-	return fopen(szGame, szMode);
-}
-#define fopen(p, m) CryAndroidFopen(p, m)
-
 // Where generated caches go (FARCRY_CACHE_PATH, from the launcher's -CACHEPATH: the app's cache folder).
 // CryPak writes that would land in the game folder are mirrored here instead.
 inline const char* CryCacheRoot()

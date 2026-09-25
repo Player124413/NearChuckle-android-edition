@@ -1337,6 +1337,11 @@ void CSystem::OpenBasicPaks()
 	// [marco] removed as it could lead to severe security hacks.
 	//m_pIPak->OpenPacks( "*.pak" );
 	m_pIPak->OpenPacks( "",paksFolder.c_str() );
+#ifdef __ANDROID__
+	// The shader cache pak is ours, staged on primary storage even when the game data is on secondary storage.
+	if (const char* szShaderPak = getenv("FARCRY_SHADER_PAK"))
+		m_pIPak->OpenPack("", szShaderPak);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////
