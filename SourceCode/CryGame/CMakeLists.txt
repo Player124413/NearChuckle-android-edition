@@ -10,6 +10,7 @@ endif()
 
 set(SRC_FILES
     "AdvCamSystem.cpp"
+    "AimAssist.cpp"
     "AIHandler.cpp"
     "BitStream_Base.cpp"
     "BitStream_Compressed.cpp"

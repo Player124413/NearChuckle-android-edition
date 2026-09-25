@@ -13,6 +13,7 @@
 #include "StdAfx.h"
 #include "XClient.h"
 #include "XPlayer.h"
+#include "AimAssist.h"
 
 #include "UIHud.h"
 #include "XSystemClient.h"
@@ -1020,8 +1021,11 @@ void CXClient::SendInputToServer( const bool bTimeToSend )
 		if(m_nGameState==CGS_INTERMISSION)
 			m_PlayerProcessingCmd.Reset();
 
+		AimAssist::Update(m_pGame, pPlayer, m_PlayerProcessingCmd, m_PlayerProcessingCmd.CheckAction(ACTION_FIRE0));
+
 		// to clamp the angles (up/down)
 		pPlayer->ProcessAngles(m_PlayerProcessingCmd);
+		AimAssist::Commit(m_PlayerProcessingCmd);
 
 		bool bSendToServer = false;
 		if (m_pGame->IsMultiplayer() || !pPlayer->IsAlive() || m_PlayerProcessingCmd.CheckAction(ACTION_SCORE_BOARD))

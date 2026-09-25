@@ -439,6 +439,22 @@ void CXGame::InitConsoleVars()
 		"Usage: cl_use_joypad [0/1]\n"
 		"Default is 0 (off)."); 	
 
+	// Not saved: the launcher sets the level through FARCRY_AIM_ASSIST.
+	const char* szAimAssist = getenv("FARCRY_AIM_ASSIST");
+	cl_aim_assist = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist", szAimAssist ? szAimAssist : "0", 0,
+		"Steers the view toward the enemy nearest the crosshair (single player).\n"
+		"Usage: cl_aim_assist [0..3], 0=off, 1=light, 2=strong, 3=strong and snap when firing\n"
+		"Default is 0 (off).");
+	cl_aim_assist_angle = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_angle", "8", 0,
+		"Aim assist reach from the crosshair, in degrees at the unzoomed FOV.\n"
+		"Default is 8.");
+	cl_aim_assist_range = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_range", "60", 0,
+		"Aim assist range in metres, unzoomed.\n"
+		"Default is 60.");
+	cl_aim_assist_debug = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_debug", "0", 0,
+		"Logs aim assist target changes and a status line each second.\n"
+		"Usage: cl_aim_assist_debug [0..2], 2=every frame");
+
 	cl_weapon_fx = GetISystem()->GetIConsole()->CreateVariable("cl_weapon_fx","2",VF_DUMPTODISK,
 		"Control the complexity of weapon firing effects.\n"
 		"Usage: cl_weapon_fx [0..2], 0=low,1=medium,2=high"

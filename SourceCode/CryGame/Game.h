@@ -584,6 +584,10 @@ public:
 	ICVar* cl_scope_flare;
 	ICVar* cl_lazy_weapon;
 	ICVar* cl_use_joypad;
+	ICVar* cl_aim_assist;
+	ICVar* cl_aim_assist_angle;
+	ICVar* cl_aim_assist_range;
+	ICVar* cl_aim_assist_debug;
 	ICVar* cl_weapon_fx;
 	ICVar* cl_projectile_light;
 	ICVar* cl_weapon_light;
