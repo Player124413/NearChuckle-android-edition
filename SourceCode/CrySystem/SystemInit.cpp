@@ -522,9 +522,15 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 #endif
 
 #ifdef __ANDROID__
-	// The window is always the whole game surface, sized by the host glue.
-	m_rWidth->Set(game_screen_width);
-	m_rHeight->Set(game_screen_height);
+	// The window is always the whole game surface, sized by the host glue; FARCRY_RENDER_SCALE renders
+	// below it (the GLES layer sizes its scene framebuffer with the same factor and scales up at the swap).
+	{
+		float fScale = getenv("FARCRY_RENDER_SCALE") ? (float)atof(getenv("FARCRY_RENDER_SCALE")) : 1.0f;
+		if (!(fScale >= 0.25f && fScale <= 1.0f))
+			fScale = 1.0f;
+		m_rWidth->Set((int)(game_screen_width * fScale));
+		m_rHeight->Set((int)(game_screen_height * fScale));
+	}
 	m_rFullscreen->Set(1);
 #endif
 
