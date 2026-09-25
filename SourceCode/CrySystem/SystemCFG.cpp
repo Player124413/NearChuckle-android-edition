@@ -227,6 +227,8 @@ void CSystem::LoadConfiguration(const string &sFilename)
 		char szBuf[1024];
 		if (!strchr(sFilename.c_str(), '/') && access(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf)), R_OK) == 0)
 			sPath = szBuf;
+		else if (sFilename[0] != '/' && CryGameRoot())
+			sPath = string(CryGameRoot()) + "/" + sFilename; // no cwd on secondary storage
 		CSystemConfiguration tempConfig(sPath,this);
 #else
 		CSystemConfiguration tempConfig(sFilename,this);

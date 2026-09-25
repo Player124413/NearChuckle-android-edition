@@ -14,10 +14,6 @@
 #include "StdAfx.h"
 #include "Log.h"
 
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
-
 //this should not be included here
 #include <IConsole.h>
 #include <ISystem.h>
@@ -138,7 +134,6 @@ void CLog::LogError(const char *szFormat,...)
 //////////////////////////////////////////////////////////////////////////
 void CLog::Log(const char *szFormat,...)
 {
-#ifndef __ANDROID__
 	if (m_pLogVerbosity && !m_pLogVerbosity->GetIVal())
 	{
 		if (m_pLogFileVerbosity && !m_pLogFileVerbosity->GetIVal())
@@ -146,7 +141,6 @@ void CLog::Log(const char *szFormat,...)
 			return;
 		}
 	}
-#endif
 
 	RETURN;
 	va_list arg;
@@ -210,11 +204,6 @@ void CLog::LogV( const ELogType type, const char* szFormat, va_list args )
 	
 	_vsnprintf( szString, sizeof(szBuffer)-32, szCommand, args );
 	szBuffer[sizeof(szBuffer)-8]=0;
-
-#ifdef __ANDROID__
-	__android_log_print(ANDROID_LOG_INFO, "CryEngine", "%s", szString);
-	bfile = true;
-#endif
 
 	if (bfile)
 		LogStringToFile( szString );
@@ -454,7 +443,6 @@ void CLog::LogStringToFile( const char *szString,bool bAdd )
 		fseek(m_pFile, bAdd ? -2 : 0, SEEK_END);
 		fputs(szTemp, m_pFile);
 		fflush(m_pFile);
-		fputs(szTemp, stdout); // on to logcat and the launcher's log file
 		return;
 	}
 #endif

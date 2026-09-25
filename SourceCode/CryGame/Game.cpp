@@ -1819,7 +1819,11 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 #ifdef LINUX
 		DIR *fdir;
 
+#ifdef __ANDROID__
+		fdir = opendir(CryGameRoot() ? (string(CryGameRoot()) + "/" + sLevelFolder).c_str() : sLevelFolder.c_str());
+#else
 		fdir = opendir(sLevelFolder.c_str());
+#endif
 		if (!fdir)
 		{
 			sLevelFolder = GetCorrectedLevelPath(sLevelFolder);
@@ -2397,7 +2401,11 @@ string CXGame::GetPlayerProfilePath()
 		m_pSystem->GetIPak()->MakeDir(szPath); // nested; CopyTree's mkdir is not
 		struct stat st;
 		char szSrc[1024];
-		if (stat((sProfiles + "default").c_str(), &st) != 0 && casepath("Profiles/Player", szSrc))
+		// The game root when the launcher gave one (secondary storage: no cwd to resolve against, and
+		// both storages are case-insensitive), else a case-corrected path from the cwd.
+		bool bSrc = CryGameRoot() ? (snprintf(szSrc, sizeof(szSrc), "%s/Profiles/Player", CryGameRoot()), stat(szSrc, &st) == 0)
+		                          : casepath("Profiles/Player", szSrc) != 0;
+		if (stat((sProfiles + "default").c_str(), &st) != 0 && bSrc)
 		{
 			printf("Seeding player profiles from %s\n", szSrc);
 			CopyTree(szSrc, sProfiles.substr(0, sProfiles.length() - 1));
