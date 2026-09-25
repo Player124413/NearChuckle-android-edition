@@ -783,6 +783,12 @@ static void DumpDrawState(const char* what, GLsizei count, GLenum indexType = 0,
   GLES_Log("GLES: draw %s n=%d prog %d (%s) blend %d %x/%x color %.2f,%.2f,%.2f,%.2f vtx %d:%dx0x%x buf%u col %d%s",
     what, count, prog, GLES_CurrentProgramDesc(), blend, src, dst, g_es.color[0], g_es.color[1], g_es.color[2], g_es.color[3],
     g_es.vertexArray.enabled, g_es.vertexArray.size, g_es.vertexArray.type, g_es.vertexArray.buffer, g_es.colorArray.enabled, units.c_str());
+  {
+    GLint vp[4], fb = 0;
+    es_glGetIntegerv(GL_VIEWPORT, vp);
+    es_glGetIntegerv(0x8CA6 /* DRAW_FRAMEBUFFER_BINDING */, &fb);
+    GLES_Log("GLES:   viewport %d,%d %dx%d fbo %d", vp[0], vp[1], vp[2], vp[3], fb);
+  }
   if (prog) GLES_Log("GLES:   fog %d mode 0x%x %.1f..%.1f col %.2f,%.2f,%.2f env%s", g_es.fog, g_es.fogMode, g_es.fogStart, g_es.fogEnd,
     g_es.fogColor[0], g_es.fogColor[1], g_es.fogColor[2], GLES_ARB_EnvDesc());
   {

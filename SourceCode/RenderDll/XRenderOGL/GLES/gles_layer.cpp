@@ -161,8 +161,10 @@ bool GLES_Init()
     SDL_GetWindowSize(win, &w, &h);
     SDL_GetWindowSizeInPixels(win, &pw, &ph);
     GLES_Log("GLES: window %dx%d, drawable %dx%d", w, h, pw, ph);
-    float GLES_RenderScale();
-    GLES_SceneFBOEnsure((int)(pw * GLES_RenderScale()), (int)(ph * GLES_RenderScale()));
+    void GLES_RenderSize(int pw, int ph, int* w, int* h);
+    int rw, rh;
+    GLES_RenderSize(pw, ph, &rw, &rh);
+    GLES_SceneFBOEnsure(rw, rh);
   }
   return true;
 }

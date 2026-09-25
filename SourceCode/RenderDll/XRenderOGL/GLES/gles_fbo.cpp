@@ -11,19 +11,25 @@
 static GLuint sSceneFBO, sSceneColor, sSceneDepth;   // colour renderbuffer, depth-stencil texture
 static int sSceneW, sSceneH;
 
-// FARCRY_RENDER_SCALE (0.25-1): the scene renders at a fraction of the window and is scaled up at the
-// swap. The engine sizes r_Width/r_Height with the same factor (GLES_RenderScale).
-float GLES_RenderScale()
+// The scene renders at FARCRY_RENDER_SIZE=WxH, or at FARCRY_RENDER_SCALE (0.25-1) of the window, never
+// above the window, and is scaled up at the swap (letterboxed with FARCRY_RENDER_ASPECT=1). The Android
+// engine sizes r_Width/r_Height the same way (SystemInit.cpp).
+void GLES_RenderSize(int pw, int ph, int* w, int* h)
 {
-  static float s = -1.0f;
-  if (s < 0.0f)
+  *w = pw; *h = ph;
+  const char* size = getenv("FARCRY_RENDER_SIZE");
+  int rw = 0, rh = 0;
+  if (size && sscanf(size, "%dx%d", &rw, &rh) == 2 && rw >= 64 && rh >= 64)
   {
-    s = getenv("FARCRY_RENDER_SCALE") ? (float)atof(getenv("FARCRY_RENDER_SCALE")) : 1.0f;
-    if (!(s >= 0.25f && s <= 1.0f)) s = 1.0f;
+    float fit = (float)pw / rw < (float)ph / rh ? (float)pw / rw : (float)ph / rh;
+    if (fit < 1.0f) { rw = (int)(rw * fit); rh = (int)(rh * fit); }
+    *w = rw; *h = rh;
+    return;
   }
-  return s;
+  float s = getenv("FARCRY_RENDER_SCALE") ? (float)atof(getenv("FARCRY_RENDER_SCALE")) : 1.0f;
+  if (s >= 0.25f && s < 1.0f) { *w = (int)(pw * s); *h = (int)(ph * s); }
 }
-static int Scaled(int n) { return n > 0 ? (int)(n * GLES_RenderScale()) : n; }
+static void EnsureScene(int pw, int ph) { int w, h; GLES_RenderSize(pw, ph, &w, &h); GLES_SceneFBOEnsure(w, h); }
 static GLuint sScratchFBO;
 
 static void DestroyScene()
@@ -65,6 +71,9 @@ bool GLES_SceneFBOEnsure(int w, int h)
     return false;
   }
   sSceneW = w; sSceneH = h;
+  // The renderer sets no viewport for the menus and videos and relies on the window's default one.
+  es_glViewport(0, 0, w, h);
+  es_glScissor(0, 0, w, h);
   GLES_Log("GLES: scene framebuffer %dx%d", w, h);
   return true;
 }
@@ -89,7 +98,24 @@ void GLES_SwapWindow(SDL_Window* win)
     static const GLenum depthStencil[] = { 0x821A /* DEPTH_STENCIL_ATTACHMENT */ };
     es_glInvalidateFramebuffer(ES_READ_FRAMEBUFFER, 1, depthStencil);
     es_glBindFramebuffer(ES_DRAW_FRAMEBUFFER, 0);
-    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, 0, 0, pw, ph, GL_COLOR_BUFFER_BIT, (sSceneW == pw && sSceneH == ph) ? GL_NEAREST : GL_LINEAR);
+    int x0 = 0, y0 = 0, x1 = pw, y1 = ph;
+    static bool aspect = getenv("FARCRY_RENDER_ASPECT") && atoi(getenv("FARCRY_RENDER_ASPECT"));
+    if (aspect && (long long)sSceneW * ph != (long long)sSceneH * pw)
+    {
+      // Letterbox: the largest rect of the scene's aspect, centred, with black bars.
+      if ((long long)sSceneW * ph > (long long)sSceneH * pw) { int h = (int)((long long)pw * sSceneH / sSceneW); y0 = (ph - h) / 2; y1 = y0 + h; }
+      else { int w = (int)((long long)ph * sSceneW / sSceneH); x0 = (pw - w) / 2; x1 = x0 + w; }
+      GLboolean mask[4]; GLfloat clear[4];
+      es_glGetBooleanv(GL_COLOR_WRITEMASK, mask);
+      es_glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+      es_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      es_glClearColor(0, 0, 0, 1);
+      es_glClear(GL_COLOR_BUFFER_BIT);
+      es_glColorMask(mask[0], mask[1], mask[2], mask[3]);
+      es_glClearColor(clear[0], clear[1], clear[2], clear[3]);
+    }
+    bool same = sSceneW == x1 - x0 && sSceneH == y1 - y0;
+    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, x0, y0, x1, y1, GL_COLOR_BUFFER_BIT, same ? GL_NEAREST : GL_LINEAR);
     // If the surface still has alpha, the compositor honours it (macOS/ANGLE, Android): the sky
     // pass leaves alpha 0 and shows black on screen while screenshots look fine. Write alpha 1.
     static int alphaBits = -1;
@@ -109,7 +135,7 @@ void GLES_SwapWindow(SDL_Window* win)
     if (scissor) es_glEnable(GL_SCISSOR_TEST);
   }
   SDL_GL_SwapWindow(win);
-  GLES_SceneFBOEnsure(Scaled(pw), Scaled(ph));
+  EnsureScene(pw, ph);
   es_glBindFramebuffer(ES_FRAMEBUFFER, sSceneFBO);
 }
 

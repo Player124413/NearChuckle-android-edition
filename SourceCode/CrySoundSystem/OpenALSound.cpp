@@ -1055,8 +1055,13 @@ static void UpdateStream(ALStream_t* stream)
 	if (stream->channel == CS_FREE && !(bOgg && state == AL_INITIAL))
 		return;
 	// Vorbis is decoded on the game thread, so keep file streams' lead short (~0.5 s) and their fills gentle.
+	// Bink video audio (libbinkdec's buffer size) is one fill per update: the video calls CS_Update once per
+	// decoded frame and its callback hands over that frame's audio on every call until the update returns,
+	// so topping up repeated each frame's audio several times.
+	bool bBink = stream->len == 138240;
 	int target = bOgg ? 6 : MIN_QUEUED_BUFFERS;
-	for (int fills = 0; num_queued_buffers < target && fills < (bOgg ? 2 : 4); fills++)
+	int maxFills = bOgg ? 2 : (bBink ? 1 : 4);
+	for (int fills = 0; num_queued_buffers < target && fills < maxFills; fills++)
 	{
 		if (ogg && ogg->ended)
 			break;
@@ -1065,7 +1070,7 @@ static void UpdateStream(ALStream_t* stream)
 		stream->callback((CS_STREAM*)stream, stream->buffer,
 			stream->len, stream->userdata);
 
-		if (stream->len == 138240)
+		if (bBink)
 		{
 			bytes_processed = BytesFromBinkDec(stream->buffer, stream->len);
 		}
