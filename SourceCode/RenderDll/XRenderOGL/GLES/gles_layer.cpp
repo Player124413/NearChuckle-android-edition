@@ -90,7 +90,7 @@ static void QueryNative()
   // has no SGIX depth textures either; opt in to compare.
   if (getenv("FARCRY_GLES_DEPTHMAPS"))
     sExtensions += "GL_SGIX_depth_texture GL_SGIX_shadow ";
-  if (GLES_HasNativeExt("GL_EXT_texture_compression_s3tc") || GLES_HasNativeExt("GL_ANGLE_texture_compression_dxt"))
+  if (!getenv("FARCRY_GLES_NOS3TC") && (GLES_HasNativeExt("GL_EXT_texture_compression_s3tc") || GLES_HasNativeExt("GL_ANGLE_texture_compression_dxt")))
     sExtensions += "GL_EXT_texture_compression_s3tc ";
   if (GLES_HasNativeExt("GL_EXT_texture_filter_anisotropic"))
     sExtensions += "GL_EXT_texture_filter_anisotropic ";

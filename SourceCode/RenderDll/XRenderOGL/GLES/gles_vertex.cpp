@@ -2,7 +2,9 @@
   gles_vertex.cpp : current attributes, immediate mode, client arrays, VBOs, draws.
 =============================================================================*/
 #include "gles_internal.h"
+#include "gles_arb.h"
 #include <deque>
+#include <set>
 #include <SDL3/SDL.h>
 
 #define IM_UNITS 4
@@ -783,6 +785,15 @@ static void DumpDrawState(const char* what, GLsizei count, GLenum indexType = 0,
     g_es.vertexArray.enabled, g_es.vertexArray.size, g_es.vertexArray.type, g_es.vertexArray.buffer, g_es.colorArray.enabled, units.c_str());
   if (prog) GLES_Log("GLES:   fog %d mode 0x%x %.1f..%.1f col %.2f,%.2f,%.2f env%s", g_es.fog, g_es.fogMode, g_es.fogStart, g_es.fogEnd,
     g_es.fogColor[0], g_es.fogColor[1], g_es.fogColor[2], GLES_ARB_EnvDesc());
+  {
+    // Each ARB program's source, the first time a dumped draw uses it.
+    static std::set<const void*> shown;
+    for (int v = 0; v < 2; v++)
+    {
+      SARBProgram* p = GLES_ARB_Bound(v == 0);
+      if (p && shown.insert(p).second) GLES_Log("GLES:   %s program %u source:\n%s", v == 0 ? "vertex" : "fragment", p->id, p->source.c_str());
+    }
+  }
   if (prog)
   {
     // What unit 0 really samples: the native binding and two texels read back through a scratch framebuffer.

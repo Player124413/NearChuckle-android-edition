@@ -753,6 +753,7 @@ char *mfLoadCG(char *prog_text)
     }
     else
     {
+      float v[4]; // outlives the rect scaling below: vData points at it until the upload
       for (i=0; i<ParamBind->m_nBindComponents; i++)
       {
         int n = (ParamBind->m_dwBind+i) & ~0x10000;
@@ -761,7 +762,6 @@ char *mfLoadCG(char *prog_text)
           n &= ~0x80000;
           float fScaleX = CRenderer::CV_r_embm * (float)gcpOGL->GetWidth();
           float fScaleY = CRenderer::CV_r_embm * (float)gcpOGL->GetHeight();
-          float v[4];
           v[0] = vData[0] * fScaleX;
           v[1] = vData[1] * fScaleX;
           v[2] = vData[2] * fScaleY;
