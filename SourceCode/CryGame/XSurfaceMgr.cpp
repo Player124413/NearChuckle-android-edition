@@ -184,7 +184,7 @@ bool CXSurfaceMgr::LoadMaterials( const string &sFolder,bool bReload,bool bAddMa
 	int surfaceId = 102; // 100,101 reserved for default and water.
 
 	//_bstr_t sSearchPattern=sPath+_T("\\")+_T("*.*");
-#ifndef __linux
+#ifndef LINUX
 	struct _finddata_t c_file;
 #else
 	dirent c_file;

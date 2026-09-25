@@ -30,9 +30,7 @@ static char THIS_FILE[] = __FILE__;
 
 #if !defined(WIN64) && !defined(LINUX64) && !defined(NOT_USE_ASE_SDK)
 
-#ifdef _WIN32
 #pragma comment(lib, "ASEQuerySDK.lib")
-#endif
 
 static CServer *g_pServer = 0;
 

@@ -245,7 +245,7 @@ protected:
 		if(!pThis)
 		{
 			m_pSS->RaiseError("Null Self");
-#ifndef __linux
+#ifndef LINUX
 			::OutputDebugString("Null Self\n");
 #else
 			fprintf(stderr, "%s", "Null Self\n");

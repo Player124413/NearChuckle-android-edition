@@ -305,7 +305,7 @@ FILETIME ZipDir::FileEntry::GetModificationTime()
 	st.wSecond= (nLastModTime<<1)&0x3F;
 	st.wMilliseconds = 0;
 	FILETIME ft;
-#ifndef __linux
+#ifndef LINUX
 	SystemTimeToFileTime(&st, &ft);
 #else
 	//rknstub

@@ -208,7 +208,7 @@ bool CNetwork::Init( IScriptSystem *pScriptSystem )
 
 	CNetwork::m_nCryNetInitialized+=1;
 	int n=0;
-	while(m_neNetErrors[n].sErrorDescription != NULL){
+	while(m_neNetErrors[n].sErrorDescription!=NULL){
 		m_mapErrors[m_neNetErrors[n].nrErrorCode]=m_neNetErrors[n].sErrorDescription;
 		n++;
 	}

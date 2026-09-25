@@ -507,7 +507,7 @@ void CREOcean::FFT2D(int iDir, float cmpX[OCEANGRID][OCEANGRID], float cmpY[OCEA
 
 #if !defined(_XBOX) && !defined(WIN64) && !defined(LINUX)
 	// NOTE: AMD64 port: implement
-  if ((g_CpuFlags & CPUF_SSE) && CRenderer::CV_r_sse && !(((INT_PTR)&cmpX[0][0]) & 0xf) && !(((INT_PTR)&cmpY[0][0]) & 0xf) && OCEANGRID == 64)
+  if ((g_CpuFlags & CPUF_SSE) && CRenderer::CV_r_sse && !(((int)&cmpX[0][0]) & 0xf) && !(((int)&cmpY[0][0]) & 0xf) && OCEANGRID == 64)
   {
     FFTSSE_64(&cmpY[0][0], &cmpX[0][0]);
     return;

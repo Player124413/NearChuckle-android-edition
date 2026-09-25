@@ -1456,12 +1456,7 @@ void CXServer::SaveBanList(bool bSaveID, bool bSaveIP)
 	{
 		GetISystem()->GetILog()->Log("\001Saving banned IP list...");
 
-#ifdef __ANDROID__
-		char szBanned[1024];
-		FILE *hFile = fopen(CryUserFile("bannedip.txt", szBanned, sizeof(szBanned)), "w+"); // server state is user data
-#else
 		FILE *hFile = fopen("bannedip.txt", "w+");
-#endif
 
 		if (!hFile)
 		{
@@ -1533,12 +1528,7 @@ void CXServer::LoadBanList(bool bLoadID, bool bLoadIP)
 		m_vBannedIPList.clear();
 		GetISystem()->GetILog()->Log("\001Loading banned IP list...");
 
-#ifdef __ANDROID__
-		char szBanned[1024];
-		FILE *hFile = fopen(CryUserFile("bannedip.txt", szBanned, sizeof(szBanned)), "r"); // server state is user data
-#else
 		FILE *hFile = fopen("bannedip.txt", "r");
-#endif
 
 		if (!hFile)
 		{

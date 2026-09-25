@@ -1241,12 +1241,7 @@ void CREFlare::mfDrawCorona(SShader *ef, CFColor &col)
             if (newVP)
             {
               curVP = newVP;
-              if (!curVP->mfSet(true, slw, VPF_DONTSETMATRICES))
-              {
-                curVP = NULL;
-                rd->m_RP.m_FlagsPerFlush &= ~RBSI_USEVP;
-                rd->m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
-              }
+              curVP->mfSet(true, slw, VPF_DONTSETMATRICES);
             }
             else
               curVP = NULL;
@@ -1276,12 +1271,7 @@ void CREFlare::mfDrawCorona(SShader *ef, CFColor &col)
 
           // Set Pixel shaders and Register combiners for the current pass
           if (slw->m_FShader)
-          {
-            if (!slw->m_FShader->mfSet(true, slw))
-            {
-              rd->m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET);
-            }
-          }
+            slw->m_FShader->mfSet(true, slw);
           else
             rd->m_RP.m_PersFlags &= ~RBPF_PS1NEEDSET;
 

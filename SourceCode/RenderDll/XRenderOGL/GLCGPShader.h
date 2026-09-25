@@ -518,78 +518,24 @@ char *mfLoadCG(char *prog_text)
     {
       glGenProgramsARB(1, &m_Insts[m_CurInst].m_dwHandle);
       glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, m_Insts[m_CurInst].m_dwHandle);
-
-      const char *pProgToLoad = prog_text;
-      std::string sanitizedProg;
-#ifdef __ANDROID__
-      if (prog_text)
-      {
-        sanitizedProg = prog_text;
-        bool bModified = false;
-        if (strstr(prog_text, "RECT"))
-        {
-          size_t pos = 0;
-          while ((pos = sanitizedProg.find("RECT", pos)) != std::string::npos)
-          {
-            bool bBefore = (pos == 0 || !isalnum((unsigned char)sanitizedProg[pos - 1]));
-            bool bAfter = (pos + 4 >= sanitizedProg.size() || !isalnum((unsigned char)sanitizedProg[pos + 4]));
-            if (bBefore && bAfter)
-            {
-              sanitizedProg.replace(pos, 4, "2D");
-              pos += 2;
-              bModified = true;
-            }
-            else
-            {
-              pos += 4;
-            }
-          }
-        }
-        size_t optPos = sanitizedProg.find("OPTION ARB_fragment_program_shadow;");
-        if (optPos != std::string::npos)
-        {
-          sanitizedProg.replace(optPos, strlen("OPTION ARB_fragment_program_shadow;"), "# OPTION ARB_fragment_program_shadow;");
-          bModified = true;
-        }
-
-        // Replace unsupported shadow samplers (SHADOW2D, SHADOWRECT, SHADOW1D) with 2D
-        static const char* s_shadowSamplers[] = { "SHADOW2D", "SHADOWRECT", "SHADOW1D", NULL };
-        for (int k = 0; s_shadowSamplers[k]; ++k)
-        {
-          size_t sPos = 0;
-          size_t sLen = strlen(s_shadowSamplers[k]);
-          while ((sPos = sanitizedProg.find(s_shadowSamplers[k], sPos)) != std::string::npos)
-          {
-            sanitizedProg.replace(sPos, sLen, "2D");
-            sPos += 2;
-            bModified = true;
-          }
-        }
-
-        if (bModified)
-          pProgToLoad = sanitizedProg.c_str();
-      }
-#endif
-
-      int size = strlen(pProgToLoad);
-      glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, size, (const GLubyte *)pProgToLoad);
+      int size = strlen(prog_text);
+      glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, size, (const GLubyte *)prog_text);
       GLint errpos;
       glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errpos);
       if(errpos != -1)
       {
         const GLubyte *pError = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-        iLog->Log("Warning: Fragment Program '%s' error (%s):\n", m_Name.c_str(), pError ? (const char*)pError : "unknown");
+        iLog->Log("Warning: Fragment Program '%s' error (%s):\n", m_Name.c_str(), pError);
         int bgn = errpos - 10;
-        if (bgn < 0) bgn = 0;
-        const char * c = (const char *)(pProgToLoad + bgn);
-        char buf[64];
-        int count = 0;
-        for(int i = 0; i < 30 && (bgn+i < int(size-1)); i++)
+        bgn < 0 ? 0 : bgn;
+        const char * c = (const char *)(prog_text + bgn);
+        for(int i = 0; i < 30; i++)
         {
-          buf[count++] = *c++;
+          if(bgn+i >= int(size-1))
+            break;
+          iLog->Log("%c", *c++);
         }
-        buf[count] = 0;
-        iLog->Log("  Near: %s\n", buf);
+        iLog->Log("\n");
       }
     }
     else
@@ -883,11 +829,6 @@ char *mfLoadCG(char *prog_text)
   }
   virtual void mfDisable()
   {
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     if (m_CGProfileType == CG_PROFILE_FP20)
     {
       if (m_Insts[m_CurInst].m_dwHandleExt)
@@ -913,11 +854,6 @@ char *mfLoadCG(char *prog_text)
 
   void mfDel()
   {
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     if(m_Insts[m_CurInst].m_dwHandle && m_Insts[m_CurInst].m_dwHandle != -1)
     {
       if (m_Insts[m_CurInst].m_BindConstants)
@@ -930,10 +866,7 @@ char *mfLoadCG(char *prog_text)
         glDeleteLists(m_Insts[m_CurInst].m_dwHandle, 1);
       else
       if (m_CGProfileType == CG_PROFILE_ARBFP1)
-      {
-        glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0);
         glDeleteProgramsARB(1, &m_Insts[m_CurInst].m_dwHandle);
-      }
       m_Insts[m_CurInst].m_dwHandle = 0;
     }
     if(m_Insts[m_CurInst].m_dwHandleExt && m_Insts[m_CurInst].m_dwHandleExt != -1)

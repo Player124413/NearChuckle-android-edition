@@ -70,7 +70,7 @@ unsigned int CRefReadStreamProxy::GetBytesRead (bool bWait)
 		if (m_pStream->isOverlapped())
 		{
 			DWORD dwBytesRead;
-#ifndef __linux
+#ifndef LINUX
 			if (GetOverlappedResult(m_pStream->GetFile(), &m_Overlapped, &dwBytesRead, bWait))
 #else
 			if (0)
@@ -374,7 +374,7 @@ DWORD CRefReadStreamProxy::CallReadFileEx ()
 #if defined(LINUX)
 		m_Overlapped.pCaller = (void*)this;//store caller address here
 #endif
-#ifndef __linux
+#ifndef LINUX
 		if (!ReadFileEx (hFile, ((char*)m_pBuffer) + m_nPieceOffset, m_nPieceLength, &m_Overlapped, FileIOCompletionRoutine))
 #else
 		if (1)
@@ -394,7 +394,7 @@ DWORD CRefReadStreamProxy::CallReadFileEx ()
 		// the actual number of bytes read
 		DWORD dwRead = 0;
 		unsigned newOffset = m_Params.nOffset + m_nPieceOffset + m_pStream->GetArchiveOffset();
-#ifndef __linux
+#ifndef LINUX
 		if (SetFilePointer (hFile, newOffset, NULL, FILE_BEGIN) != newOffset)
 #else
 		if (1)
@@ -405,7 +405,7 @@ DWORD CRefReadStreamProxy::CallReadFileEx ()
 			return dwError;
 		}
 		// just read the file
-#ifndef __linux
+#ifndef LINUX
 		if (!ReadFile (hFile, ((char*)m_pBuffer) + m_nPieceOffset, m_nPieceLength, &dwRead, NULL))
 #else
 		if (1)

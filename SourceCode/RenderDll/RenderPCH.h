@@ -78,7 +78,7 @@ typedef unsigned char BYTE;
 
 #endif
 
-#ifndef __linux
+#ifndef LINUX
 #include <SDL.h>
 #else
 #include <SDL3/SDL.h>
@@ -792,7 +792,7 @@ inline double sCycles2()
 			mov   [H],edx   // Save high value.
 	}
 	return ((double)L +  4294967296.0 * (double)H);
-#elif !defined(__linux)
+#elif !defined(LINUX)
 	return __rdtsc();
 #else
   return SDL_GetTicks();

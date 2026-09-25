@@ -20,6 +20,9 @@ void STexPic::BuildMips()
     CreateMips();
 
   glBindTexture(m_TargetType, m_Bind);
+#ifdef GLES_RENDERER
+  if (getenv("FARCRY_GLES_DEBUG")) fprintf(stderr, "BuildMips: %s (%s) %dx%d mips %d bind %d\n", m_SourceName.c_str(), m_eTT == eTT_Cubemap ? "cube" : "2D", m_Width, m_Height, m_nMips, m_Bind);
+#endif
   if (m_eTT != eTT_Cubemap)
   {
     for (int i=0; i<m_nMips; i++)
@@ -81,6 +84,10 @@ void STexPic::BuildMips()
 bool STexPic::UploadMips(int nStartMip, int nEndMip)
 {
   glBindTexture(m_TargetType, m_Bind);
+#ifdef LINUX
+  static bool bDebug = getenv("FARCRY_GLES_DEBUG") != NULL;
+  if (bDebug) iLog->Log("TEXUP stream %s bind %d %dx%d mips %d..%d fmt %d\n", GetName(), m_Bind, m_Width, m_Height, nStartMip, nEndMip, (int)m_ETF);
+#endif
   if (SUPPORTS_GL_SGIS_texture_lod/* && m_eTT != eTT_Cubemap*/)
   {
 		glTexParameteri(m_TargetType, GL_TEXTURE_BASE_LEVEL_SGIS, nStartMip);

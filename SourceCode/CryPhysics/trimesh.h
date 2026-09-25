@@ -80,9 +80,6 @@ public:
 		int *&pVtxIdBuf,int *&pEdgeIdBuf);
 
 	int GetEdgeByBuddy(int itri,int itri_buddy) {
-		// Defensive: callers may pass a boundary buddy (-1) or a stale index.
-		if ((unsigned int)itri >= (unsigned int)m_nTris)
-			return 0;
 		int iedge=0,imask;
 		imask = m_pTopology[itri].ibuddy[1]-itri_buddy; imask = imask-1>>31 ^ imask>>31; iedge = 1&imask;
 		imask = m_pTopology[itri].ibuddy[2]-itri_buddy; imask = imask-1>>31 ^ imask>>31; iedge = iedge&~imask | 2&imask;

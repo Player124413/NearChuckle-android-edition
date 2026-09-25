@@ -4,9 +4,6 @@
 
 #include "RenderPCH.h"
 
-#include <vector>
-#include <algorithm>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // PipVertex 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,18 +24,14 @@ bool struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F::operator == (struct_VERTEX_FORMAT_
 
 int CLeafBuffer::FindInBuffer(struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F &opt, SPipTangents &origBasis, uint nMatInfo, uint *uiInfo, struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F* _vbuff, SPipTangents *_vbasis, int _vcount, list2<unsigned short> * pHash, TArray<uint>& ShareNewInfo)
 {
-  if (!_vbuff || !pHash)
-    return -1;
   for(int i=0; i<pHash->Count(); i++) 
   {
     int id = (*pHash)[i];
-    if (id < 0 || id >= _vcount)
-      continue;
     if(_vbuff[id] == opt) 
     {
-      if (id < ShareNewInfo.Num() && ShareNewInfo[id] != nMatInfo)
+      if (ShareNewInfo[id] != nMatInfo)
         continue;
-      if (CRenderer::CV_r_indexingWithTangents && _vbasis)
+      if (CRenderer::CV_r_indexingWithTangents)
       {
         if (origBasis.m_Binormal.Dot(_vbasis[id].m_Binormal) > 0.005f && origBasis.m_Tangent.Dot(_vbasis[id].m_Tangent) > 0.005f)
           return (*pHash)[i];  
@@ -53,106 +46,54 @@ int CLeafBuffer::FindInBuffer(struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F &opt, SPip
 
 void CLeafBuffer::CompactBuffer(struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F * _vbuff, SPipTangents *_tbuff, int * _vcount, TArray<unsigned short> * pindices, bool bShareVerts[128], uint *uiInfo)
 {
-  if (!_vbuff || !_vcount || *_vcount <= 0)
+  //assert(*_vcount);
+  if(!*_vcount)
+  {
+//    iLog->Log("CLeafBuffer::CompactBuffer: Mesh has no geometry for rendering");
     return;
+  }
   
   int vert_num_before = *_vcount;
-  if (!pindices)
-    return;
 
-  if (vert_num_before <= 1)
+  struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F * tmp_vbuff = new struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F[*_vcount];
+  SPipTangents *tmp_tbuff = new SPipTangents[*_vcount];
+  unsigned int tmp_count = 0;
+  pindices->Free();
+  TArray<uint> ShareNewInfo;
+
+  list2<unsigned short> hash_table[256];//[256];
+
+  for(unsigned int v=0; v<(unsigned int)(*_vcount); v++)
   {
-    pindices->Free();
-    if (vert_num_before == 1)
-      pindices->AddElem(0);
-    return;
-  }
+    // Through int first: float -> unsigned char is undefined out of range and arm64 clang drops the truncation.
+    int nHashInd = (unsigned char)(int)(_vbuff[v].xyz.x*100);
+    uint nMInfo = uiInfo[v];
+    uint nMatId = nMInfo & 255;
+		int find = bShareVerts[nMatId] ? FindInBuffer( _vbuff[v], _tbuff[v], nMInfo, uiInfo, tmp_vbuff, tmp_tbuff, tmp_count, &hash_table[nHashInd], ShareNewInfo/*[(unsigned char)(_vbuff[v].pos.y*100)]*/) : -1;
+    if(find < 0)
+    { // not found
+      tmp_vbuff[tmp_count] = _vbuff[v];
+      tmp_tbuff[tmp_count] = _tbuff[v];
+      pindices->AddElem(tmp_count);
+      ShareNewInfo.AddElem(uiInfo[v]);
 
-  struct VertRef
-  {
-    float x;
-    int origIndex;
-  };
+      hash_table[nHashInd]/*[(unsigned char)(_vbuff[v].pos.y*100)]*/.Add(tmp_count);
 
-  std::vector<VertRef> sorted(vert_num_before);
-  for (int i = 0; i < vert_num_before; ++i)
-  {
-    sorted[i].x = _vbuff[i].xyz.x;
-    sorted[i].origIndex = i;
-  }
-
-  std::sort(sorted.begin(), sorted.end(), [](const VertRef& a, const VertRef& b) {
-    return a.x < b.x;
-  });
-
-  std::vector<int> remap(vert_num_before, -1);
-  std::vector<struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F> unique_vbuff;
-  std::vector<SPipTangents> unique_tbuff;
-  std::vector<uint> unique_uiInfo;
-  unique_vbuff.reserve(vert_num_before);
-  if (_tbuff) unique_tbuff.reserve(vert_num_before);
-  if (uiInfo) unique_uiInfo.reserve(vert_num_before);
-
-  for (int i = 0; i < vert_num_before; ++i)
-  {
-    int idxI = sorted[i].origIndex;
-    if (remap[idxI] != -1)
-      continue;
-
-    uint nMInfo = uiInfo ? uiInfo[idxI] : 0;
-    uint nMatId = nMInfo & 127;
-    bool bCanShare = bShareVerts ? bShareVerts[nMatId] : true;
-
-    int newUniqueId = (int)unique_vbuff.size();
-    unique_vbuff.push_back(_vbuff[idxI]);
-    if (_tbuff) unique_tbuff.push_back(_tbuff[idxI]);
-    if (uiInfo) unique_uiInfo.push_back(nMInfo);
-    remap[idxI] = newUniqueId;
-
-    if (!bCanShare)
-      continue;
-
-    for (int j = i + 1; j < vert_num_before; ++j)
-    {
-      if ((sorted[j].x - sorted[i].x) > PIP_VER_EPS)
-        break;
-
-      int idxJ = sorted[j].origIndex;
-      if (remap[idxJ] != -1)
-        continue;
-
-      uint nMInfoJ = uiInfo ? uiInfo[idxJ] : 0;
-      if (nMInfo != nMInfoJ)
-        continue;
-
-      if (!(_vbuff[idxI] == _vbuff[idxJ]))
-        continue;
-
-      if (CRenderer::CV_r_indexingWithTangents && _tbuff)
-      {
-        if (_tbuff[idxI].m_Binormal.Dot(_tbuff[idxJ].m_Binormal) <= 0.005f ||
-            _tbuff[idxI].m_Tangent.Dot(_tbuff[idxJ].m_Tangent) <= 0.005f)
-        {
-          continue;
-        }
-      }
-
-      remap[idxJ] = newUniqueId;
+      tmp_count++;
+    }
+    else
+    { // found
+      pindices->AddElem(find);
     }
   }
 
-  pindices->Free();
-  for (int i = 0; i < vert_num_before; ++i)
-  {
-    pindices->AddElem((unsigned short)remap[i]);
-  }
+  *_vcount = tmp_count;
+  cryMemcpy(_vbuff, tmp_vbuff, tmp_count*sizeof(struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F));
+  cryMemcpy(_tbuff, tmp_tbuff, tmp_count*sizeof(SPipTangents));
 
-  int uniqueCount = (int)unique_vbuff.size();
-  *_vcount = uniqueCount;
-  cryMemcpy(_vbuff, unique_vbuff.data(), uniqueCount * sizeof(struct_VERTEX_FORMAT_P3F_N_COL4UB_TEX2F));
-  if (_tbuff && !unique_tbuff.empty())
-    cryMemcpy(_tbuff, unique_tbuff.data(), uniqueCount * sizeof(SPipTangents));
+  SAFE_DELETE_ARRAY (tmp_vbuff);
+  SAFE_DELETE_ARRAY (tmp_tbuff);
 
-  int ratio = 100 * (*_vcount) / vert_num_before;
-  CryLogComment("  Size after compression = %d %s ( %d -> %d )", ratio, "%", vert_num_before, *_vcount);
+  int ratio = 100*(*_vcount)/vert_num_before;
+  CryLogComment("  Size after compression = %d %s ( %d -> %d )", ratio, "%", vert_num_before, *_vcount); 
 }

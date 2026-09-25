@@ -1287,8 +1287,7 @@ void CEntity::UpdateLipSync( SEntityUpdateContext &ctx )
 void CEntity::OnCollide(float fDeltaTime)
 {
 	//m_pISystem->GetILog()->LogToConsole("diff=%0.2f",m_pISystem->GetITimer()->GetCurrTime()-m_fLastCollideTime);
-	pe_status_awake sa;
-	int bAwake = m_physic ? m_physic->GetStatus(&sa) : 0;
+	int bAwake = m_physic ? m_physic->GetStatus(&pe_status_awake()) : 0;
 	float fFreq = m_physic && (m_physic->GetType()==PE_RIGID || m_physic->GetType()==PE_WHEELEDVEHICLE) && (bAwake+m_bWasAwake) ? 0.01f : 0.3f;
 	float fFrameTime = m_pISystem->GetITimer()->GetCurrTime()-m_fLastCollideTime;
 	if (!m_physic || fFrameTime<=fFreq && bAwake==m_bWasAwake)
@@ -1469,8 +1468,7 @@ void CEntity::OnCollide(float fDeltaTime)
 		IGeometry *pWaterSurface = pWorld->GetGeomManager()->CreatePrimitive(primitives::box::type, &boxWater);
 		m_pSplashList->Clear();
 
-		pe_status_nparts snp;
-		for(sp.ipart=m_physic->GetStatus(&snp)-1; sp.ipart>=0; sp.ipart--)
+		for(sp.ipart=m_physic->GetStatus(&pe_status_nparts())-1; sp.ipart>=0; sp.ipart--)
 		{
 			m_physic->GetStatus(&sp);
 			gwd.offset = sp.pos;
@@ -2220,8 +2218,7 @@ void CEntity::AddImpulse(int ipart, Vec3d pos, Vec3d impulse,bool bPos,float fAu
 		))
 	{
 		Vec3d mod_impulse = impulse;
-		pe_status_nparts snp;
-		if (!(physic->GetStatus(&snp)>5 && physic->GetType()==PE_ARTICULATED))
+		if (!(physic->GetStatus(&pe_status_nparts())>5 && physic->GetType()==PE_ARTICULATED))
 		{	// don't scale impulse for complex articulated entities
 			pe_status_dynamics sd;
 			float minVel = m_pEntitySystem->m_pMinImpulseVel->GetFVal();

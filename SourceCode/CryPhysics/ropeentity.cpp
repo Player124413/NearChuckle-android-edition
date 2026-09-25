@@ -359,8 +359,7 @@ __ropeframe++;
 			m_segs[i].dir = dir;
 			m_segs[i].pt = ptend[0] + m_segs[i].dir*(newseglen*i);
 		}
-		pe_status_awake sa;
-		m_bAwake = m_pTiedTo[0]->GetStatus(&sa) | m_pTiedTo[1]->GetStatus(&sa);
+		m_bAwake = m_pTiedTo[0]->GetStatus(&pe_status_awake()) | m_pTiedTo[1]->GetStatus(&pe_status_awake());
 		m_BBox[0].x = min(m_segs[0].pt.x,m_segs[m_nSegs].pt.x); m_BBox[1].x = max(m_segs[0].pt.x,m_segs[m_nSegs].pt.x); 
 		m_BBox[0].y = min(m_segs[0].pt.y,m_segs[m_nSegs].pt.y); m_BBox[1].y = max(m_segs[0].pt.y,m_segs[m_nSegs].pt.y); 
 		m_BBox[0].z = min(m_segs[0].pt.z,m_segs[m_nSegs].pt.z); m_BBox[1].z = max(m_segs[0].pt.z,m_segs[m_nSegs].pt.z); 

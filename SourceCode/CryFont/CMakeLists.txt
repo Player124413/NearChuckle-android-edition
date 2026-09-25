@@ -38,8 +38,8 @@ set(SRC_FILES
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
-    ${CMAKE_SOURCE_DIR}/SourceCode/CrytekDLL
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/CrytekDLL
     ${CMAKE_CURRENT_SOURCE_DIR}/FreeType2/include
 )
 

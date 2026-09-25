@@ -305,7 +305,7 @@ void CUISystem::Update()
 #endif
 	
 	FUNCTION_PROFILER( m_pSystem, PROFILE_GAME );
-#ifdef __linux
+#ifdef LINUX
 	ISystem* sys = GetISystem();
 	IConsole* console = sys->GetIConsole();
 	int old_fullscreen, new_fullscreen;
@@ -618,7 +618,7 @@ void CUISystem::Update()
 			}
 		}
 	}
-#ifdef __linux
+#ifdef LINUX
 	new_fullscreen = console->GetCVar("r_Fullscreen")->GetIVal();
 	if (old_fullscreen != new_fullscreen)
 	{

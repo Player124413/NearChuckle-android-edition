@@ -2236,7 +2236,7 @@ void __stdcall lglViewport (GLint x, GLint y, GLsizei width, GLsizei height)
   gRenDev->Logv(SRendItem::m_RecurseLevel, "%s (%d, %d, %d, %d)\n", "glViewport", x, y, width, height);
   tglViewport(x, y, width, height);
 }
-#ifndef __linux
+#ifndef LINUX
 BOOL __stdcall lpwglCopyContext (HGLRC Parm0, HGLRC Parm1, UINT Parm2)
 {
   gRenDev->Logv(SRendItem::m_RecurseLevel, "%s\n", "wglCopyContext");
@@ -2368,7 +2368,7 @@ void __stdcall lglDrawRangeElementsEXT (GLenum mode, GLuint start, GLuint end, G
   gRenDev->Logv(SRendItem::m_RecurseLevel, "%s\n", "glDrawRangeElementsEXT");
   tglDrawRangeElementsEXT(mode,start,end,count,type,indices);
 }
-#ifndef __linux
+#ifndef LINUX
 INT __stdcall lpChoosePixelFormat (HDC hDC, CONST PIXELFORMATDESCRIPTOR* pfd)
 {
   gRenDev->Logv(SRendItem::m_RecurseLevel, "%s\n", "ChoosePixelFormat");

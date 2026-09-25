@@ -418,7 +418,7 @@ int CUIScreen::OnActivate()
 	}
 
 	int iResult = 1;
-#if defined(__linux) && !defined(__ANDROID__)
+#ifdef LINUX
 	int w, h;
 	bool curr_fullscreen = false;
 	bool last_fullscreen = false;

@@ -282,10 +282,6 @@ static void _ConvertNameForXBox(char *dst, const char *src)
 }
 #endif
 
-#ifdef __ANDROID__
-FILE *LuaAndroidOpen(const char *szFile, const char *szMode); /* LuaCryPakIO.cpp */
-#endif
-
 FILE * fxopen(const char *file, const char *mode)
 {
 //  SetFileAttributes(file,FILE_ATTRIBUTE_ARCHIVE);
@@ -302,8 +298,6 @@ FILE * fxopen(const char *file, const char *mode)
 #else
 	#ifdef USE_CRYPAK
 		return CryPakOpen(file,mode);  	
-	#elif defined(__ANDROID__)
-		return LuaAndroidOpen(file,mode);
 	#else
 		return (fopen(file,mode));
 	#endif

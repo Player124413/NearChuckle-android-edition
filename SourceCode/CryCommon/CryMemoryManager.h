@@ -1,7 +1,9 @@
 #ifndef _CRY_MEMORY_MANAGER_H_
 #define _CRY_MEMORY_MANAGER_H_
 
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <platform.h>
 #include <stdlib.h>
 

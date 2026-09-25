@@ -290,27 +290,20 @@ int CUIStatic::Draw(int iPass)
 	{
 		IRenderer *pRenderer = m_pUISystem->GetIRenderer();
 
-		// save old viewport
-		int iViewportX, iViewportY, iViewportW, iViewportH;
-		pRenderer->GetViewport(&iViewportX, &iViewportY, &iViewportW, &iViewportH);
-
-		// Leave 2D mode cleanly before drawing 3D model
-		pRenderer->Set2DMode(false, 0, 0);
-
-		// Disable scissor testing so the 3D model is not clipped by 2D canvas rects
-		pRenderer->SetScissor(0, 0, 0, 0);
-
-		// Ensure depth write and depth test are enabled for 3D model pass
-		pRenderer->SetState(GS_DEPTHWRITE);
+		// because we clear the z-buffer here we cannot have more than one
+		// hack was done because z-buffer read for flares was not working with transparent menu
 		pRenderer->ClearDepthBuffer();
+
+		pRenderer->SetState(GS_NODEPTHTEST);
 
 		int iX = (int)(pRenderer->ScaleCoordX(pAbsoluteRect.fLeft) + 0.5f);
 		int iY = (int)(pRenderer->ScaleCoordY(pAbsoluteRect.fTop) + 0.5f);
 		int iW = (int)(pRenderer->ScaleCoordX(pAbsoluteRect.fWidth) + 0.5f);
 		int iH = (int)(pRenderer->ScaleCoordY(pAbsoluteRect.fHeight) + 0.5f);
 
-		if (iW <= 0) iW = 1;
-		if (iH <= 0) iH = 1;
+		// save old viewport
+		int iViewportX, iViewportY, iViewportW, iViewportH;
+		pRenderer->GetViewport(&iViewportX, &iViewportY, &iViewportW, &iViewportH);
 
 		// set new viewport
 		pRenderer->SetViewport(iX, iY, iW, iH);
@@ -331,28 +324,30 @@ int CUIStatic::Draw(int iPass)
 		pRenderParams.vPos = Vec3d(0.0f, 0.0f, -0.9f);
 		pRenderParams.vAngles = Vec3d(0.0f, 0.0f, m_fAngle);
 		pRenderParams.nDLightMask = 0;
-		pRenderParams.vAmbientColor = Vec3d(0.4f, 0.4f, 0.4f);
+		pRenderParams.vAmbientColor = Vec3d(0.25f, 0.25f, 0.25f);
 
 		// setup a dynamic light
 		CDLight pLight;
 		memset(&pLight, 0, sizeof(CDLight));
 
-		pLight.m_Color = CFColor(1.0f, 1.0f, 1.0f) * 1.0f;
-		pLight.m_SpecColor = CFColor(0.2f, 0.2f, 0.2f);
+		pLight.m_Color = CFColor(1.0f, 1.0f, 1.0f) * 0.8f;
+		pLight.m_SpecColor = CFColor(0.0f, 0.0f, 0.0f);
 		pLight.m_Flags = DLF_POINT;
 		pLight.m_fRadius = m_fLightDistance * 10.0f;
 		pLight.m_fStartRadius = 0.0f;
 		pLight.m_fEndRadius = m_fLightDistance * 10.0f;
+		pLight.m_fRadius = m_fLightDistance * 10.0f;
 		pLight.m_Origin = Vec3d(10.0f, m_fLightDistance, 0.0f);
+
+		// enable the light
+		pRenderParams.nDLightMask |= 1 << pLight.m_Id;
+//		pRenderParams.nDLightMaskFull |= 1 << pLight.m_Id;
 
 		pRenderer->EF_StartEf();
 
 		pRenderer->EF_ClearLightsList();
 		pRenderer->EF_ADDDlight(&pLight);
 		pRenderer->EF_UpdateDLight(&pLight);
-
-		if (pLight.m_Id >= 0)
-			pRenderParams.nDLightMask |= 1 << pLight.m_Id;
 		
 		m_pModel->Update();
 		m_pModel->Draw(pRenderParams,Vec3(zero));
@@ -361,10 +356,6 @@ int CUIStatic::Draw(int iPass)
 
 		// restore old settings
 		pRenderer->SetViewport(iViewportX, iViewportY, iViewportW, iViewportH);	
-
-		// restore 2D mode and scissor for remaining UI widgets
-		pRenderer->Set2DMode(true, m_pUISystem->GetIRenderer()->GetWidth(), m_pUISystem->GetIRenderer()->GetHeight());
-		m_pUISystem->ResetDraw();
 	}
 
 	// adjust the rect with the scrollbar sizes
@@ -605,8 +596,6 @@ int CUIStatic::LoadModel(const string &szModelName)
 	m_pModel = m_pUISystem->GetISystem()->GetIAnimationSystem()->MakeCharacter(szModelName.c_str());
 	m_szModelName = szModelName;
 
-	m_pUISystem->GetISystem()->GetILog()->Log("CUIStatic::LoadModel: '%s', result=%p", szModelName.c_str(), m_pModel);
-
 	return (m_pModel ? 1 : 0);
 }
 
@@ -644,15 +633,6 @@ int CUIStatic::StartAnimation(const string &szAnimationName)
 		}
 		else
 		{
-			// Fallback to layer 0 if layer 1 synchronization fails
-			ccap.nLayerID = 0;
-			ccap.nFlags = 0;
-			if (m_pModel->StartAnimation(szAnimationName.c_str(), ccap))
-			{
-				m_pModel->Update();
-				return 1;
-			}
-
 			m_pModel->ResetAnimations();
 
 			return 0;

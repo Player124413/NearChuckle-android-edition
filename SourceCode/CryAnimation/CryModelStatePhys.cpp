@@ -58,8 +58,7 @@ void CryModelState::BuildPhysicalEntity(IPhysicalEntity *pent,float mass,int sur
 	if (surface_idx>=0)
 		pgp->surface_idx = surface_idx;
 	
-	pe_action_remove_all_parts arap;
-	pent->Action(&arap);
+	pent->Action(&pe_action_remove_all_parts());
 	
 	for(i=0;i<(int)numBones();i++) if (getBoneInfo(i)->m_PhysInfo[nLod].pPhysGeom) {
 		mtx = getBoneMatrixGlobal(i);
@@ -403,12 +402,11 @@ void CryModelState::SynchronizeWithPhysicalEntity(IPhysicalEntity *pent, const V
 		float rScale = 1.0f;///scale;
 		pe_status_pos sp;
 		pe_status_joint sj;
-		pe_status_awake sa;
 		m_bPhysicsAwake = 0;
 		if (pent)
-			m_bPhysicsAwake = pent->GetStatus(&sa);
+			m_bPhysicsAwake = pent->GetStatus(&pe_status_awake());
 		for(j=0;j<m_nAuxPhys;j++)
-			m_bPhysicsAwake |= m_auxPhys[j].pPhysEnt->GetStatus(&sa);
+			m_bPhysicsAwake |= m_auxPhys[j].pPhysEnt->GetStatus(&pe_status_awake());
 
 		if (!m_bPhysicsAwake && !m_bPhysicsWasAwake)
 			return;
@@ -687,8 +685,7 @@ void CryModelState::ProcessPhysics(float fDeltaTimePhys, int nNeff)
 		for(i=0;i<4;i++) if (m_pIKEffectors[i])
 			m_pIKEffectors[i]->Tick (fDeltaTimePhys);
 
-	pe_status_awake sa;
-	if (m_pCharPhysics && (m_bPhysicsAwake = m_pCharPhysics->GetStatus(&sa)))
+	if (m_pCharPhysics && (m_bPhysicsAwake = m_pCharPhysics->GetStatus(&pe_status_awake())))
 	{
 		if (nNeff==0) 
 		{	// if there's no animation atm, just read the state from physics verbatim
@@ -788,9 +785,8 @@ void CryModelState::ProcessPhysics(float fDeltaTimePhys, int nNeff)
 		m_pCharPhysics->SetParams(&pab);
 	}
 
-	pe_status_awake saAux;
 	for(i=0;i<m_nAuxPhys;i++)
-		m_bPhysicsAwake |= m_auxPhys[i].pPhysEnt->GetStatus(&saAux);
+		m_bPhysicsAwake |= m_auxPhys[i].pPhysEnt->GetStatus(&pe_status_awake());
 
 	if (m_bPhysicsAwake)
 		m_uFlags |= nFlagsNeedReskinAllLODs;

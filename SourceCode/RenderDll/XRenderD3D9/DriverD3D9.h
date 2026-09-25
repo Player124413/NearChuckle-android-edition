@@ -29,7 +29,7 @@ The DXRenderer interface Class
 #include <xgraphics.h>
 #else
 // Base class
-#ifndef __linux
+#ifndef LINUX
 #include <d3dx9.h>
 #include <dxerr.h>
 #else

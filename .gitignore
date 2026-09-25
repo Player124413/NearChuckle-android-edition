@@ -2,11 +2,8 @@
 *.user
 bin
 build
-build_android
-.gradle
-local.properties
-*.apk
 Debug
 Debug_XBox
 Release
+build
 cmake-build-*

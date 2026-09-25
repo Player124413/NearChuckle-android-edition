@@ -312,7 +312,7 @@ void CGameMods::ScanMods()
 	ClearMods();
 
 	// search all files in the mods folder
-#ifndef __linux
+#ifndef LINUX
 	struct _finddata_t c_file;
 #else
 	dirent c_file;

@@ -49,9 +49,6 @@
 	#include <dlfcn.h>
 	#include <stdlib.h>
 	#include "platform.h"
-#ifdef __ANDROID__
-	#include <android/log.h>
-#endif
 
 	// for compatibility with code written for windows
 	#define CrySharedLibraySupported true
@@ -61,12 +58,6 @@
 
 	#define HMODULE void*
 	static const char* gEnvName("MODULE_PATH");
-	static char g_szLastCryLibraryError[1024] = {0};
-
-	static inline const char* CryGetLastErrorString()
-	{
-		return g_szLastCryLibraryError[0] ? g_szLastCryLibraryError : "unknown";
-	}
 
 	static const char* GetModulePath()
 	{
@@ -80,84 +71,9 @@
 
 	static HMODULE CryLoadLibrary(const char* libName, const bool cAppend = true, const bool cLoadLazy = false)
 	{
-		const char* pModPath = GetModulePath();
-		string newLibName = "";
-		if (pModPath && strlen(pModPath) > 0)
-		{
-			newLibName = pModPath;
-			if (newLibName.back() != '/')
-				newLibName += "/";
-			newLibName += libName;
-		}
-		HMODULE h = NULL;
-		g_szLastCryLibraryError[0] = '\0';
-
-		int loadFlags = cLoadLazy ? (RTLD_LAZY | RTLD_GLOBAL) : (RTLD_NOW | RTLD_GLOBAL);
-		if (!newLibName.empty())
-		{
-			h = ::dlopen(newLibName.c_str(), loadFlags);
-		}
-		if (!h)
-		{
-			h = ::dlopen(libName, loadFlags);
-		}
-		// Fallback: if RTLD_NOW failed, try RTLD_LAZY | RTLD_GLOBAL
-		if (!h && !cLoadLazy)
-		{
-			if (!newLibName.empty())
-				h = ::dlopen(newLibName.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-			if (!h)
-				h = ::dlopen(libName, RTLD_LAZY | RTLD_GLOBAL);
-		}
-		if (!h && libName)
-		{
-			// Fallback: try converting Foo.dll to libFoo.so
-			string altName = libName;
-			size_t lastSlash = altName.find_last_of('/');
-			string file = (lastSlash != string::npos) ? altName.substr(lastSlash + 1) : altName;
-
-			if (file.length() > 4 && file.substr(file.length() - 4) == ".dll")
-				file = file.substr(0, file.length() - 4) + ".so";
-			if (file.rfind("lib", 0) != 0 && file.find(".so") != string::npos)
-				file = "lib" + file;
-
-			if (pModPath && strlen(pModPath) > 0)
-			{
-				string modCandidate = string(pModPath);
-				if (modCandidate.back() != '/')
-					modCandidate += "/";
-				modCandidate += file;
-				h = ::dlopen(modCandidate.c_str(), RTLD_NOW | RTLD_GLOBAL);
-				if (!h)
-					h = ::dlopen(modCandidate.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-			}
-			if (!h)
-			{
-				h = ::dlopen(file.c_str(), RTLD_NOW | RTLD_GLOBAL);
-				if (!h)
-					h = ::dlopen(file.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-			}
-		}
-		if (!h)
-		{
-			const char* err = ::dlerror();
-			if (err)
-			{
-				strncpy(g_szLastCryLibraryError, err, sizeof(g_szLastCryLibraryError) - 1);
-				g_szLastCryLibraryError[sizeof(g_szLastCryLibraryError) - 1] = '\0';
-			}
-			else
-			{
-				strncpy(g_szLastCryLibraryError, "unknown dlerror", sizeof(g_szLastCryLibraryError) - 1);
-			}
-#ifdef __ANDROID__
-			__android_log_print(ANDROID_LOG_ERROR, "CryLibrary", "CryLoadLibrary failed to load '%s' (tried '%s'): %s",
-				libName ? libName : "(null)", newLibName.c_str(), g_szLastCryLibraryError);
-#else
-			fprintf(stderr, "CryLoadLibrary failed to load '%s': %s\n", libName ? libName : "(null)", g_szLastCryLibraryError);
-#endif
-		}
-		return h;
+		string newLibName(GetModulePath());
+		newLibName += libName;
+		return ::dlopen(newLibName.c_str(), cLoadLazy?(RTLD_LAZY | RTLD_GLOBAL):(RTLD_NOW | RTLD_GLOBAL));
 	}
 
 

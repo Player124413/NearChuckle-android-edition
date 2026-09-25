@@ -785,122 +785,12 @@ bool CXGame::IsInPause(IProcess *pProcess)
 #include <unistd.h>
 #endif
 
-#ifdef __ANDROID__
-#include "farcry_bridge.h"
-
-// Touch input for this frame, drained every frame so nothing stale fires later.
-static FarCryTouchInput s_TouchInput;
-
-// The scope button has no release, and hold-to-aim weapons (no ZoomDeadSwitch) only leave the scope on
-// one; player.lua's ZoomToggle handler takes 2 as "leave" for every weapon.
-static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
-{
-	IScriptSystem* pSS = pSystem->GetIScriptSystem();
-	IEntity* pPlayer = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
-	if (!pSS || !pPlayer)
-		return;
-	static const char szQuery[] = "_fcScopeUp = (ClientStuff and ClientStuff.vlayers and ClientStuff.vlayers:IsActive(\"WeaponScope\")) and 1 or 0";
-	int nUp = 0;
-	pSS->ExecuteBuffer(szQuery, sizeof(szQuery) - 1);
-	pSS->GetGlobalValue("_fcScopeUp", nUp);
-	if (nUp)
-		pPlayer->SendScriptEvent(ScriptEvent_ZoomToggle, 2);
-	else
-		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
-}
-
-static CPlayer* TouchPlayer(CXClient* pClient, ISystem* pSystem)
-{
-	IEntity* pEntity = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
-	IEntityContainer* pCnt = pEntity ? pEntity->GetContainer() : NULL;
-	CPlayer* pPlayer = NULL;
-	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer))
-		return pPlayer;
-	return NULL;
-}
-
-// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
-static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
-{
-	if (CPlayer* pPlayer = TouchPlayer(pClient, pSystem))
-		pPlayer->TouchStance(bHold);
-}
-
-// Turn the drained touch state into client actions by name (docs/porting/phase2.md).
-static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
-{
-	const FarCryTouchInput& in = s_TouchInput;
-	if (in.moveFwd != 0.0f)
-		pClient->OnAction(ACTION_MOVEFB, -in.moveFwd, etHolding); // negative is forward
-	if (in.moveSide != 0.0f)
-		pClient->OnAction(ACTION_MOVELR, in.moveSide, etHolding);
-
-	static const XACTIONID held[FC_HELD_COUNT] = {
-		ACTION_FIRE0, ACTION_JUMP, ACTION_MOVEMODE, ACTION_RUNSPRINT, ACTION_WALK,
-		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE, ACTION_SCORE_BOARD };
-	// Sprint changes seat each frame it is held in a vehicle, so there send only its press.
-	static unsigned prevHeld;
-	unsigned heldNow = in.held;
-	if (heldNow & (1u << FC_HELD_SPRINT))
-	{
-		CPlayer* pPlayer = TouchPlayer(pClient, pSystem);
-		if (pPlayer && pPlayer->GetVehicle() && (prevHeld & (1u << FC_HELD_SPRINT)))
-			heldNow &= ~(1u << FC_HELD_SPRINT);
-	}
-	prevHeld = in.held;
-	for (int i = 0; i < FC_HELD_COUNT; i++)
-		if (heldNow & (1u << i))
-			pClient->OnAction(held[i], 1.0f, etHolding);
-
-	for (int i = 0; i < in.impulseCount; i++)
-	{
-		int imp = in.impulses[i];
-		if (imp >= FC_IMP_WEAPON_0 && imp <= FC_IMP_WEAPON_0 + 8)
-		{
-			pClient->OnAction(ACTION_WEAPON_0 + (imp - FC_IMP_WEAPON_0), 1.0f, etPressing);
-			continue;
-		}
-		switch (imp)
-		{
-			case FC_IMP_USE:           pClient->OnAction(ACTION_USE, 1.0f, etPressing); break;
-			case FC_IMP_RELOAD:        pClient->OnAction(ACTION_RELOAD, 1.0f, etPressing); break;
-			case FC_IMP_FLASHLIGHT:    pClient->OnAction(ACTION_FLASHLIGHT, 1.0f, etPressing); break;
-			case FC_IMP_NEXT_WEAPON:   pClient->OnAction(ACTION_NEXT_WEAPON, 1.0f, etPressing); break;
-			case FC_IMP_PREV_WEAPON:   pClient->OnAction(ACTION_PREV_WEAPON, 1.0f, etPressing); break;
-			case FC_IMP_CROUCH_TOGGLE: pClient->OnAction(ACTION_MOVEMODE_TOGGLE, 1.0f, etPressing); break;
-			case FC_IMP_PRONE:         pClient->OnAction(ACTION_MOVEMODE2, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_TOGGLE:   TouchZoomToggle(pClient, pSystem); break;
-			case FC_IMP_BINOCULARS:    pClient->OnAction(ACTION_ITEM_0, 1.0f, etPressing); break;
-			case FC_IMP_FIREMODE:      pClient->OnAction(ACTION_FIREMODE, 1.0f, etPressing); break;
-			case FC_IMP_CYCLE_GRENADE: pClient->OnAction(ACTION_CYCLE_GRENADE, 1.0f, etPressing); break;
-			case FC_IMP_DROP_WEAPON:   pClient->OnAction(ACTION_DROPWEAPON, 1.0f, etPressing); break;
-			case FC_IMP_CHANGE_VIEW:   pClient->OnAction(ACTION_CHANGE_VIEW, 1.0f, etPressing); break;
-			// Not in the action map; the F5/F6 triggers the client keeps for them.
-			case FC_IMP_QUICKSAVE:     pClient->TriggerQuickSave(1.0f, etPressing); break;
-			case FC_IMP_QUICKLOAD:     pClient->TriggerQuickLoad(1.0f, etPressing); break;
-			case FC_IMP_STANCE_TAP:    TouchStance(pClient, pSystem, false); break;
-			case FC_IMP_STANCE_HOLD:   TouchStance(pClient, pSystem, true); break;
-			case FC_IMP_CRYVISION:     pClient->OnAction(ACTION_ITEM_1, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_IN:       pClient->OnAction(ACTION_ZOOM_IN, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_OUT:      pClient->OnAction(ACTION_ZOOM_OUT, 1.0f, etPressing); break;
-			default: break;
-		}
-	}
-}
-#endif
 
 #ifdef LINUX
 
 // Development aid: FARCRY_DEVCMD=<file> drives the UI unattended. The file is read and deleted
 // whenever it appears, one line per frame: "mouse x y" (800x600 virtual screen), "click [x y]",
-// "key <SDL key name, _ for spaces> [frames]", "keydown/_keyup <name>", "wait n". Presses are held a frame, as CryInput samples once per frame.
-static SDL_Keycode DevKey(const char* szName)
-{
-	string sName(szName);
-	std::replace(sName.begin(), sName.end(), '_', ' ');
-	return SDL_GetKeyFromName(sName.c_str());
-}
-
+// "key <SDL key name>", "wait n". Presses are held a frame, as CryInput samples once per frame.
 static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 {
 	static std::deque<string> cmds;
@@ -961,28 +851,19 @@ static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 		ev.button.button = SDL_BUTTON_LEFT;
 		SDL_PushEvent(&ev);
 	}
-	else if (sscanf(cmd.c_str(), "keydown %63s", arg) == 1)
-	{
-		// Held until "_keyup <name>", so it can be combined with other keys.
-		ev.type = SDL_EVENT_KEY_DOWN;
-		ev.key.key = DevKey(arg);
-		ev.key.down = true;
-		SDL_PushEvent(&ev);
-		nHold = 1;
-	}
 	else if (sscanf(cmd.c_str(), "key %63s", arg) == 1)
 	{
 		ev.type = SDL_EVENT_KEY_DOWN;
-		ev.key.key = DevKey(arg);
+		ev.key.key = SDL_GetKeyFromName(arg);
 		ev.key.down = true;
 		SDL_PushEvent(&ev);
 		cmds.push_front(string("_keyup ") + arg);
-		nHold = sscanf(cmd.c_str(), "key %*s %f", &x) == 1 ? (int)x : 1;
+		nHold = 1;
 	}
 	else if (sscanf(cmd.c_str(), "_keyup %63s", arg) == 1)
 	{
 		ev.type = SDL_EVENT_KEY_UP;
-		ev.key.key = DevKey(arg);
+		ev.key.key = SDL_GetKeyFromName(arg);
 		SDL_PushEvent(&ev);
 	}
 	else if (sscanf(cmd.c_str(), "wait %f", &x) == 1)
@@ -1065,16 +946,6 @@ bool CXGame::Update()
 		static const char* szDevCmd = getenv("FARCRY_DEVCMD");
 		if (szDevCmd)
 			DevCmdUpdate(m_pSystem, szDevCmd, this);
-	}
-#endif
-
-#ifdef __ANDROID__
-	{
-		bool bInGame = !m_bMenuOverlay && !m_bEditor && m_pClient && m_pClient->IsConnected();
-		FarCry_ReportScreenMode(bInGame, m_pSystem->GetIConsole()->GetStatus());
-		FarCry_DrainTouchInput(&s_TouchInput, m_pSystem->GetITimer()->GetFrameTime());
-		if (!bInGame)
-			s_TouchInput.impulseCount = 0;
 	}
 #endif
 
@@ -1248,15 +1119,6 @@ bool CXGame::Update()
 			pTimer->MeasureTime("Net");
 
 			assert(m_pClient);
-#ifdef __ANDROID__
-			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
-			{
-				// Joypad mode runs mouse look through a stick dead zone that eats slow swipes; XPlayer's AnalogMove covers the sticks.
-				if (cl_use_joypad->GetIVal())
-					cl_use_joypad->Set(0);
-				ApplyTouchInput(m_pClient, m_pSystem);
-			}
-#endif
 			m_pClient->Update();
 			
 			if(m_pClient->DestructIfMarked())			//  to make sure the client is only released in one place - here
@@ -1874,11 +1736,7 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 #ifdef LINUX
 		DIR *fdir;
 
-#ifdef __ANDROID__
-		fdir = opendir(CryGameRoot() ? (string(CryGameRoot()) + "/" + sLevelFolder).c_str() : sLevelFolder.c_str());
-#else
 		fdir = opendir(sLevelFolder.c_str());
-#endif
 		if (!fdir)
 		{
 			sLevelFolder = GetCorrectedLevelPath(sLevelFolder);
@@ -2406,68 +2264,9 @@ ITagPointManager* CXGame::GetTagPointManager()
 	return m_pTagPointManager;
 }
 
-#ifdef __ANDROID__
-// First run: copy the game folder's Profiles/Player (default profile, its checkpoint saves and
-// cfgs) into the user folder, so the profile screen has something to show.
-static void CopyTree(const string& sSrc, const string& sDst)
-{
-	mkdir(sDst.c_str(), 0755);
-	DIR* pDir = opendir(sSrc.c_str());
-	if (!pDir)
-		return;
-	while (struct dirent* d = readdir(pDir))
-	{
-		if (d->d_name[0] == '.')
-			continue;
-		string sFrom = sSrc + "/" + d->d_name, sTo = sDst + "/" + d->d_name;
-		// FUSE storage reports DT_UNKNOWN, so ask stat.
-		struct stat st;
-		if (d->d_type == DT_DIR || (d->d_type == DT_UNKNOWN && stat(sFrom.c_str(), &st) == 0 && S_ISDIR(st.st_mode)))
-		{
-			CopyTree(sFrom, sTo);
-			continue;
-		}
-		FILE* fIn = fopen(sFrom.c_str(), "rb");
-		if (!fIn)
-			continue;
-		if (FILE* fOut = fopen(sTo.c_str(), "wb"))
-		{
-			char buf[65536];
-			size_t n;
-			while ((n = fread(buf, 1, sizeof(buf), fIn)) > 0)
-				fwrite(buf, 1, n, fOut);
-			fclose(fOut);
-		}
-		fclose(fIn);
-	}
-	closedir(pDir);
-}
-#endif
-
 string CXGame::GetPlayerProfilePath()
 {
-#ifdef __ANDROID__
-	static string sProfiles;
-	if (sProfiles.empty())
-	{
-		char szPath[1024];
-		CryUserFile("Profiles/Player/", szPath, sizeof(szPath));
-		sProfiles = szPath;
-		m_pSystem->GetIPak()->MakeDir(szPath); // nested; CopyTree's mkdir is not
-		struct stat st;
-		char szSrc[1024];
-		// The game root when the launcher gave one (secondary storage: no cwd to resolve against, and
-		// both storages are case-insensitive), else a case-corrected path from the cwd.
-		bool bSrc = CryGameRoot() ? (snprintf(szSrc, sizeof(szSrc), "%s/Profiles/Player", CryGameRoot()), stat(szSrc, &st) == 0)
-		                          : casepath("Profiles/Player", szSrc) != 0;
-		if (stat((sProfiles + "default").c_str(), &st) != 0 && bSrc)
-		{
-			printf("Seeding player profiles from %s\n", szSrc);
-			CopyTree(szSrc, sProfiles.substr(0, sProfiles.length() - 1));
-		}
-	}
-	return sProfiles;
-#elif defined(LINUX)
+#ifdef LINUX
 	DIR *fdir;
 	int found_profiles = 0;
 	int found_player = 0;

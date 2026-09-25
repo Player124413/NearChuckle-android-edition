@@ -246,8 +246,10 @@ int CLivingEntity::SetParams(pe_params *_params)
 				m_vel.zero(); m_dh=0;
 				for(int i=0;i<m_szHistory;i++) m_history[i].pos = m_pos;
 			}
+			// A rotation that would put the capsule inside geometry is refused, which for a vehicle
+			// passenger means refusing the vehicle's own bank angle; lef_loosen_stuck_checks opts out.
 			if (sqr(m_qrot.v*prevq.v)<m_qrot.v.len2()*prevq.v.len2()*sqr(0.998f) && ((pe_params_pos*)_params)->bRecalcBounds && 
-					m_bActive && !IsPositionFree(m_BBox,m_hCyl-m_hPivot,m_size)) 
+					m_bActive && !(m_flags & lef_loosen_stuck_checks) && !IsPositionFree(m_BBox,m_hCyl-m_hPivot,m_size)) 
 			{
 				m_qrot = prevq; ComputeBBox();
 				return 0;

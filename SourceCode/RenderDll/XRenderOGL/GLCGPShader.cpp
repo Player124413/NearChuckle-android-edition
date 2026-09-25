@@ -131,11 +131,6 @@ void CCGPShader_GL::mfPrecache()
 
 void CCGPShader_GL::mfReset()
 {
-  if (m_LastVP == this)
-  {
-    m_LastVP = NULL;
-    m_LastTypeVP = 0;
-  }
   for (int i=0; i<m_Insts.Num(); i++)
   {
     m_CurInst = i;
@@ -179,11 +174,6 @@ void CCGPShader_GL::mfFree()
 
 CCGPShader_GL::~CCGPShader_GL()
 {
-  if (m_LastVP == this)
-  {
-    m_LastVP = NULL;
-    m_LastTypeVP = 0;
-  }
   mfFree();
   CPShader::m_PShaders[m_Id] = NULL;
 }
@@ -624,123 +614,6 @@ static char *sGetText(char **buf)
   return result;
 }
 
-static FILE* TryOpenCachedFPFallback(char* namedst)
-{
-  const char* profiles[] = { "$ARB$", "$GL_Auto$", "$FP20$", "$NV$" };
-  const int numProfiles = 4;
-  FILE* fp = NULL;
-
-  const char* maskPos = strrchr(namedst, '(');
-  const char* extPos = strrchr(namedst, '.');
-  if (!extPos) extPos = namedst + strlen(namedst);
-
-  const char* curProf = NULL;
-  if (strstr(namedst, "$GL_Auto$")) curProf = "$GL_Auto$";
-  else if (strstr(namedst, "$ARB$")) curProf = "$ARB$";
-  else if (strstr(namedst, "$FP20$")) curProf = "$FP20$";
-  else if (strstr(namedst, "$NV$")) curProf = "$NV$";
-
-  // 1. Try profile substitution directly on namedst
-  if (curProf)
-  {
-    for (int p = 0; p < numProfiles; p++)
-    {
-      if (!strcmp(curProf, profiles[p])) continue;
-      char testName[256];
-      const char* pos = strstr(namedst, curProf);
-      int preLen = pos - namedst;
-      snprintf(testName, sizeof(testName), "%.*s%s%s", preLen, namedst, profiles[p], pos + strlen(curProf));
-
-      char asmName[256];
-      StripExtension(testName, asmName);
-      AddExtension(asmName, ".cgasm");
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      fp = iSystem->GetIPak()->FOpen(testName, "r");
-      if (fp) { strcpy(namedst, testName); return fp; }
-
-      char psName[256];
-      StripExtension(testName, psName);
-      AddExtension(psName, ".cgps");
-      fp = iSystem->GetIPak()->FOpen(psName, "r");
-      if (fp) { strcpy(namedst, psName); return fp; }
-    }
-  }
-
-  // 2. Try stripping the mask: e.g. "(...)"
-  if (maskPos && extPos && maskPos < extPos)
-  {
-    int noMaskLen = maskPos - namedst;
-    char noMask[256];
-    snprintf(noMask, sizeof(noMask), "%.*s%s", noMaskLen, namedst, extPos);
-
-    for (int p = 0; p < numProfiles; p++)
-    {
-      char variant[256];
-      if (curProf)
-      {
-        const char* pos = strstr(noMask, curProf);
-        if (pos)
-        {
-          int preLen = pos - noMask;
-          snprintf(variant, sizeof(variant), "%.*s%s%s", preLen, noMask, profiles[p], pos + strlen(curProf));
-        }
-        else
-          strncpy(variant, noMask, sizeof(variant));
-      }
-      else
-        strncpy(variant, noMask, sizeof(variant));
-
-      char asmName[256];
-      StripExtension(variant, asmName);
-      AddExtension(asmName, ".cgasm");
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      fp = iSystem->GetIPak()->FOpen(variant, "r");
-      if (fp) { strcpy(namedst, variant); return fp; }
-
-      char psName[256];
-      StripExtension(variant, psName);
-      AddExtension(psName, ".cgps");
-      fp = iSystem->GetIPak()->FOpen(psName, "r");
-      if (fp) { strcpy(namedst, psName); return fp; }
-    }
-  }
-
-  // 3. Try base shader templates
-  const char* dollarPos = strchr(namedst, '$');
-  if (dollarPos)
-  {
-    int namePrefixLen = dollarPos - namedst;
-    const char* baseForms[] = {
-      "$ARB$Fog",
-      "$ARB$NoFog",
-      "$GL_Auto$Fog",
-      "$GL_Auto$NoFog",
-      "$FP20$Fog",
-      "$FP20$NoFog",
-      "$NV$Fog",
-      "$NV$NoFog"
-    };
-    for (int b = 0; b < 8; b++)
-    {
-      char asmName[256];
-      char psName[256];
-      snprintf(asmName, sizeof(asmName), "%.*s%s.cgasm", namePrefixLen, namedst, baseForms[b]);
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      snprintf(psName, sizeof(psName), "%.*s%s.cgps", namePrefixLen, namedst, baseForms[b]);
-      fp = iSystem->GetIPak()->FOpen(psName, "r");
-      if (fp) { strcpy(namedst, psName); return fp; }
-    }
-  }
-
-  return NULL;
-}
-
 bool CCGPShader_GL::mfActivate()
 {
   if (!m_Insts[m_CurInst].m_dwHandle)
@@ -936,41 +809,26 @@ create:
     }
     if (!statusdst)
     {
-      statusdst = TryOpenCachedFPFallback(namedst);
+#ifdef DISABLE_CG
+      iLog->LogError("Failed to load cached fragment shader %s!\n", namedst);
+      LogMissingShader(namedst, "pixel",
+        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetViewCamera().GetPos());
+#endif
+      return false;
     }
-
-    char *pbuf = NULL;
-    int len = 0;
-    if (statusdst)
+    else
     {
       iSystem->GetIPak()->FSeek(statusdst, 0, SEEK_END);
-      len = iSystem->GetIPak()->FTell(statusdst);
+      int len = iSystem->GetIPak()->FTell(statusdst);
       iSystem->GetIPak()->FSeek(statusdst, 0, SEEK_SET);
-      pbuf = new char [len+1];
+      char *pbuf = new char [len+1];
       iSystem->GetIPak()->FGets(strVer0, 128, statusdst);
       len = iSystem->GetIPak()->FRead(pbuf, 1, len, statusdst);
       pbuf[len] = 0;
       iSystem->GetIPak()->FClose(statusdst);
       statusdst = NULL;
-    }
-    else
-    {
-      iLog->LogWarning("Missing fragment shader '%s' - activating embedded fallback ARB fragment program", namedst);
-      const char* s_FallbackFP = 
-        "!!ARBfp1.0\n"
-        "#var sampler2D Texture0 : $vin.TEXUNIT0 : texunit 0 : 1 : 1\n"
-        "#var float4 OUT.color : $vout.COL : COL : -1 : 1\n"
-        "TEMP baseColor;\n"
-        "TEX baseColor, fragment.texcoord[0], texture[0], 2D;\n"
-        "MUL result.color, baseColor, fragment.color;\n"
-        "END\n";
-      len = strlen(s_FallbackFP);
-      pbuf = new char[len + 1];
-      strcpy(pbuf, s_FallbackFP);
-      m_CGProfileType = CG_PROFILE_ARBFP1;
-    }
 
-    {
       if (!bCreate && (m_Flags & PSFI_AUTOENUMTC))
       {
         if (strstr(pbuf, "!!ARBfp1.0"))
@@ -1094,11 +952,6 @@ bool CCGPShader_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
       rd->Logv(SRendItem::m_RecurseLevel, "--- Reset CGPShader \"%s\"\n", m_Name.c_str());
 #endif
     mfDisable();
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     rd->m_RP.m_PersFlags &= ~RBPF_PS2NEEDSET;
     rd->m_RP.m_PersFlags &= ~RBPF_PS1NEEDSET;
   }
@@ -1126,13 +979,6 @@ bool CCGPShader_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
     if ((INT_PTR)m_Insts[Type].m_dwHandle == -1)
     {
       m_LastTypeVP = Mask;
-      mfDisable();
-      if (m_LastVP == this)
-      {
-        m_LastVP = NULL;
-        m_LastTypeVP = 0;
-      }
-      rd->m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET);
       return false;
     }
 
@@ -1142,13 +988,6 @@ bool CCGPShader_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
       if (!mfActivate())
       {
         m_Insts[Type].m_dwHandle = -1;
-        mfDisable();
-        if (m_LastVP == this)
-        {
-          m_LastVP = NULL;
-          m_LastTypeVP = 0;
-        }
-        rd->m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET);
         return false;
       }
       m_LastVP = NULL;

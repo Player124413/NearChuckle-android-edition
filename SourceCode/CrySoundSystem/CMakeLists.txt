@@ -29,7 +29,7 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
     ${CMAKE_CURRENT_SOURCE_DIR}/OggVorbisInclude
 )
 
@@ -64,8 +64,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${VORBISFILE_STATIC_LIB}
     legacy_stdio_definitions.lib
 )
-elseif (ANDROID)
-target_link_libraries(${PROJECT_NAME} PUBLIC openal ogg vorbis vorbisfile log)
 else()
 target_link_libraries(${PROJECT_NAME} PUBLIC vorbisfile openal)
 endif()

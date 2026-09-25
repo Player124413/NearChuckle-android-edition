@@ -31,8 +31,6 @@ public:
 
 	void				SetTimeScale(float value);
 
-	std::function<void()> m_onFinished;
-
 protected:
 	void BinkDecReset(void);
 	void DrawYUV(void);

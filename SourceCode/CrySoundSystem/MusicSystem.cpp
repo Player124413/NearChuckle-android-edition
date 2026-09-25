@@ -670,7 +670,6 @@ void CMusicSystem::Silence()
 	m_nLayeredRhythmicPatterns=0;
 	m_nLayeredIncidentalPatterns=0;
 	m_vecPlayingPatterns.clear();
-	StopPlaying();
 }
 
 /* main update-loop; check comments in function for details

@@ -10,7 +10,7 @@
 #ifndef __D3DCGVPROGRAM_H__
 #define __D3DCGVPROGRAM_H__
 
-#ifndef __linux
+#ifndef LINUX
 #include "cg\cgD3D9.h"
 #include <direct.h>
 #else

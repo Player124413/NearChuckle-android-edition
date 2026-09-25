@@ -957,8 +957,6 @@ public:
 	bool GoStealth( void );
 	bool GoCrouch( void );
 	bool GoProne( void );
-	//! Touch crouch button: a tap stands or crouches (crouches from prone), a hold goes prone (stands from prone).
-	void TouchStance( bool bHold );
 	bool GoRelaxed( void );
 	bool GoSwim( void );
 	bool RestorePrevStence( void );

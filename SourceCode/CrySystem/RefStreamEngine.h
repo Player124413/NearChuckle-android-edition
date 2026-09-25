@@ -203,7 +203,7 @@ protected:
 
 	// this flag is set if the callback time quota is enabled
 	int m_nSuspendCallbackTimeQuota;
-#ifndef __linux
+#ifndef LINUX
 	// this is the id of the main thread in which this engine operates
 	DWORD m_dwMainThreadId;
 	// the id of the worker thread, if any 

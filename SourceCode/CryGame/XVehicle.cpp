@@ -166,6 +166,17 @@ void CVehicle::Update()
 	if(GetEntity()->GetPhysics())
 	if(!GetEntity()->GetPhysics()->GetStatus(&awake))
 		UpdateCamera(fTimeStep, m_pGame->IsSynchronizing());
+		// FARCRY_CAMLOG=1: physics position, velocity and clock per frame, to see how the vehicle advances.
+		static bool bCamLog = getenv("FARCRY_CAMLOG") != NULL;
+		if (bCamLog && m_pEntity->GetPhysics())
+		{
+			pe_status_pos sp; pe_status_dynamics sd;
+			m_pEntity->GetPhysics()->GetStatus(&sp);
+			m_pEntity->GetPhysics()->GetStatus(&sd);
+			fprintf(stderr, "VEH frame %d dt %.5f phystime %.5f iphys %d pos %.4f %.4f %.4f vel %.4f %.4f %.4f awake %d\n",
+				m_pGame->GetSystem()->GetIRenderer()->GetFrameID(), fTimeStep, m_pGame->GetSystem()->GetIPhysicalWorld()->GetPhysicsTime(),
+				m_pGame->GetSystem()->GetIPhysicalWorld()->GetiPhysicsTime(), sp.pos.x, sp.pos.y, sp.pos.z, sd.v.x, sd.v.y, sd.v.z, (int)sp.iSimClass);
+		}
 
 	if ((m_Type == VHT_BOAT) )
 		WakeupPhys();

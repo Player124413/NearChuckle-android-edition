@@ -41,7 +41,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #endif //_XBOX
 
 #ifdef USE_SDL_INPUT
-#ifndef __linux
+#ifndef LINUX
 #include <SDL_syswm.h>
 #endif
 #endif

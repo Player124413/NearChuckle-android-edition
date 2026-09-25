@@ -77,31 +77,6 @@ void CXGame::SetConfigToActionMap(const char *pszActionName, ...)
 	va_end(v);
 }
 
-#ifdef __ANDROID__
-// The stock movement, crouch and lean binds on keypad digits, which are what the touch overlay's custom buttons send.
-static const struct { const char *szAction; XACTIONID nAction; const char *szKey; int nKey; } s_StockKeypadBinds[] = {
-	{ "MOVE_LEFT", ACTION_MOVE_LEFT, "numpad4", XKEY_NUMPAD4 },
-	{ "MOVE_RIGHT", ACTION_MOVE_RIGHT, "numpad6", XKEY_NUMPAD6 },
-	{ "MOVE_FORWARD", ACTION_MOVE_FORWARD, "numpad5", XKEY_NUMPAD5 },
-	{ "MOVE_BACKWARD", ACTION_MOVE_BACKWARD, "numpad2", XKEY_NUMPAD2 },
-	{ "MOVEMODE", ACTION_MOVEMODE, "numpad0", XKEY_NUMPAD0 },
-	{ "LEANLEFT", ACTION_LEANLEFT, "numpad7", XKEY_NUMPAD7 },
-	{ "LEANRIGHT", ACTION_LEANRIGHT, "numpad9", XKEY_NUMPAD9 },
-};
-
-// True for a saved game.cfg line that restores one of them, so configs written before this drop them too.
-bool FarCry_IsStockKeypadBindLine(const char *szLine)
-{
-	char szAction[64], szKey[64];
-	if (sscanf(szLine, " Input:BindAction(\"%63[^\"]\", \"%63[^\"]\"", szAction, szKey) != 2)
-		return false;
-	for (int i = 0; i < sizeof(s_StockKeypadBinds) / sizeof(s_StockKeypadBinds[0]); i++)
-		if (!strcmp(szAction, s_StockKeypadBinds[i].szAction) && !stricmp(szKey, s_StockKeypadBinds[i].szKey))
-			return true;
-	return false;
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////
 void CXGame::SetCommonKeyBindings(IActionMap *pMap)
 {
@@ -463,22 +438,6 @@ void CXGame::InitConsoleVars()
 		"Toggles use of joypad for movements.\n"
 		"Usage: cl_use_joypad [0/1]\n"
 		"Default is 0 (off)."); 	
-
-	// Not saved: the launcher sets the level through FARCRY_AIM_ASSIST.
-	const char* szAimAssist = getenv("FARCRY_AIM_ASSIST");
-	cl_aim_assist = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist", szAimAssist ? szAimAssist : "0", 0,
-		"Steers the view toward the enemy nearest the crosshair (single player).\n"
-		"Usage: cl_aim_assist [0..3], 0=off, 1=light, 2=strong, 3=strong and snap when firing\n"
-		"Default is 0 (off).");
-	cl_aim_assist_angle = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_angle", "8", 0,
-		"Aim assist reach from the crosshair, in degrees at the unzoomed FOV.\n"
-		"Default is 8.");
-	cl_aim_assist_range = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_range", "60", 0,
-		"Aim assist range in metres, unzoomed.\n"
-		"Default is 60.");
-	cl_aim_assist_debug = GetISystem()->GetIConsole()->CreateVariable("cl_aim_assist_debug", "0", 0,
-		"Logs aim assist target changes and a status line each second.\n"
-		"Usage: cl_aim_assist_debug [0..2], 2=every frame");
 
 	cl_weapon_fx = GetISystem()->GetIConsole()->CreateVariable("cl_weapon_fx","2",VF_DUMPTODISK,
 		"Control the complexity of weapon firing effects.\n"
@@ -1322,15 +1281,6 @@ void CXGame::ResetInputMap()
 	pMap->BindAction(ACTION_MOVE_RIGHT,XKEY_RIGHT);
 	pMap->BindAction(ACTION_TAKESCREENSHOT,XKEY_F12);
 //	pMap->BindAction(ACTION_QUICKLOAD,XKEY_F6);
-
-#ifdef __ANDROID__
-	for (int i = 0; i < sizeof(s_StockKeypadBinds) / sizeof(s_StockKeypadBinds[0]); i++)
-	{
-		XBind Bind;
-		Bind.nKey = s_StockKeypadBinds[i].nKey;
-		m_pIActionMapManager->RemoveBind(s_StockKeypadBinds[i].nAction, Bind, aamOnHold);
-	}
-#endif
 
 	//////////////////////////////////////////////////////////////////////
 	//switch to default action map now

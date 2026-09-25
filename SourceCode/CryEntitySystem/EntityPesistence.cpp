@@ -414,8 +414,11 @@ bool CEntity::Read(CStream& stm,bool bNoUpdate)
 			{
 				Vec3d vPos;
 //			_VERIFY(stm.Read(vPos));
-				CStreamData_WorldPos posData(vPos);
-				_VERIFY(stm.ReadPkd(posData));
+#if defined(LINUX)
+				_VERIFY(stm.ReadPkd(*(IStreamData*)(&CStreamData_WorldPos(vPos))));
+#else
+				_VERIFY(stm.ReadPkd(CStreamData_WorldPos(vPos)));
+#endif
 				if (!bNoUpdate)
 					SetPos(vPos, false);
 			}

@@ -180,16 +180,6 @@ void SetMasterCDFolder()
 	strcat( path_buffer,".." );
 	SetCurrentDirectory( path_buffer );
 	GetCurrentDirectory( sizeof(szMasterCDFolder),szMasterCDFolder );
-#elif defined(__ANDROID__)
-	// The modules live in the APK's native library dir. The game root is the launcher's
-	// -GAMEPATH (a secondary-storage path cannot be chdir()ed into), else the cwd the host set.
-	extern const char *nativeLibsPath;
-	string modulePath = string(nativeLibsPath ? nativeLibsPath : ".") + "/";
-	SetModulePath(modulePath.c_str());
-	if (CryGameRoot())
-		snprintf(szMasterCDFolder, sizeof(szMasterCDFolder), "%s", CryGameRoot());
-	else
-		getcwd(szMasterCDFolder, sizeof(szMasterCDFolder));
 #else
 	char* last_slash;
 	char dll_path[_MAX_PATH];
@@ -278,8 +268,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
-#elif defined(__ANDROID__)
-int FarCry_AndroidMain(int argc, char** argv)
 #else
 int main(int argc, char** argv)
 #endif
@@ -744,10 +732,6 @@ bool RunGame(int argc, char** argv)
 
 		SSystemInitParams sip;
 		sip.sLogFileName = "log.txt";
-#ifdef __ANDROID__
-		static char szLogPath[1024];
-		sip.sLogFileName = CryUserFile("log.txt", szLogPath, sizeof(szLogPath));
-#endif
 
 		if (szLocalCmdLine[0])
 		{
@@ -768,11 +752,7 @@ bool RunGame(int argc, char** argv)
 		//		return false;
 		//	}
 		//}
-#ifdef __ANDROID__
-		g_hSystemHandle = SDL_LoadObject((string(GetModulePath()) + DLL_SYSTEM).c_str());
-#else
 		g_hSystemHandle = SDL_LoadObject((string(szMasterCDFolder) + "/" + DLL_SYSTEM).c_str());
-#endif
 		if (!g_hSystemHandle)
 		{
 			string errorStr = "CrySystem.dll Loading Failed:\n";

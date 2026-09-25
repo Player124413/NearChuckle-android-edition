@@ -19,25 +19,18 @@
 #include "MeshIdx.h"
 #include "3DEngine.h"
 
-#include <vector>
-#include <algorithm>
-
 /////////////////////////////////////////////////////////////////////////////////////
 // Buffer optimizer
 /////////////////////////////////////////////////////////////////////////////////////
 
 int CStatObj::FindInPosBuffer(const Vec3d & opt, Vec3d * _vbuff, int _vcount, list2<int> * pHash)
 { 
-  if (!_vbuff || !pHash)
-    return -1;
   for(int i=0; i<pHash->Count(); i++) 
   {
-    int idx = (*pHash)[i];
-    if (idx >= 0 && idx < _vcount)
-    {
-      if (IsEquivalent(_vbuff[idx], opt, VEC_EPSILON))
-        return idx;
-    }
+    if(
+			IsEquivalent(*((Vec3d*)(&_vbuff[(*pHash)[i]].x)), *((Vec3d*)(&opt.x)), VEC_EPSILON)
+			) 
+      return (*pHash)[i];  
   }
 
   return -1;
@@ -45,75 +38,42 @@ int CStatObj::FindInPosBuffer(const Vec3d & opt, Vec3d * _vbuff, int _vcount, li
 
 void CStatObj::CompactPosBuffer(Vec3d * _vbuff, int * _vcount, list2<int> * pindices)
 {
-  if (!_vbuff || !_vcount || *_vcount <= 0)
-    return;
+  int before = *_vcount; assert(before);
+  if(!before)
+    GetConsole()->Exit("Error: CStatObj::CompactPosBuffer: Input vertex count is zero");
 
-  int nVerts = *_vcount;
-  if (!pindices)
-    return;
+  Vec3d * tmp_buff = new Vec3d[*_vcount];
+  int tmp_count = 0;
 
-  if (nVerts <= 1)
+  pindices->Clear();
+ 
+  list2<int> pos_hash_table[256];//[256];
+
+  for(uint v=0; v<(uint)(*_vcount); v++)
   {
-    pindices->Clear();
-    if (nVerts == 1)
-      pindices->Add(0);
-    return;
-  }
-
-  struct VertRef
-  {
-    float x;
-    int origIndex;
-  };
-
-  std::vector<VertRef> sorted(nVerts);
-  for (int i = 0; i < nVerts; ++i)
-  {
-    sorted[i].x = _vbuff[i].x;
-    sorted[i].origIndex = i;
-  }
-
-  std::sort(sorted.begin(), sorted.end(), [](const VertRef& a, const VertRef& b) {
-    return a.x < b.x;
-  });
-
-  std::vector<int> remap(nVerts, -1);
-  std::vector<Vec3d> uniqueVerts;
-  uniqueVerts.reserve(nVerts);
-
-  for (int i = 0; i < nVerts; ++i)
-  {
-    int idxI = sorted[i].origIndex;
-    if (remap[idxI] != -1)
-      continue;
-
-    int newUniqueId = (int)uniqueVerts.size();
-    uniqueVerts.push_back(_vbuff[idxI]);
-    remap[idxI] = newUniqueId;
-
-    for (int j = i + 1; j < nVerts; ++j)
+    // Through int first: float -> unsigned char is undefined out of range and arm64 clang drops the truncation.
+    list2<int> * pHash = &pos_hash_table[(unsigned char)(int)(_vbuff[v].x*100)];//[(unsigned char)(_vbuff[v].y*100)];
+    int find = FindInPosBuffer( _vbuff[v], tmp_buff, tmp_count, pHash);
+    if(find<0)
     {
-      if ((sorted[j].x - sorted[i].x) > VEC_EPSILON)
-        break;
+      tmp_buff[tmp_count] = _vbuff[v];
+      pindices->Add(tmp_count);
 
-      int idxJ = sorted[j].origIndex;
-      if (remap[idxJ] == -1 && IsEquivalent(_vbuff[idxI], _vbuff[idxJ], VEC_EPSILON))
-      {
-        remap[idxJ] = newUniqueId;
-      }
+      pos_hash_table[(unsigned char)(int)(_vbuff[v].x*100)]/*[(unsigned char)(_vbuff[v].y*100)]*/.Add(tmp_count);
+
+      tmp_count++;
+    }
+    else
+    {
+      int u = (uint)find;
+      pindices->Add(u);
     }
   }
 
-  pindices->Clear();
-  pindices->PreAllocate(nVerts);
-  for (int i = 0; i < nVerts; ++i)
-  {
-    int r = remap[i];
-    pindices->Add(r);
-  }
+  * _vcount = tmp_count;
+  memcpy( _vbuff, tmp_buff, tmp_count*sizeof(Vec3d));
 
-  *_vcount = (int)uniqueVerts.size();
-  memcpy(_vbuff, uniqueVerts.data(), uniqueVerts.size() * sizeof(Vec3d));
+  delete [] tmp_buff;
 }
 
 // This function prepares 3 additional meshes: 
@@ -259,26 +219,20 @@ void CStatObj::Physicalize()
 
 	  if(lstPhysIndices.Count())
 	  {
-      Vec3d * pExVerts = nullptr;
-			int nInitVertCount = 0;
+      Vec3d * pExVerts;
+			int nInitVertCount;
 
 			if (m_pTriData->m_lstGeomNames.Count()>0 && strstr(m_pTriData->m_lstGeomNames[0],"cloth")!=0)
 			{
 				pExVerts = m_pTriData->m_pVerts;
 				nInitVertCount = m_pTriData->m_nVertCount;
 			}
-			else if (m_pTriData->m_pVerts && m_pTriData->m_nVertCount > 0)
+			else
 			{
 				pExVerts = new Vec3d[lstPhysIndices.Count()];
       
 				for(int i=0; i<lstPhysIndices.Count();i++)
-				{
-					int vertIdx = lstPhysIndices[i];
-					if (vertIdx >= 0 && vertIdx < m_pTriData->m_nVertCount)
-						pExVerts[i] = m_pTriData->m_pVerts[vertIdx];
-					else
-						pExVerts[i] = Vec3d(0,0,0);
-				}
+					pExVerts[i] = m_pTriData->m_pVerts[lstPhysIndices[i]];
 
 				if(bShowINfo)
 					GetLog()->UpdateLoadingScreen("  Compacting buffer ...");
@@ -290,7 +244,7 @@ void CStatObj::Physicalize()
       if(bShowINfo)
         GetLog()->UpdateLoadingScreen("  Creating OBB tree ...");
 
-      if(pExVerts && GetPhysicalWorld() && (nMesh==MESH_PHYSIC || nMesh==MESH_OBSTRUCT || nMesh==MESH_LEAVES) && nInitVertCount>2)
+      if(GetPhysicalWorld() && (nMesh==MESH_PHYSIC || nMesh==MESH_OBSTRUCT || nMesh==MESH_LEAVES) && nInitVertCount>2)
       {
         int nPhysTris = lstPhysIndices.Count()/3;
         if(GetCVars()->e_check_number_of_physicalized_polygons && 
@@ -334,13 +288,13 @@ void CStatObj::Physicalize()
 					m_arrPhysGeomInfo[nMesh]->surface_idx = lstFaceMaterials[0];
       }
 
-      if(nOcclMatID>=0 && nMesh==MESH_OCCLUSION && pExVerts)
+      if(nOcclMatID>=0 && nMesh==MESH_OCCLUSION)
       {
         m_lstOcclVolVerts.AddList(pExVerts,nInitVertCount);
         m_lstOcclVolInds.AddList(lstPhysIndices);
       }
 
-			if (pExVerts && pExVerts!=m_pTriData->m_pVerts)
+			if (pExVerts!=m_pTriData->m_pVerts)
 				delete [] pExVerts;
     }
   }

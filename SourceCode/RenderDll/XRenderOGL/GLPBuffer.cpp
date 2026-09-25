@@ -33,7 +33,7 @@ CPBuffer::~CPBuffer()
 void CPBuffer::mfHandleModeSwitch()
 {
   int lost = 0;
-#ifndef __linux
+#ifndef LINUX
   wglQueryPbufferARB(m_Buffer, WGL_PBUFFER_LOST_ARB, &lost);
 #endif
   if ( lost )
@@ -246,7 +246,7 @@ bool CPBuffer::mfMakeMainCurrent()
 
 BOOL CPBuffer::mfTextureBind()
 {
-#ifndef __linux
+#ifndef LINUX
   return wglBindTexImageARB(m_Buffer, WGL_FRONT_LEFT_ARB);
 #else
   return 0;
@@ -255,7 +255,7 @@ BOOL CPBuffer::mfTextureBind()
 
 BOOL CPBuffer::mfReleaseFromTexture()
 {
-#ifndef __linux
+#ifndef LINUX
   return wglReleaseTexImageARB(m_Buffer, WGL_FRONT_LEFT_ARB);
 #else
   return 0;

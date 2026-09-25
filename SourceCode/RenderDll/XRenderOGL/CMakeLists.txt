@@ -152,7 +152,6 @@ else() #x64
     )
 endif()
 
-if (NOT ANDROID)
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -191,7 +190,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ARCH_LIBS}
     ${SYSTEM_DEPS}
 )
-endif() # NOT ANDROID
 
 # OpenGL ES 3.0 build of the same renderer, routed through GLES/ (see GLES-PORT-PLAN.md).
 if (NOT MSVC)
@@ -204,7 +202,4 @@ if (NOT MSVC)
         ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Common/Shaders
     )
     target_link_libraries(XRenderGLES PRIVATE ${ARCH_LIBS} SDL3)
-    if (ANDROID)
-        target_link_libraries(XRenderGLES PRIVATE log)
-    endif()
 endif()

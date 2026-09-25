@@ -40,6 +40,7 @@ struct CVars : public Cry3DEngineBase
     e_particles,
     e_particles_debug,
 		e_particles_max_count,
+		e_decals_max_count,
 		e_particles_receive_shadows,
     e_decals,
     e_bflyes,

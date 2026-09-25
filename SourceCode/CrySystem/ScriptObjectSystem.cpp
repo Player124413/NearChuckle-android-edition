@@ -21,7 +21,7 @@
 #include <ISound.h>
 #include <IGame.h>									// IGame
 #include <ICryPak.h>
-#ifndef __linux
+#ifndef LINUX
 #include "ddraw.h"
 #include <SDL_cpuinfo.h>
 #else
@@ -749,7 +749,7 @@ int CScriptObjectSystem::GetEntities(IFunctionHandler *pH)
 		}
 	}
 
-#ifndef __linux
+#ifndef LINUX
 	inline bool Filter(struct _finddata_t& fd, int nScanMode)
 #else
 	inline bool Filter(struct dirent& fd, int nScanMode)
@@ -792,13 +792,13 @@ int CScriptObjectSystem::ScanDirectory(IFunctionHandler *pH)
 	if (pH->GetParamCount()>2)
 		pH->GetParam(3, nInPack);
 
-#ifdef __linux
+#ifdef LINUX
 	nInPack = 1; //CryPak can load loose files in the correct directory
 #endif
 
 	if (!nInPack)
 	{
-#ifndef __linux
+#ifndef LINUX
 		struct __finddata64_t c_file;
 		intptr_t hFile;
 
@@ -825,7 +825,7 @@ int CScriptObjectSystem::ScanDirectory(IFunctionHandler *pH)
 	}
 	else
 	{
-#ifndef __linux
+#ifndef LINUX
 		_finddata_t c_file;
 #else
 		dirent c_file;

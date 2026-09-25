@@ -180,7 +180,7 @@ public:
 	// the directory wildcard must already be adjusted
 	CCryPakFindData (class CCryPak*pPak, const char* szDir);
 	bool	empty() const;
-#ifndef __linux
+#ifndef LINUX
 	bool	Fetch(_finddata_t* pfd);
 #else
 	bool	Fetch(dirent* pfd);
@@ -202,7 +202,7 @@ protected:
 
 		FileDesc (struct _finddata_t* fd);
 		FileDesc (struct __finddata64_t* fd);
-#ifdef __linux
+#ifdef LINUX
 		FileDesc (struct dirent* fd);
 #endif
 		FileDesc (ZipDir::FileEntry* fe);
@@ -239,22 +239,6 @@ class CCryPak : public ICryPak
 	// The F* emulation functions critical sectio: protects all F* functions
 	// that don't have a chance to be called recursively (to avoid deadlocks)
 	CCritSection m_csMain;
-
-#ifdef __ANDROID__
-	// Loose files under the game root, listed once per directory: FOpen probes the disk before the paks,
-	// nearly always for files that only live in a pak, and on secondary storage every probe is a SAF lookup.
-	struct SLooseDir { bool bExists; std::set<string> setNames; }; // lowercased names
-	std::map<string, SLooseDir> m_mapLooseDirs;                     // lowercased directory path
-	CCritSection m_csLoose;
-	const SLooseDir& LooseDir(const string& strPath, size_t nRoot);
-public:
-	bool LooseFileMayExist(const char* szFullPath);
-	bool LooseDirMayExist(const char* szFullPath);
-	bool LooseFileUnder(const char* szFullPath, const char* szRoot);
-	bool CacheMirror(const char* szFullPath, char* szOut, size_t nOut);
-	void ForgetLooseFiles();
-private:
-#endif
 
 	// open zip cache objects that can be reused. They're self-[un]registered
 	// they're sorted by the path and 
@@ -397,7 +381,7 @@ public:
   virtual long FTell(FILE *handle);
   virtual int FFlush(FILE *handle);
   virtual int FClose(FILE *handle);
-#ifndef __linux
+#ifndef LINUX
   virtual intptr_t FindFirst(const char *pDir, struct _finddata_t *fd);
   virtual int FindNext(intptr_t handle, struct _finddata_t *fd);
 #else

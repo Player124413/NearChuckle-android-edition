@@ -246,6 +246,13 @@ void CPlayer::UpdateCamera()
 	}
 
 	float frameTime = m_pGame->GetSystem()->GetITimer()->GetFrameTime();
+
+	// FARCRY_CAMLOG=1: one line per call, so repeated updates within a frame show up.
+	static bool bCamLog = getenv("FARCRY_CAMLOG") != NULL;
+	if (bCamLog)
+		fprintf(stderr, "CAMUPD frame %d time %.4f vehicle %d firstperson %d entpos %.3f %.3f %.3f\n",
+			m_pGame->GetSystem()->GetIRenderer()->GetFrameID(), m_pGame->GetSystem()->GetITimer()->GetCurrTime(),
+			m_pVehicle ? 1 : 0, m_bFirstPerson ? 1 : 0, m_pEntity->GetPos().x, m_pEntity->GetPos().y, m_pEntity->GetPos().z);
 	
 	IPhysicalEntity *physEnt = m_pEntity->GetPhysics();
 	if (physEnt)

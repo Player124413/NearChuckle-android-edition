@@ -5348,7 +5348,7 @@ void CFurNormalMap::Update(EShaderPassType eShPass, float dt, SShaderPassHW *slw
     return;
 
   static bool bUseGravity = true;
-#ifndef __linux
+#ifndef LINUX
   if ((GetAsyncKeyState('G') & 0x8000))
     bUseGravity = true;
   if ((GetAsyncKeyState('N') & 0x8000))

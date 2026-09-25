@@ -3410,7 +3410,7 @@ int CShader::mfReadTexSequence(SShader *ef, TArray<STexPic *>& tl, const char *n
 
 int CShader::mfReadAllImgFiles(SShader *ef, SShaderTexUnit *tl, STexAnim *ta, char *name)
 {
-#ifndef __linux
+#ifndef LINUX
   struct __finddata64_t fileinfo;
   intptr_t handle;
   char d[1024];

@@ -245,7 +245,7 @@ void CD3D9Renderer::UnRegisterVariables()
 
 void CD3D9Renderer::WaitForDevice()
 {
-#ifndef __linux
+#ifndef LINUX
   if (m_bEditor)
     return;
 
@@ -311,7 +311,7 @@ bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColD
     nNewColDepth = 16;
   else
     nNewColDepth = 32;
-#ifndef __linux
+#ifndef LINUX
   if (!bFullScreen)
   {
     if (nNewWidth > m_deskwidth-16)
@@ -367,7 +367,7 @@ bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColD
   }
   if (!bFullScreen)
   {
-#ifndef __linux
+#ifndef LINUX
     int x = (m_deskwidth-CRenderer::m_width)/2;
     int y = (m_deskheight-CRenderer::m_height)/2;
     int wdt = GetSystemMetrics(SM_CXDLGFRAME)*2 + CRenderer::m_width;
@@ -1080,7 +1080,7 @@ void CD3D9Renderer::Update()
     static CFColor ColCurMem = Col_Yellow;
 
     static int sMask = -1;
-#ifndef __linux
+#ifndef LINUX
     if (GetAsyncKeyState('1') & 0x1)
       sMask ^= 1;
     if (GetAsyncKeyState('2') & 0x1)
@@ -1788,7 +1788,7 @@ void CD3D9Renderer::ScreenShot(const char *filename)
   D3DLOCKED_RECT d3dlrSys;
   int wdt = m_deskwidth;
   int hgt = m_deskheight;
-#ifdef __linux
+#ifdef LINUX
   if (true)
 #else
   if (m_bFullScreen)
@@ -2743,7 +2743,7 @@ void CD3D9Renderer::SetCamera(const CCamera &cam)
 
   float fov=cam.GetFov()*cam.GetProjRatio();
   D3DXMatrixPerspectiveFovRH(m, fov, 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
-#ifndef __linux
+#ifndef LINUX
   //IVO: code to check, if off-center projection works
   if (0) 
   {

@@ -1040,8 +1040,12 @@ void CPlayer::Update()
 		FRAME_PROFILER( "CPlayerUpdate::PostStep",GetISystem(),PROFILE_GAME );
 		pe_params_flags pf;
 		pf.flagsOR = pef_custom_poststep;
-		if (m_bIsAI)
+		// In a vehicle the rotation follows the vehicle; without this the physics refuses bank
+		// angles that push the capsule into the vehicle and the camera target jumps for a frame.
+		if (m_bIsAI || m_pVehicle)
 			pf.flagsOR |= lef_loosen_stuck_checks;
+		else
+			pf.flagsAND = ~lef_loosen_stuck_checks;
 		physEnt->SetParams(&pf);
 	}
 
@@ -1647,13 +1651,6 @@ void CPlayer::ProcessAngles(CXEntityProcessingCmd &ProcessingCmd)
 
 //#define UNDERWATER_SPEED	0.19f/8.0f
 
-#ifdef __ANDROID__
-// Touch sticks always scale speed by deflection; joypad mode would also put mouse look through a stick dead zone.
-static bool AnalogMove(CXGame*) { return true; }
-#else
-static bool AnalogMove(CXGame* pGame) { return pGame->cl_use_joypad->GetIVal() != 0; }
-#endif
-
 ///////////////////////////////////////////////
 /*! Updates the position and stats of the player
 		@param ProcessingCmd structure of commands to process
@@ -2015,7 +2012,7 @@ void CPlayer::ProcessMovements(CXEntityProcessingCmd &cmd, bool bScheduled)
 	{				          
 		bMoveF=true;
 		float fFwd=1.0f;
-		if (AnalogMove(m_pGame))
+		if (m_pGame->cl_use_joypad->GetIVal())
 			fFwd=cmd.GetMoveFwd();
 
 		if(m_stats.onLadder)	// when on ladder - move mostly UP/DOWN
@@ -2058,7 +2055,7 @@ void CPlayer::ProcessMovements(CXEntityProcessingCmd &cmd, bool bScheduled)
 
 		bMoveB=true;
 		float fBack=1.0f;
-		if (AnalogMove(m_pGame))
+		if (m_pGame->cl_use_joypad->GetIVal())			
 			fBack=cmd.GetMoveBack();
 
 		//FIXME: would be nice if backward key detach us from the ladder when we approach the ground (instead use the jump button), but for this
@@ -2104,7 +2101,7 @@ void CPlayer::ProcessMovements(CXEntityProcessingCmd &cmd, bool bScheduled)
 	{								
 		bMoveL=true;
 		float fLR=1.0f;
-		if (AnalogMove(m_pGame))
+		if (m_pGame->cl_use_joypad->GetIVal())
 			fLR=cmd.GetMoveLeft();		
 
 		/*if (m_stats.onLadder)
@@ -2124,7 +2121,7 @@ void CPlayer::ProcessMovements(CXEntityProcessingCmd &cmd, bool bScheduled)
 	{			
 		bMoveR=true;
 		float fLR=1.0f;
-		if (AnalogMove(m_pGame))
+		if (m_pGame->cl_use_joypad->GetIVal())
 			fLR=cmd.GetMoveRight();		
 
 
@@ -2229,7 +2226,7 @@ void CPlayer::ProcessMovements(CXEntityProcessingCmd &cmd, bool bScheduled)
 		}
 
 		// Resolve analog movement magnitudes
-		if (AnalogMove(m_pGame))
+		if (m_pGame->cl_use_joypad->GetIVal())
 		{		
 			float fMoveMag=0;
 			{
@@ -5129,7 +5126,7 @@ void CPlayer::OnDraw(const SRendParams & _RendParams)
 	OnDrawMountedWeapon( _RendParams );
 
 	// if nRecursionLevel is not 0 - use only 3tp person view ( for reflections )
-	int nRecursionLevel = (int)(INT_PTR)m_pGame->GetSystem()->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
+	int nRecursionLevel = (int)(intptr_t)m_pGame->GetSystem()->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
 
 	// draw first person weapon
 	if(m_bFirstPerson && !nRecursionLevel && m_stats.drawfpweapon	&& m_nSelectedWeaponID != -1)
@@ -6018,36 +6015,6 @@ bool	CPlayer::GoProne( )
 
 	return true;
 }
-//////////////////////////////////////////////////////////////////////////
-// Touch crouch button. The stance is set directly: the keyboard's toggle crouch keeps m_bStayCrouch
-// and restores the previous stance on release, so standing after prone -> crouch would go prone again.
-void CPlayer::TouchStance( bool bHold )
-{
-	if (m_pVehicle || m_bSwimming || m_stats.onLadder)
-		return;
-	if (bHold)
-	{
-		if (m_CurStance == eProne)
-		{
-			m_bStayCrouch = false;
-			GoStand(false);
-		}
-		else
-			GoProne();
-		return;
-	}
-	if (m_CurStance == eProne || !(m_stats.crouch || m_bStayCrouch))
-	{
-		m_bStayCrouch = true;
-		GoCrouch();
-	}
-	else
-	{
-		m_bStayCrouch = false;
-		GoStand(false);
-	}
-}
-
 
 //
 //-----------------------------------------------------------------------------------------------
@@ -6819,7 +6786,7 @@ void	CPlayer::GiveBinoculars(bool val)
 
 void CPlayer::PreloadInstanceResources(Vec3d vPrevPortalPos, float fPrevPortalDistance, float fTime)
 {
-	int nRecursionLevel = (int)(INT_PTR)m_pGame->GetSystem()->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
+	int nRecursionLevel = (int)(intptr_t)m_pGame->GetSystem()->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
 	if(m_bFirstPerson && !nRecursionLevel && m_stats.drawfpweapon	&& m_nSelectedWeaponID != -1)
 		return;
 

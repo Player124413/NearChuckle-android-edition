@@ -85,7 +85,7 @@ inline int IsHeapValid ()
 #define TEXT
 
 #ifndef __cplusplus
-#if !defined(_WCHAR_T_DEFINED) && !defined(__APPLE__) && !defined(__ANDROID__)
+#if !defined(_WCHAR_T_DEFINED) && !defined(__APPLE__)
 typedef unsigned short wchar_t;
 #define TCHAR wchar_t;
 #define _WCHAR_T_DEFINED
@@ -203,63 +203,6 @@ typedef struct in_addr_windows
 #define _finite isfinite
 #define stat64 stat
 #define fstat64 fstat
-#elif defined(__ANDROID__)
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-// Sigma Touch: everything the game writes lives under $USER_FILES/farcry, never in the
-// game folder (docs/porting/phase2.md). Without USER_FILES it falls back to the cwd.
-inline const char* CryUserDir()
-{
-	static char szDir[1024];
-	if (!szDir[0])
-	{
-		const char* szUser = getenv("USER_FILES");
-		snprintf(szDir, sizeof(szDir), "%s/farcry", szUser && szUser[0] ? szUser : ".");
-		mkdir(szDir, 0755);
-	}
-	return szDir;
-}
-inline const char* CryUserFile(const char* szRelative, char* szOut, size_t nOut)
-{
-	snprintf(szOut, nOut, "%s/%s", CryUserDir(), szRelative);
-	return szOut;
-}
-// The game folder as an absolute path (FARCRY_GAME_PATH, from the launcher's -GAMEPATH). On secondary storage it is
-// a virtual path that SAFFAL matches by prefix and nothing can chdir() into, so game data is always opened through it.
-inline const char* CryGameRoot()
-{
-	const char* szRoot = getenv("FARCRY_GAME_PATH");
-	return szRoot && szRoot[0] ? szRoot : NULL;
-}
-// Files the engine names by bare relative path (reports, dumps, logs; sixty-odd call sites) belong to the user
-// folder, which can be a SAF path on secondary storage that nothing can chdir() into: every fopen() in the
-// engine goes through here. Writes go to the user folder; reads try it, then the game folder.
-#include <unistd.h>
-inline FILE* CryAndroidFopen(const char* szPath, const char* szMode)
-{
-	if (!szPath || !szPath[0] || szPath[0] == '/' || !getenv("USER_FILES"))
-		return fopen(szPath, szMode);
-	char szUser[1024];
-	CryUserFile(szPath, szUser, sizeof(szUser));
-	if (strpbrk(szMode, "wa+") || access(szUser, R_OK) == 0 || !CryGameRoot())
-		return fopen(szUser, szMode);
-	char szGame[1024];
-	snprintf(szGame, sizeof(szGame), "%s/%s", CryGameRoot(), szPath);
-	return fopen(szGame, szMode);
-}
-#define fopen(p, m) CryAndroidFopen(p, m)
-
-// Where generated caches go (FARCRY_CACHE_PATH, from the launcher's -CACHEPATH: the app's cache folder).
-// CryPak writes that would land in the game folder are mirrored here instead.
-inline const char* CryCacheRoot()
-{
-	const char* szRoot = getenv("FARCRY_CACHE_PATH");
-	return szRoot && szRoot[0] ? szRoot : NULL;
-}
-// bionic has no __finite
-#define _finite isfinite
-#define __finite isfinite
 #else
 #define _finite __finite
 #endif
@@ -417,7 +360,7 @@ typedef struct
 		CHandle(const HandleType cHandle = U) : m_Value(cHandle){}
 		CHandle(const PointerType cpHandle) : m_Value((HandleType)(intptr_t)(cpHandle)){}
 		CHandle(INVALID_HANDLE_VALUE_ENUM) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
-#if defined(LINUX64) && defined(__LP64__)
+#if defined(LINUX64)
 		//treat __null tyope also as invalid handle type
 		CHandle(typeof(__null)) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
 #endif

@@ -607,7 +607,7 @@ void CTimeDemoRecorder::LogInfo( const char *format,... )
 	va_end(ArgList);
 
 	char path_buffer[_MAX_PATH];
-#ifndef __linux
+#ifndef LINUX
 	char drive[_MAX_DRIVE];
 	char dir[_MAX_DIR];
 	char fname[_MAX_FNAME];
@@ -617,7 +617,7 @@ void CTimeDemoRecorder::LogInfo( const char *format,... )
 #endif
 	m_pSystem->GetILog()->Log( szBuffer  );
 
-#ifndef __linux
+#ifndef LINUX
 	_splitpath( m_file.c_str(), drive, dir, fname, ext );
 	_makepath( path_buffer, drive, dir,fname,"log" );
 #else

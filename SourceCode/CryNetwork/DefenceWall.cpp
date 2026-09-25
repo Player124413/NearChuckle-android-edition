@@ -163,7 +163,7 @@ void CDefenceWall::FillStdServerProbes()
 bool CDefenceWall::ServerCreateModuleProbe( const char *sFilename,SClientCheckContext &ctx )
 {
 	char sModule[_MAX_PATH];
-#ifndef __linux
+#ifndef LINUX
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
 	_splitpath( sFilename,0,0,fname,ext );
@@ -424,7 +424,7 @@ void CDefenceWall::GetRelativeFilename( string &sFilename )
 
 	// Get current folder.
 	char szCurrDir[_MAX_PATH];
-#ifndef __linux
+#ifndef LINUX
 	GetCurrentDirectory( sizeof(szCurrDir),szCurrDir );
 #else
 	getcwd(szCurrDir, sizeof(szCurrDir));

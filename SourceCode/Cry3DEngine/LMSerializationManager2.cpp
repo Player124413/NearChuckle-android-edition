@@ -333,7 +333,7 @@ unsigned int CLMSerializationManager2::Save(const char *pszFilePath, LMGenParam 
 	string strPakName = strDirName + "\\" LEVELLM_PAK_NAME;
 	GetPak()->ClosePack(strPakName.c_str());
 	// make sure the pak file in which this LM data resides is opened
-#ifndef __linux
+#ifndef LINUX
 	SetFileAttributes(strPakName.c_str(), FILE_ATTRIBUTE_NORMAL);
 #endif
 	ICryArchive_AutoPtr pPak = GetPak()->OpenArchive (strPakName.c_str(), ICryArchive::FLAGS_RELATIVE_PATHS_ONLY);
@@ -686,16 +686,10 @@ RenderLMData * CLMSerializationManager2::CreateLightmap(const string& strDirPath
 string CLMSerializationManager2::GetLMPakFilename(const char *pszFileName)
 {
 	string strDirName = CryStringUtils::GetParentDirectory<string>(pszFileName);
-#ifdef __linux
+#ifdef LINUX
 	DIR *fdir;
 	struct dirent *d;
-#ifdef __ANDROID__
-	// Scan on the game root (secondary storage has no cwd); the name returned stays relative for CryPak.
-	string strScanDir = (CryGameRoot() && strDirName.c_str()[0] != '/') ? string(CryGameRoot()) + "/" + strDirName : strDirName;
-	fdir = opendir(strScanDir.c_str());
-#else
 	fdir = opendir(strDirName.c_str());
-#endif
 	if (fdir == NULL)
 	{
 		__builtin_trap();
@@ -727,7 +721,7 @@ RenderLMData * CLMSerializationManager2::CreateLightmap(const char *pszFileName,
 	// Create a DOT3 Lightmap object
 	IRenderer *pIRenderer = GetSystem()->GetIRenderer();
 	int iColorLerpTex = 0, iHDRColorLerpTex = 0, iDomDirectionTex = 0, iOcclTex = 0;
-#ifndef __linux
+#ifndef LINUX
 	assert(!IsBadReadPtr(pColorLerp4, sizeof(BYTE) * 4 * iWidth * iHeight));
 #ifdef USE_DOT3_ALPHA
 	assert(!IsBadReadPtr(pDomDirection3, sizeof(BYTE) * 4 * iWidth * iHeight));
@@ -869,7 +863,7 @@ bool CLMSerializationManager2::ExportDLights(const char *pszFilePath, const CDLi
 	string strPakName = strDirName + "\\" LEVELLM_PAK_NAME;
 	GetPak()->ClosePack(strPakName.c_str());
 	// make sure the pak file in which this LM data resides is opened
-#ifndef __linux
+#ifndef LINUX
 	SetFileAttributes(strPakName.c_str(), FILE_ATTRIBUTE_NORMAL);
 #endif
 	if (!bNewZip)
@@ -887,7 +881,7 @@ bool CLMSerializationManager2::ExportDLights(const char *pszFilePath, const CDLi
 		pPak->RemoveFile (pFileName);
 		return true;
 	}
-#ifndef __linux
+#ifndef LINUX
 	assert(!IsBadReadPtr(ppLights, sizeof(CDLight *) * iNumLights));
 #endif
 	sHeader.iNumDLights = iNumLights;

@@ -34,7 +34,6 @@
 	*/
 
 
-#ifdef _WIN32
 #ifndef EXCLUDE_UBICOM_CLIENT_SDK
 	#pragma comment(lib,"libgsclient.lib")
 	#pragma comment(lib,"libgsmsclient.lib")
@@ -48,7 +47,6 @@
 	#pragma comment(lib,"libgsproxyclient.lib")
 	#pragma comment(lib,"libgsresult.lib")
 	#pragma comment(lib,"libgscdkey.lib")
-#endif
 //#endif
 
 
@@ -560,12 +558,10 @@ void NewUbisoftClient::MSClientDisconnected()
 
 // the following libs are excluded from the build in the project settings and here they are included
 // because only if we don't use UBI.com we need them
-#ifdef _WIN32
 #ifdef _DEBUG
 	#pragma comment(lib,"libcmtd.lib")
 #else
 	#pragma comment(lib,"libcmt.lib")
-#endif
 #endif
 
 #endif // NOT_USE_UBICOM_SDK

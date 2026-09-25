@@ -244,11 +244,7 @@ unsigned CRefStreamEngine::GetFileSize (const char* szFilePathPC, unsigned nCryP
    
 	// we didn't find the file size in the cache - open the file and query the size
 #ifdef LINUX
-#ifdef __ANDROID__
-	FILE* hFile = m_pPak->LooseFileMayExist(szFilePath) ? fopen (szFilePath, "rb") : NULL; // mostly pak files: skip the probe
-#else
 	FILE* hFile = fopen (szFilePath, "rb");
-#endif
 	if (hFile)
 #else
 	HANDLE hFile = CreateFile (szFilePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);

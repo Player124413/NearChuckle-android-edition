@@ -38,8 +38,176 @@ The GLRenderer interface Class
 #undef GL_EXT
 #undef GL_PROC
  
-#if defined(LINUX) || defined(__linux__) || defined(__ANDROID__)
-#include "GLFuncs_Redefine.h"
+#ifdef LINUX
+#define glLineWidth cryglLineWidth
+#define glEnable cryglEnable
+#define glDisable cryglDisable
+#define glIsEnabled cryglIsEnabled
+#define glFogf cryglFogf
+#define glFogi cryglFogi
+#define glFogfv cryglFogfv
+#define glActiveTextureARB cryglActiveTextureARB
+#define glClientActiveTextureARB cryglClientActiveTextureARB
+#define glTexGeni cryglTexGeni
+#define glTexGenfv cryglTexGenfv
+#define glMatrixMode cryglMatrixMode
+#define glLoadMatrixf cryglLoadMatrixf
+#define glLoadIdentity cryglLoadIdentity
+#define glPushMatrix cryglPushMatrix
+#define glPopMatrix cryglPopMatrix
+#define glMultMatrixf cryglMultMatrixf
+#define glTrackMatrixNV cryglTrackMatrixNV
+#define glEnableClientState cryglEnableClientState
+#define glDisableClientState cryglDisableClientState
+#define glGenFencesNV cryglGenFencesNV
+#define glDeleteFencesNV cryglDeleteFencesNV
+#define glTestFenceNV cryglTestFenceNV
+#define glFinishFenceNV cryglFinishFenceNV
+#define glSetFenceNV cryglSetFenceNV
+#define glBindBufferARB cryglBindBufferARB
+#define glVertexPointer cryglVertexPointer
+#define glTexCoordPointer cryglTexCoordPointer
+#define glNormalPointer cryglNormalPointer
+#define glProgramParameter4fvNV cryglProgramParameter4fvNV
+#define glUnmapBufferARB cryglUnmapBufferARB
+#define glColorPointer cryglColorPointer
+#define glColor3ubv cryglColor3ubv
+#define glColor3f cryglColor3f
+#define glColor3fv cryglColor3fv
+#define glColor4ubv cryglColor4ubv
+#define glColor4f cryglColor4f
+#define glColor4fv cryglColor4fv
+#define glScissor cryglScissor
+#define glTexEnvi cryglTexEnvi
+#define glGenProgramsARB cryglGenProgramsARB
+#define glBindProgramARB cryglBindProgramARB
+#define glMapBufferARB cryglMapBufferARB
+#define glCallList cryglCallList
+#define glProgramStringARB cryglProgramStringARB
+#define glGenProgramsNV cryglGenProgramsNV
+#define glDeleteProgramsNV cryglDeleteProgramsNV
+#define glLoadProgramNV cryglLoadProgramNV
+#define glBindProgramNV cryglBindProgramNV
+#define glGetString cryglGetString
+#define glGetIntegerv cryglGetIntegerv
+#define glGetBooleanv cryglGetBooleanv
+#define glNewList cryglNewList
+#define glGenLists cryglGenLists
+#define glDeleteLists cryglDeleteLists
+#define glEndList cryglEndList
+#define glDeleteProgramsARB cryglDeleteProgramsARB
+#define glProgramEnvParameter4fvARB cryglProgramEnvParameter4fvARB
+#define glCombinerStageParameterfvNV cryglCombinerStageParameterfvNV
+#define glCombinerParameterfvNV cryglCombinerParameterfvNV
+#define glCombinerInputNV cryglCombinerInputNV
+#define glCombinerOutputNV cryglCombinerOutputNV
+#define glCombinerParameteriNV cryglCombinerParameteriNV
+#define glGetCombinerInputParameterivNV cryglGetCombinerInputParameterivNV
+#define glGetCombinerOutputParameterivNV cryglGetCombinerOutputParameterivNV
+#define glGetCombinerStageParameterfvNV cryglGetCombinerStageParameterfvNV
+#define glFinalCombinerInputNV cryglFinalCombinerInputNV
+#define glGetFinalCombinerInputParameterivNV cryglGetFinalCombinerInputParameterivNV
+#define glTexEnvf cryglTexEnvf
+#define glTexEnvfv cryglTexEnvfv
+#define glProgramParameters4fvNV cryglProgramParameters4fvNV
+#define glProgramEnvParameter4fARB cryglProgramEnvParameter4fARB
+#define glProgramParameter4fNV cryglProgramParameter4fNV
+#define glTexParameteri cryglTexParameteri
+#define glTexParameterf cryglTexParameterf
+#define glGetTexLevelParameteriv cryglGetTexLevelParameteriv
+#define glOrtho cryglOrtho
+#define glBegin cryglBegin
+#define glEnd cryglEnd
+#define glTexCoord2f cryglTexCoord2f
+#define glTexCoord2fv cryglTexCoord2fv
+#define glTexCoord3f cryglTexCoord3f
+#define glMultiTexCoord2fARB cryglMultiTexCoord2fARB
+#define glMultiTexCoord2fvARB cryglMultiTexCoord2fvARB
+#define glVertex2i cryglVertex2i
+#define glVertex2f cryglVertex2f
+#define glVertex3f cryglVertex3f
+#define glVertex3fv cryglVertex3fv
+#define glReadBuffer cryglReadBuffer
+#define glDrawBuffer cryglDrawBuffer
+#define glViewport cryglViewport
+#define glTranslatef cryglTranslatef
+#define glRotatef cryglRotatef
+#define glScalef cryglScalef
+#define glReadPixels cryglReadPixels
+#define glGenBuffersARB cryglGenBuffersARB
+#define glDeleteBuffersARB cryglDeleteBuffersARB
+#define glBufferDataARB cryglBufferDataARB
+#define glClearColor cryglClearColor
+#define glClearDepth cryglClearDepth
+#define glClear cryglClear
+#define glClipPlane cryglClipPlane
+#define glClearStencil cryglClearStencil
+#define glGenTextures cryglGenTextures
+#define glDeleteTextures cryglDeleteTextures
+#define glTexImage1D cryglTexImage1D
+#define glTexImage2D cryglTexImage2D
+#define glTexImage3DEXT cryglTexImage3DEXT
+#define glTexSubImage2D cryglTexSubImage2D
+#define glCopyTexImage2D cryglCopyTexImage2D
+#define glCopyTexSubImage2D cryglCopyTexSubImage2D
+#define glGetTexImage cryglGetTexImage
+#define glGetCompressedTexImageARB cryglGetCompressedTexImageARB
+#define glCompressedTexImage2DARB cryglCompressedTexImage2DARB
+#define glCompressedTexSubImage2DARB cryglCompressedTexSubImage2DARB
+#define glDepthRange cryglDepthRange
+#define glStencilFuncSeparateATI cryglStencilFuncSeparateATI
+#define glCullFace cryglCullFace
+#define glStencilOpSeparateATI cryglStencilOpSeparateATI
+#define glActiveStencilFaceEXT cryglActiveStencilFaceEXT
+#define glStencilOp cryglStencilOp
+#define glStencilFunc cryglStencilFunc
+#define glDepthFunc cryglDepthFunc
+#define glColorMask cryglColorMask
+#define glDepthMask cryglDepthMask
+#define glStencilMask cryglStencilMask
+#define glPolygonMode cryglPolygonMode
+#define glBlendFunc cryglBlendFunc
+#define glAlphaFunc cryglAlphaFunc
+#define glGetFloatv cryglGetFloatv
+#define glGetDoublev cryglGetDoublev
+#define glLightf cryglLightf
+#define glLightfv cryglLightfv
+#define glLightModeli cryglLightModeli
+#define glLightModelfv cryglLightModelfv
+#define glMaterialfv cryglMaterialfv
+#define glMaterialf cryglMaterialf
+#define glDrawElements cryglDrawElements
+#define glBufferSubDataARB cryglBufferSubDataARB
+#define glPolygonOffset cryglPolygonOffset
+#define glGetError cryglGetError
+#define glPixelStorei cryglPixelStorei
+#define glVertexAttribPointerNV cryglVertexAttribPointerNV
+#define glDeleteOcclusionQueriesNV cryglDeleteOcclusionQueriesNV
+#define glGetOcclusionQueryuivNV cryglGetOcclusionQueryuivNV
+#define glGenOcclusionQueriesNV cryglGenOcclusionQueriesNV
+#define glBeginOcclusionQueryNV cryglBeginOcclusionQueryNV
+#define glEndOcclusionQueryNV cryglEndOcclusionQueryNV
+#define glTexGenf cryglTexGenf
+#define glVertexArrayRangeNV cryglVertexArrayRangeNV
+#define glLockArraysEXT cryglLockArraysEXT
+#define glUnlockArraysEXT cryglUnlockArraysEXT
+#define glSecondaryColorPointerEXT cryglSecondaryColorPointerEXT
+#define glFinish cryglFinish
+#define glColorTableEXT cryglColorTableEXT
+#define glBindTexture cryglBindTexture
+#define glShadeModel cryglShadeModel
+#define glHint cryglHint
+#define glPointSize cryglPointSize
+
+#define wglSetDeviceGammaRamp3DFX crywglSetDeviceGammaRamp3DFX
+#define wglSwapIntervalEXT crywglSwapIntervalEXT
+#define wglGetDeviceGammaRamp3DFX crywglGetDeviceGammaRamp3DFX
+#define wglAllocateMemoryNV crywglAllocateMemoryNV
+#define wglFreeMemoryNV crywglFreeMemoryNV
+#define wglCreateBufferRegionARB crywglCreateBufferRegionARB
+#define wglRestoreBufferRegionARB crywglRestoreBufferRegionARB
+#define wglDeleteBufferRegionARB crywglDeleteBufferRegionARB
+#define wglSaveBufferRegionARB crywglSaveBufferRegionARB
 #endif
 
 #include "CG/cgGL.h"
@@ -95,6 +263,10 @@ struct SGLTexUnit
 };
 
 //////////////////////////////////////////////////////////////////////
+#ifdef GLES_RENDERER
+void* GLES_MapBufferRange(unsigned int target, size_t offset, size_t size); // GLES/gles_vertex.cpp
+#endif
+
 class CGLRenderer : public CRenderer
 {
   friend class CGLTexMan;
@@ -976,6 +1148,22 @@ public:
     if (SUPPORTS_GL_ARB_vertex_buffer_object)
     {
       glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_RP.m_VidBufs[nCurVB].m_pVBDyn->m_VS[0].m_VertBuf.m_nID);
+#ifdef GLES_RENDERER
+      // Map only the slice about to be written: mapping the whole shared buffer per light pass cost
+      // a driver allocation (or a ring wait) per pass on Adreno. VB_Unlock's unmap is then a no-op.
+      {
+        int nOffsR = m_RP.m_VidBufs[nCurVB].m_nOffs;
+        if (nSize + nOffsR > m_RP.m_VidBufs[nCurVB].m_nCount)
+          nOffsR = 0;
+        byte *pSlice = (byte *)GLES_MapBufferRange(GL_ARRAY_BUFFER_ARB, nOffsR, nSize);
+        if (pSlice)
+        {
+          nOffs = nOffsR;
+          m_RP.m_VidBufs[nCurVB].m_nOffs = nOffsR + nSize;
+          return pSlice;
+        }
+      }
+#endif
       pData = (byte *)glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
       if (nSize+m_RP.m_VidBufs[nCurVB].m_nOffs > m_RP.m_VidBufs[nCurVB].m_nCount)
         m_RP.m_VidBufs[nCurVB].m_nOffs = 0;

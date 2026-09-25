@@ -1,9 +1,6 @@
 project(CryAnimation LANGUAGES CXX ASM_MASM)
 
-if (${ARCH_TYPE} STREQUAL "x86")
-    add_definitions(-DDO_ASM -DPROC_INTEL)
-endif()
-add_definitions(-D_USRDLL -DCRYANIMATION_EXPORTS)
+add_definitions(-DDO_ASM -DPROC_INTEL -D_USRDLL -DCRYANIMATION_EXPORTS)
 
 set(SRC_FILES
     "AnimObject.cpp"
@@ -86,7 +83,7 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
 )
 
 target_link_libraries(${PROJECT_NAME})

@@ -1024,7 +1024,7 @@ void CSoundSystem::Update()
 
 	{
 		//FRAME_PROFILER( "CSoundSystem::CS_Update",GetSystem(),PROFILE_SOUND );
-		CS_Update();
+		//CS_Update();
 	}
 }
 
@@ -1957,7 +1957,7 @@ void CSoundSystem::GetMemoryUsage(class ICrySizer* pSizer)
 #endif
 
 		//CS_GetMemoryStats(&nCurrentAlloced, &nMaxAlloced);
-		if (!pSizer->AddObject((const void*)(uintptr_t)&CS_Init, nCurrentAlloced))
+		if (!pSizer->AddObject(reinterpret_cast<const void*>(&CS_Init), nCurrentAlloced))
 			return;
 	}
 }
@@ -1998,7 +1998,7 @@ extern "C"
 {
 	void CheckMem(void* pData, size_t nSize)
 	{
-#ifndef __linux
+#ifndef LINUX
 		assert (0 == IsBadReadPtr(pData, nSize));
 #endif
 	}

@@ -163,9 +163,9 @@ static uint64 CRC_64( const char *buf,unsigned int len )
 void encipher(unsigned int *src,unsigned int *trg,int len,unsigned int *key )
 {
 unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; 
-register unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3];
+unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3];
 while (nlen--) {
-register unsigned int y=v[0],z=v[1],n=32,sum=0; 
+unsigned int y=v[0],z=v[1],n=32,sum=0; 
 while(n-->0) { sum += delta; y += (z << 4)+a ^ z+sum ^ (z >> 5)+b; z += (y << 4)+c ^ y+sum ^ (y >> 5)+d; } 
 w[0]=y; w[1]=z; 
 v+=2,w+=2;
@@ -175,9 +175,9 @@ v+=2,w+=2;
 void decipher(unsigned int *src,unsigned int *trg,int len,unsigned int *key )
 {
 unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; 
-register unsigned delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; 
+unsigned delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; 
 while (nlen--) { 
-register unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32;
+unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32;
 while(n-->0) { z -= (y << 4)+c ^ y+sum ^ (y >> 5)+d; y -= (z << 4)+a ^ z+sum ^ (z >> 5)+b; sum -= delta; } 
 w[0]=y; w[1]=z;
 v+=2,w+=2;
@@ -189,10 +189,10 @@ v+=2,w+=2;
 // key is 128bit:  int key[4] = {n1,n2,n3,n4};
 // void encipher(unsigned int *const v,unsigned int *const w,const unsigned int *const k )
 #define TEA_ENCODE( src,trg,len,key ) {\
-	register unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
-	register unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
+	unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
+	unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
 	while (nlen--) {\
-	register unsigned int y=v[0],z=v[1],n=32,sum=0; \
+	unsigned int y=v[0],z=v[1],n=32,sum=0; \
 	while(n-->0) { sum += delta; y += (z << 4)+a ^ z+sum ^ (z >> 5)+b; z += (y << 4)+c ^ y+sum ^ (y >> 5)+d; } \
 	w[0]=y; w[1]=z; v+=2,w+=2; }}
 
@@ -201,10 +201,10 @@ v+=2,w+=2;
 // key is 128bit: int key[4] = {n1,n2,n3,n4};
 // void decipher(unsigned int *const v,unsigned int *const w,const unsigned int *const k)
 #define TEA_DECODE( src,trg,len,key ) {\
-	register unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
-	register unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
+	unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
+	unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
 	while (nlen--) { \
-	register unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32; \
+	unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32; \
 	while(n-->0) { z -= (y << 4)+c ^ y+sum ^ (y >> 5)+d; y -= (z << 4)+a ^ z+sum ^ (z >> 5)+b; sum -= delta; } \
 	w[0]=y; w[1]=z; v+=2,w+=2; }}
 

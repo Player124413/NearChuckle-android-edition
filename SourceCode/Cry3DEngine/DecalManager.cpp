@@ -236,9 +236,17 @@ void CDecalManager::Spawn( CryEngineDecalInfo DecalInfo, float fMaxViewDistance,
 		}
 	}
 
-	// loop position in array
-  if(m_nCurDecal>=DECAL_COUNT)
+	// loop position in array; e_decals_max_count recycles earlier to bound the draw calls decals add
+  int nMaxDecals = GetCVars()->e_decals_max_count;
+  if (nMaxDecals < 1 || nMaxDecals > DECAL_COUNT)
+    nMaxDecals = DECAL_COUNT;
+  if(m_nCurDecal>=nMaxDecals)
+  {
+    // Slots above a lowered cap would otherwise live on until they expire.
+    for (int i = nMaxDecals; i < DECAL_COUNT; i++)
+      m_arrbActiveDecals[i] = false;
     m_nCurDecal=0;
+  }
 
 	// free old LB
 	GetRenderer()->DeleteLeafBuffer(m_arrDecals[m_nCurDecal].m_pBigDecalLeafBuffer);

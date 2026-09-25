@@ -328,7 +328,7 @@ bool CInput::Init(ISystem *pSystem
 #endif
 		return (false);
 	m_pLog->Log("Mouse initialized\n");		
-#ifndef __linux
+#ifndef LINUX
 	if (!m_Joystick.Init(m_g_pdi,hinst,hwnd,m_pLog)) 
 #else
 	if (true)

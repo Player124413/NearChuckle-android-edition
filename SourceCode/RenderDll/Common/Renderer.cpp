@@ -2004,7 +2004,7 @@ SShaderItem CRenderer::EF_LoadShaderItem (const char *name, EShClass Class, bool
 
 bool CRenderer::EF_ReloadFile (const char *szFileName)
 {
-#ifndef __linux
+#ifndef LINUX
   char nmf[512];
   char drn[512];
   char drv[16];
@@ -4284,7 +4284,7 @@ bool CRenderer::DXTDecompress(byte *srcData,byte *dstData,int nWidth,int nHeight
 
 bool CRenderer::DXTCompress( byte *raw_data,int nWidth,int nHeight,ETEX_Format eTF, bool bUseHW, bool bGenMips, int nSrcBytesPerPix, MIPDXTcallback callback)
 {
-#ifndef __linux
+#ifndef LINUX
   if(IsBadReadPtr(raw_data, nWidth*nHeight*nSrcBytesPerPix))
   {
     assert(0);

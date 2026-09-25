@@ -782,11 +782,6 @@ char *mfLoadCG(const char *prog_text)
   }
   void mfDisable()
   {
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     if (m_CGProfileType == CG_PROFILE_VP20)
       glDisable(GL_VERTEX_PROGRAM_NV);
     else
@@ -799,11 +794,6 @@ char *mfLoadCG(const char *prog_text)
 
   void mfDel()
   {
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     if(m_Insts[m_CurInst].m_dwHandle >= 0)
     {
       if (m_Insts[m_CurInst].m_BindConstants)
@@ -818,10 +808,7 @@ char *mfLoadCG(const char *prog_text)
         glDeleteProgramsNV(1, &m_Insts[m_CurInst].m_dwHandle);
       else
       if (m_CGProfileType == CG_PROFILE_ARBVP1)
-      {
-        glBindProgramARB(GL_VERTEX_PROGRAM_ARB, 0);
         glDeleteProgramsARB(1, &m_Insts[m_CurInst].m_dwHandle);
-      }
     }
     m_Insts[m_CurInst].m_dwHandle = 0;
   }

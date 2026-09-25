@@ -47,7 +47,9 @@
 #include <assert.h>
 #endif
 
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <stdlib.h>
 #include <fcntl.h>
 

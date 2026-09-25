@@ -349,7 +349,7 @@ XmlString CXmlNode::getXML( int level ) const
 bool CXmlNode::saveToFile( const char *fileName )
 {
 	XmlString xml = getXML();
-#ifndef __linux
+#ifndef LINUX
 	SetFileAttributes( fileName,FILE_ATTRIBUTE_NORMAL );
 #endif
 	FILE *file = fxopen( fileName,"wt" );

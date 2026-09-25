@@ -29,7 +29,7 @@ bool CRefReadStream::Activate()
 	AUTO_LOCK(g_csActivate);
 
 	m_bOverlapped = m_pEngine->isOverlappedIoEnabled();
-#ifndef __linux
+#ifndef LINUX
 	if (m_pZipEntry == NULL && m_hFile == INVALID_HANDLE_VALUE)
 		m_hFile = CreateFile (m_strFileName.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			m_bOverlapped?FILE_FLAG_OVERLAPPED:0,
@@ -58,7 +58,7 @@ bool CRefReadStream::Activate()
 				// try to open the file - this should really be not often the case
 				const char* szPakFile = m_pZipEntry->GetZip()->GetFilePath();
 				// even if we can't open it, it doesn't matter: we automatically resort to using the cache
-#ifndef __linux
+#ifndef LINUX
 				m_hFile = CreateFile (szPakFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 					m_bOverlapped?FILE_FLAG_OVERLAPPED:0,
 					NULL);
@@ -87,7 +87,7 @@ bool CRefReadStream::Activate()
 				m_nFileSize = m_pZipEntry->GetFileEntry()->desc.lSizeUncompressed;
 			else
 			{
-#ifndef __linux
+#ifndef LINUX
 				m_nFileSize = ::GetFileSize (m_hFile, NULL);
 #else
 				m_nFileSize = 0; //STUB
@@ -112,7 +112,7 @@ bool CRefReadStream::Activate()
 CRefReadStream::~CRefReadStream()
 {
 	m_pEngine->Unregister(this);
-#ifndef __linux
+#ifndef LINUX
 	if (m_hFile != INVALID_HANDLE_VALUE)
 		CloseHandle(m_hFile);
 #endif
@@ -126,7 +126,7 @@ void CRefReadStream::Abort(CRefReadStreamProxy* pProxy)
 	{
 		// there's only one proxy that uses this object; so we can safely cancel io
 		// on this file
-#ifndef __linux
+#ifndef LINUX
 		CancelIo (m_hFile);
 #else
 		__builtin_trap();

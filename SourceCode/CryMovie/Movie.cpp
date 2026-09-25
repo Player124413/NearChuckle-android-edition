@@ -26,7 +26,7 @@
 #include "MaterialNode.h"
 
 #include <ISystem.h>
-#ifndef __linux
+#ifndef LINUX
 #include <io.h>
 #endif
 #include <ILog.h>

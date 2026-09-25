@@ -739,25 +739,16 @@ void CGLRenderer::EF_Release(int nFlags)
 
   if (nFlags & EFRF_VSHADERS)
   {
-    CVProgram::m_LastVP = NULL;
-    CVProgram::m_LastTypeVP = 0;
-    m_RP.m_LastVP = NULL;
-    m_RP.m_CurVP = NULL;
     for (i=0; i<CVProgram::m_VPrograms.Num(); i++)
     {
-      if (CVProgram::m_VPrograms[i])
-        CVProgram::m_VPrograms[i]->mfReset();
+      CVProgram::m_VPrograms[i]->mfReset();
     }
   }
   if (nFlags & EFRF_PSHADERS)
   {
-    CPShader::m_LastVP = NULL;
-    CPShader::m_LastTypeVP = 0;
-    m_RP.m_CurPS = NULL;
     for (i=0; i<CPShader::m_PShaders.Num(); i++)
     {
-      if (CPShader::m_PShaders[i])
-        CPShader::m_PShaders[i]->mfReset();
+      CPShader::m_PShaders[i]->mfReset();
     }
   }
 }
@@ -4510,14 +4501,7 @@ void CGLRenderer::EF_DrawLightPasses_PS30(SShaderTechnique *hs, SShader *ef, int
       if (slw->mfSetTextures())
       {
         if (curVP)
-        {
-          if (!curVP->mfSet(true, slw, VPF_DONTSETMATRICES))
-          {
-            curVP = NULL;
-            m_RP.m_FlagsPerFlush &= ~RBSI_USEVP;
-            m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
-          }
-        }
+          curVP->mfSet(true, slw, VPF_DONTSETMATRICES);
 
         EF_ApplyMatrixOps(slw->m_MatrixOps, true);
 
@@ -4536,12 +4520,7 @@ void CGLRenderer::EF_DrawLightPasses_PS30(SShaderTechnique *hs, SShader *ef, int
 
         // Set Pixel shaders and Register combiners for the current pass
         if (slw->m_FShader)
-        {
-          if (!slw->m_FShader->mfSet(true, slw))
-          {
-            m_RP.m_PersFlags &= ~RBPF_PS1NEEDSET;
-          }
-        }
+          slw->m_FShader->mfSet(true, slw);
         else
           m_RP.m_PersFlags &= ~RBPF_PS1NEEDSET;
 
@@ -4827,12 +4806,7 @@ void CGLRenderer::EF_DrawLightPasses(SShaderTechnique *hs, SShader *ef, int nSta
           if (newVP)
           {
             curVP = newVP;
-            if (!curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES))
-            {
-              curVP = NULL;
-              m_RP.m_FlagsPerFlush &= ~RBSI_USEVP;
-              m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
-            }
+            curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES);
           }
           else
             curVP = NULL;
@@ -4851,12 +4825,7 @@ void CGLRenderer::EF_DrawLightPasses(SShaderTechnique *hs, SShader *ef, int nSta
           m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
 
         if (slw->m_FShader)
-        {
-          if (!slw->m_FShader->mfSet(true, slw))
-          {
-            m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
-          }
-        }
+          slw->m_FShader->mfSet(true, slw);
         else
           m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
 
@@ -5485,12 +5454,7 @@ void CGLRenderer::EF_DrawShadowPasses(SShaderTechnique *hs, SShader *ef, int nSt
           if (newVP)
           {
             curVP = newVP;
-            if (!curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES))
-            {
-              curVP = NULL;
-              m_RP.m_FlagsPerFlush &= ~RBSI_USEVP;
-              m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
-            }
+            curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES);
           }
           else
             curVP = NULL;
@@ -5508,12 +5472,7 @@ void CGLRenderer::EF_DrawShadowPasses(SShaderTechnique *hs, SShader *ef, int nSt
 
         // Set Pixel shaders and Register combiners for the current pass
         if (slw->m_FShader)
-        {
-          if (!slw->m_FShader->mfSet(true, slw))
-          {
-            m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
-          }
-        }
+          slw->m_FShader->mfSet(true, slw);
         else
           m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
 
@@ -5717,12 +5676,7 @@ void CGLRenderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool b
         if (newVP)
         {
           curVP = newVP;
-          if (!curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES))
-          {
-            curVP = NULL;
-            m_RP.m_FlagsPerFlush &= ~RBSI_USEVP;
-            m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
-          }
+          curVP->mfSet(true, slw, VPF_SETPOINTERSFORPASS | VPF_DONTSETMATRICES);
         }
         else
           curVP = NULL;
@@ -5740,12 +5694,7 @@ void CGLRenderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool b
 
       // Set Pixel shaders and Register combiners for the current pass
       if (slw->m_FShader)
-      {
-        if (!slw->m_FShader->mfSet(true, slw))
-        {
-          m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
-        }
-      }
+        slw->m_FShader->mfSet(true, slw);
       else
         m_RP.m_PersFlags &= ~(RBPF_PS1NEEDSET | RBPF_PS2NEEDSET | RBPF_TSNEEDSET);
 

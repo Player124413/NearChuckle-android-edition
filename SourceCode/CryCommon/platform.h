@@ -78,16 +78,12 @@ typedef void *EVENT_HANDLE;
 
 #if defined(LINUX64)
 #include <Linux64Specific.h>
-#if !defined(_CPU_ARM64) && !defined(__aarch64__)
 #define _CPU_AMD64
-#endif
 #endif
 
 #if defined(LINUX32)
-#include <Linux32Specific.h>
-#if !defined(_CPU_ARM) && !defined(__arm__)
 #define _CPU_X86
-#endif
+#include <Linux32Specific.h>
 #endif
 
 #include "stdio.h"
@@ -98,7 +94,7 @@ typedef void *EVENT_HANDLE;
 #define CPUF_MMX   8
 
 
-#ifndef __linux
+#ifndef LINUX
 #define IS_DIR(X) X.attrib &_A_SUBDIR
 #define FNAME(X) X.name
 #else
@@ -106,8 +102,8 @@ typedef void *EVENT_HANDLE;
 #define FNAME(X) X.d_name
 #endif
 
-#if defined(__linux) && !defined(__x86_64__)
-#include <SDL3/SDL.h>
+#if !defined(__x86_64__) && !defined(__i386__)
+#include <time.h>
 #endif
 
 #define crymax(a,b)            (((a) > (b)) ? (a) : (b))
@@ -215,7 +211,7 @@ typedef std::wstring wstring;
 #define SIGN_MASK(x) ((intptr_t)(x) >> ((sizeof(size_t)*8)-1))
 
 // macro for structure alignement
-#if defined(__cplusplus)
+#if defined(LINUX) && defined(__cplusplus)
 #define DEFINE_ALIGNED_DATA( type, name, alignment ) alignas(alignment) type name;
 #define DEFINE_ALIGNED_DATA_STATIC( type, name, alignment ) alignas(alignment) static type name;
 #define DEFINE_ALIGNED_DATA_CONST( type, name, alignment ) alignas(alignment) const type name;
@@ -248,7 +244,7 @@ static int64 GetTicks()
 {
 #if defined(WIN64)
 	return __rdtsc ();
-#elif !defined(__linux) || defined(__x86_64__)
+#elif defined(__x86_64__) || defined(__i386__)
 	typedef union _LARGE_INTEGER 
 	{
     struct 
@@ -268,8 +264,10 @@ static int64 GetTicks()
 	__asm__ __volatile__ ( "rdtsc" : "=a" (counter.u.LowPart), "=d" (counter.u.HighPart) );
 	return counter.QuadPart;
 #else
-	//return SDL_GetTicks64();
-	return SDL_GetTicks();
+	// No cycle counter: monotonic nanoseconds serve the profilers that use this.
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (int64)ts.tv_sec * 1000000000LL + ts.tv_nsec;
 #endif
 }
 #endif

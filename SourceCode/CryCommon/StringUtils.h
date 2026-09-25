@@ -207,6 +207,7 @@ inline string toString (const Vec3& v)
 #endif
 
 // does the same as strstr, but the szString is allowed to be no more than the specified size
+#ifndef __APPLE__ // libc already has strnstr
 inline const char* strnstr (const char* szString, const char* szSubstring, int nSuperstringLength)
 {
 	int nSubstringLength = (int)strlen(szSubstring);
@@ -220,6 +221,7 @@ inline const char* strnstr (const char* szString, const char* szSubstring, int n
 	}
 	return NULL;
 }
+#endif
 
 
 // calculates the number of characters in the given string, limited by the end pointer

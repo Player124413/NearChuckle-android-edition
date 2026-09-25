@@ -451,7 +451,7 @@ int CScriptObjectEntity::SetPos(IFunctionHandler *pH)
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,*oVec);
 	vec=oVec.Get();
-#ifdef __linux
+#ifdef LINUX
 	//For some reason, the player's bounding box gets stuck on the ceiling
 	//when starting the bunker level, forcing you to crouch or go prone to
 	//drop down. This mostly happens on the Linux release build, though it

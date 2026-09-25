@@ -837,34 +837,6 @@ CUIVideoFFmpeg::CUIVideoFFmpeg(const char* aliasName)
 	m_aliasName = aliasName;
 }
 
-#if (defined(__GNUC__) || defined(__clang__)) && !defined(_WIN32)
-extern "C" {
-#ifndef LINUX64
-__attribute__((weak)) CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, int userdata)
-#else
-__attribute__((weak)) CS_STREAM* CS_Stream_Create(CS_STREAMCALLBACK callback, int length, unsigned int mode, int samplerate, void* userdata)
-#endif
-{
-	return nullptr;
-}
-__attribute__((weak)) signed char CS_Stream_Close(CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) int CS_Stream_Play(int channel, CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) signed char CS_Stream_Stop(CS_STREAM* stream)
-{
-	return 0;
-}
-__attribute__((weak)) void CS_Update()
-{
-}
-}
-#endif
-
 signed char FFmpegAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, void* nParam)
 {
 	if (!nParam)

@@ -64,18 +64,16 @@ BinkHandle Bink_Open( const char* fileName )
 
 	// loaded ok, make handle valid
 	newHandle.isValid = true;
-
+#if 0
 	// find a free slot if available
-	for( size_t i = 0; i < classInstances.size(); i++ )
+	for( int i = 0; i < classInstances.size(); i++ )
 	{
 		if( !classInstances[i] )
 		{
-			classInstances[i] = newDecoder;
-			newHandle.instanceIndex = ( int )i;
-			return newHandle;
-		}
+			class
+			}
 	}
-
+#endif
 	// add instance to global instance vector
 	classInstances.push_back( newDecoder );
 
@@ -88,11 +86,9 @@ BinkHandle Bink_Open( const char* fileName )
 
 void Bink_Close( BinkHandle& handle )
 {
-	if( handle.instanceIndex < 0 || handle.instanceIndex >= ( int )classInstances.size() || !classInstances[handle.instanceIndex] )
+	if( !classInstances.at( handle.instanceIndex ) )
 	{
 		// invalid handle
-		handle.instanceIndex = -1;
-		handle.isValid = false;
 		return;
 	}
 

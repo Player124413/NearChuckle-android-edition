@@ -2,9 +2,7 @@
   gles_vertex.cpp : current attributes, immediate mode, client arrays, VBOs, draws.
 =============================================================================*/
 #include "gles_internal.h"
-#include "gles_arb.h"
 #include <deque>
-#include <set>
 #include <SDL3/SDL.h>
 
 #define IM_UNITS 4
@@ -181,11 +179,7 @@ static GLuint sImVBO, sImOffset = IM_VBO_BYTES, sQuadIBO;
 // 40 with glBufferData per draw and 52 with client arrays (Note 20 Ultra). FARCRY_GLES_IMMODE:
 // 0 subdata ring, 1 bufferdata per draw, 2 unsynchronized map ring, 3 client arrays, 4 the persistent
 // ring shared with map mode 4 (GL_EXT_buffer_storage; falls back to 3 without it).
-#ifdef __ANDROID__
-#define IM_MODE_DEFAULT 3
-#else
 #define IM_MODE_DEFAULT 2
-#endif
 static int ImMode()
 {
   static int mode = getenv("FARCRY_GLES_IMMODE") ? atoi(getenv("FARCRY_GLES_IMMODE")) : IM_MODE_DEFAULT;
@@ -350,17 +344,10 @@ static void __stdcall gles_glTexCoordPointer(GLint size, GLenum type, GLsizei st
 static void __stdcall gles_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid* p) { SetPointer(g_es.color2Array, size, type, stride, p); }
 
 static void __stdcall gles_glGenBuffersARB(GLsizei n, GLuint* ids) { es_glGenBuffers(n, ids); }
-// Direct-mapped cache in front of g_esBuffers: each draw resolves its vertex and index buffers.
-static struct { GLuint id; SESBuffer* buf; } sResolveCache[4096];
-void GLES_ForgetBufferCache() { memset(sResolveCache, 0, sizeof(sResolveCache)); }
-
 static void __stdcall gles_glDeleteBuffersARB(GLsizei n, const GLuint* ids)
 {
-  for (GLsizei i = 0; i < n; i++)
-  {
-    g_esBuffers.erase(ids[i]);
-    if (sResolveCache[ids[i] & 4095].id == ids[i]) sResolveCache[ids[i] & 4095].id = 0;
-  }
+  for (GLsizei i = 0; i < n; i++) g_esBuffers.erase(ids[i]);
+  GLES_ForgetBufferCache();
   es_glDeleteBuffers(n, ids);
 }
 static void __stdcall gles_glBindBufferARB(GLenum target, GLuint id)
@@ -381,11 +368,7 @@ static void __stdcall gles_glBindBufferARB(GLenum target, GLuint id)
 // the Android default where the extension exists, mode 1 the fallback.
 static int MapMode()
 {
-#ifdef __ANDROID__
-  static int mode = getenv("FARCRY_GLES_MAPMODE") ? atoi(getenv("FARCRY_GLES_MAPMODE")) : 4;
-#else
   static int mode = getenv("FARCRY_GLES_MAPMODE") ? atoi(getenv("FARCRY_GLES_MAPMODE")) : 0;
-#endif
   return mode;
 }
 
@@ -511,17 +494,21 @@ static size_t RingAlloc(SRing& r, size_t bytes)
 }
 
 // Mode 4 draw-time redirection: an array or index pointer into a ring-backed buffer binds the ring.
+// Last buffer ResolveRing looked up: a draw's attributes nearly always share one buffer.
+static GLuint sResolveId;
+static SESBuffer* sResolveBuf;
+void GLES_ForgetBufferCache() { sResolveId = 0; sResolveBuf = NULL; }
+
 static void ResolveRing(GLuint& buffer, const void*& ptr)
 {
   if (!buffer || MapMode() != 4) return;
-  unsigned slot = buffer & 4095;
-  if (sResolveCache[slot].id != buffer)
+  if (buffer != sResolveId)
   {
     std::map<GLuint, SESBuffer>::iterator it = g_esBuffers.find(buffer);
     if (it == g_esBuffers.end()) return;
-    sResolveCache[slot].id = buffer; sResolveCache[slot].buf = &it->second;
+    sResolveId = buffer; sResolveBuf = &it->second;
   }
-  SESBuffer& b = *sResolveCache[slot].buf;
+  SESBuffer& b = *sResolveBuf;
   if (!b.ranges.empty())
   {
     size_t off = (uintptr_t)ptr;
@@ -791,23 +778,8 @@ static void DumpDrawState(const char* what, GLsizei count, GLenum indexType = 0,
   GLES_Log("GLES: draw %s n=%d prog %d (%s) blend %d %x/%x color %.2f,%.2f,%.2f,%.2f vtx %d:%dx0x%x buf%u col %d%s",
     what, count, prog, GLES_CurrentProgramDesc(), blend, src, dst, g_es.color[0], g_es.color[1], g_es.color[2], g_es.color[3],
     g_es.vertexArray.enabled, g_es.vertexArray.size, g_es.vertexArray.type, g_es.vertexArray.buffer, g_es.colorArray.enabled, units.c_str());
-  {
-    GLint vp[4], fb = 0;
-    es_glGetIntegerv(GL_VIEWPORT, vp);
-    es_glGetIntegerv(0x8CA6 /* DRAW_FRAMEBUFFER_BINDING */, &fb);
-    GLES_Log("GLES:   viewport %d,%d %dx%d fbo %d", vp[0], vp[1], vp[2], vp[3], fb);
-  }
   if (prog) GLES_Log("GLES:   fog %d mode 0x%x %.1f..%.1f col %.2f,%.2f,%.2f env%s", g_es.fog, g_es.fogMode, g_es.fogStart, g_es.fogEnd,
     g_es.fogColor[0], g_es.fogColor[1], g_es.fogColor[2], GLES_ARB_EnvDesc());
-  {
-    // Each ARB program's source, the first time a dumped draw uses it.
-    static std::set<const void*> shown;
-    for (int v = 0; v < 2; v++)
-    {
-      SARBProgram* p = GLES_ARB_Bound(v == 0);
-      if (p && shown.insert(p).second) GLES_Log("GLES:   %s program %u source:\n%s", v == 0 ? "vertex" : "fragment", p->id, p->source.c_str());
-    }
-  }
   if (prog)
   {
     // What unit 0 really samples: the native binding and two texels read back through a scratch framebuffer.

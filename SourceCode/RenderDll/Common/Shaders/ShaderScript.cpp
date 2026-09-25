@@ -555,7 +555,7 @@ bool CShader::mfReloadFile(const char *szPath, const char *szName, int nFlags)
 
 void CShader::mfCheckAffectedFiles(const char *ShadersPath, int nCheckFile, TArray<char *>& CheckNames, TArray<char *>& AffectedFiles)
 {
-#ifndef __linux
+#ifndef LINUX
 	struct _finddata_t fileinfo;
 #else
 	dirent fileinfo;
@@ -1886,7 +1886,7 @@ char *CShader::mfScriptForFileName(const char *name, SShader *shGen, uint64 nMas
 
 int CShader::mfLoadSubdir (char *drn, int n) 
 {
-#ifndef __linux
+#ifndef LINUX
 	struct _finddata_t fileinfo;
 #else
 	dirent fileinfo;

@@ -332,10 +332,16 @@ void CXClient::OnXConnect()
 	TRACE("CXClient::OnXConnect");	
 	LoadPlayerDesc();
 
-	if (m_pGame->m_bMapLoadedFromCheckpoint)
+/*	if (bDoSwitch)
 	{
-		m_pGame->SendMessage("Switch");
+		// TODO
+		// Check if this works
+		m_pGame->GetSystem()->GetIConsole()->SetScrollMax(600);
+		m_pGame->GetSystem()->GetIConsole()->ShowConsole(true);
+		//m_pGame->SendMessage("Switch");
+		bDoSwitch=false;
 	}
+*/
 }
 
 ///////////////////////////////////////////////
@@ -643,7 +649,7 @@ void CXClient::OnXContextSetup(CStream &stm)
 	if(m_pGame->m_pSystem->GetIMusicSystem())
 		m_pGame->m_pSystem->GetIMusicSystem()->Silence();
 
-	if (!m_pGame->m_bIsLoadingLevelFromFile || m_pGame->m_bMapLoadedFromCheckpoint)
+	if (!m_pGame->m_bIsLoadingLevelFromFile)
 	{
 		if (m_pGame->IsMultiplayer())
 		{
@@ -926,6 +932,12 @@ void CXClient::Update()
 			cam.SetAngle(cam.GetAngles()+pPlayer->m_vShake);
 			//pEntCam->GetCamera().GetAngles()+m_vSh
 		m_pGame->m_pSystem->SetViewCamera(cam);
+		// FARCRY_CAMLOG=1: the camera handed to the renderer this frame.
+		static bool bCamLog = getenv("FARCRY_CAMLOG") != NULL;
+		if (bCamLog)
+			fprintf(stderr, "VIEWCAM frame %d time %.4f pos %.3f %.3f %.3f angles %.2f %.2f %.2f fov %.2f\n",
+				m_pGame->m_pSystem->GetIRenderer()->GetFrameID(), m_pGame->m_pSystem->GetITimer()->GetCurrTime(),
+				cam.GetPos().x, cam.GetPos().y, cam.GetPos().z, cam.GetAngles().x, cam.GetAngles().y, cam.GetAngles().z, cam.GetFov());
 		if(m_bLinkListenerToCamera && m_pGame->m_pSystem->GetISoundSystem())
 			m_pGame->m_pSystem->GetISoundSystem()->SetListener(cam,Vec3(0,0,0));
 	}

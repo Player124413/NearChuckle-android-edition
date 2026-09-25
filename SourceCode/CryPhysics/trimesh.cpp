@@ -476,20 +476,6 @@ int CTriMesh::GetFeature(int iPrim,int iFeature, vectorf *pt)
 void CTriMesh::PrepareTriangle(int itri,triangle *ptri, const geometry_under_test *pGTest)
 {
 	int idx = itri*3;
-	// Defensive: a stale/corrupted triangle index (e.g. a contact cached against a geometry
-	// that was since replaced) must not turn into an out-of-bounds read - that is exactly the
-	// SIGSEGV seen in GetUnprojectionCandidates on some devices. Emit a degenerate triangle
-	// instead of crashing.
-	if (itri < 0 || itri >= m_nTris || !m_pIndices || !m_pNormals || !m_pVertices.data ||
-		(unsigned int)m_pIndices[idx  ] >= (unsigned int)m_nVertices ||
-		(unsigned int)m_pIndices[idx+1] >= (unsigned int)m_nVertices ||
-		(unsigned int)m_pIndices[idx+2] >= (unsigned int)m_nVertices) {
-		ptri->pt[0].Set(0,0,0);
-		ptri->pt[1].Set(0,0,0);
-		ptri->pt[2].Set(0,0,0);
-		ptri->n.Set(0,0,1);
-		return;
-	}
 	ptri->pt[0] = pGTest->R*m_pVertices[m_pIndices[idx  ]]*pGTest->scale + pGTest->offset;
 	ptri->pt[1] = pGTest->R*m_pVertices[m_pIndices[idx+1]]*pGTest->scale + pGTest->offset;
 	ptri->pt[2] = pGTest->R*m_pVertices[m_pIndices[idx+2]]*pGTest->scale + pGTest->offset;
@@ -519,10 +505,6 @@ int CTriMesh::TraceTriangleInters(int iop, primitive *pprims[], int idx_buddy,in
 	itypes[iop] = triangle::type;
 	itypes[iop^1] = type_buddy;
 
-	// Defensive: stale triangle index in the cached primitive would index m_pTopology OOB.
-	if ((unsigned int)itri0 >= (unsigned int)m_nTris)
-		return 0;
-
 	do {
 		itri = m_pTopology[itri0].ibuddy[pinters->iFeature[1][iop] & 0x1F];
 		if ((itri|iop<<31)==pborder->itri_end && GetEdgeByBuddy(itri,itri0)==pborder->iedge_end || (pborder->npt>3 && 
@@ -544,7 +526,7 @@ int CTriMesh::TraceTriangleInters(int iop, primitive *pprims[], int idx_buddy,in
 				itri = m_pTopology[itri0].ibuddy[dec_mod3[pinters->iFeature[1][iop] & 0x1F]];
 			}	else
 				return 0;
-			if (itri<0 || itri>=m_nTris)
+			if (itri<0)
 				return 0;
 
 			iter=0; do {
@@ -555,7 +537,7 @@ int CTriMesh::TraceTriangleInters(int iop, primitive *pprims[], int idx_buddy,in
 				itri_cur = itri;
 				itri = m_pTopology[itri].ibuddy[dec_mod3[GetEdgeByBuddy(itri, itri_prev)]];
 				itri_prev = itri_cur;
-			} while(itri>=0 && itri<m_nTris && itri!=itri_end && ++iter<30);
+			} while(itri>=0 && itri!=itri_end && ++iter<30);
 
 			return 0;
 		}
@@ -589,10 +571,6 @@ int CTriMesh::GetUnprojectionCandidates(int iop,const contact *pcontact, primiti
 	intptr_t idmask = ~iszero_mask(m_pIds);
 	short idnull=-1, *pIds = (short*)((intptr_t)m_pIds&idmask | (intptr_t)&idnull&~idmask);
 	itri = ((indexed_triangle*)pprim)->idx;
-	// Defensive: the contact may reference a triangle that no longer exists (reloaded or
-	// replaced geometry). Indexing m_pTopology/m_pIndices with it would crash.
-	if ((unsigned int)itri >= (unsigned int)m_nTris)
-		return 0;
 	PrepareTriangle(itri,ptri,pGTest); ptri->idx = itri;
 	pprim = ptri;
 	piFeature = pGTest->iFeature_buf;
@@ -640,10 +618,8 @@ int CTriMesh::GetUnprojectionCandidates(int iop,const contact *pcontact, primiti
 					itri_prev = itri;
 					itri = m_pTopology[itri].ibuddy[dec_mod3[iedge]];
 					ntris++;
-				} while(itri>=0 && itri<m_nTris && itri!=itri0 && ntris<pGTest->szprimbuf1-1);
+				} while(itri>=0 && itri!=itri0 && ntris<pGTest->szprimbuf1-1);
 
-				if (ntris < 1)
-					return 0; // boundary vertex with no fan - ptri[ntris-1] would read out of bounds
 				pGTest->edges[0].n[1] = pGTest->edges[0].dir ^ ptri[ntris-1].n;
 				pGTest->nSurfaces = ntris+1;
 				pGTest->nEdges = ntris+1;
@@ -662,22 +638,17 @@ int CTriMesh::GetUnprojectionCandidates(int iop,const contact *pcontact, primiti
 			pGTest->surfaces[0].idx = itri;
 			pGTest->surfaces[0].iFeature = 0x40;
 
-			{
-				// Defensive: read the buddy once and validate it before GetEdgeByBuddy
-				// dereferences m_pTopology[buddy] (buddy == -1 for boundary edges).
-				int ibuddy = m_pTopology[itri].ibuddy[iFeature & 0x1F];
-				piFeature[0] = ((unsigned int)ibuddy < (unsigned int)m_nTris ? GetEdgeByBuddy(ibuddy, itri) : 0) | 0xA0;
-				itri = ibuddy;
+			piFeature[0] = GetEdgeByBuddy(m_pTopology[itri].ibuddy[iFeature & 0x1F], itri) | 0xA0;
+			itri = m_pTopology[itri].ibuddy[iFeature & 0x1F];
+			pGTest->nSurfaces = 1;
+			if (itri<0) {
+				pGTest->edges[0].n[1] = pGTest->edges[0].n[0];
+				return 0;
 			}
-				pGTest->nSurfaces = 1;
-				if (itri<0 || itri>=m_nTris) {
-					pGTest->edges[0].n[1] = pGTest->edges[0].n[0];
-					return 0;
-				}
 
-				PrepareTriangle(itri,ptri,pGTest);
-				pGTest->idbuf[0] = pIds[itri&idmask];
-				ptri->idx = itri;
+			PrepareTriangle(itri,ptri,pGTest);
+			pGTest->idbuf[0] = pIds[itri&idmask];
+			ptri->idx = itri;
 
 			pGTest->edges[0].n[1] = pGTest->edges[0].dir^ptri->n;
 			pGTest->surfaces[1].n = ptri->n;

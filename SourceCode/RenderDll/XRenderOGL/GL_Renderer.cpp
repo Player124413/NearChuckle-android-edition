@@ -1775,9 +1775,6 @@ void CGLRenderer::Draw2dImage(float xpos,float ypos,float w,float h,int texture_
 { 
   PROFILE_FRAME(Draw_2DImage);
 
-  if (!angle)
-    Extend2DBoxEdges(xpos, ypos, w, h, texture_id, s0, t0, s1, t1, r, g, b, a, z);
-
   xpos=(float)ScaleCoordX(xpos);
   ypos=(float)ScaleCoordY(ypos)-1.0f;
 	w=(float)ScaleCoordX(w)+1.0f;
@@ -2257,7 +2254,7 @@ int CGLRenderer::SetPolygonMode(int mode)
 ///////////////////////////////////////////
 void CGLRenderer::SetPerspective(const CCamera &cam)
 {
-    gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
+    gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
 }
 
 ///////////////////////////////////////////
@@ -2267,7 +2264,7 @@ void CGLRenderer::SetCamera(const CCamera &cam)
   glLoadIdentity();
   // camera.fov is for horizontal -> GL needs it vertical
   // projection.ratio is height/width -> GL needs width/height
-  gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
+  gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
   glMatrixMode(GL_MODELVIEW);
 
   Matrix44 mat = cam.GetVCMatrixD3D9();
@@ -2566,12 +2563,6 @@ void CGLRenderer::ScreenShot(const char *filename)
   if (!filename)
   {           
     strcpy(scname,"FarCry00.jpg");
-#ifdef __ANDROID__
-    char szDir[1024];
-    CryUserFile("screenshots", szDir, sizeof(szDir));
-    mkdir(szDir, 0755);
-    snprintf(scname, sizeof(scname), "%s/FarCry00.jpg", szDir);
-#endif
     char *szDigits = scname + strlen(scname) - 6;
       
     for (i=0 ; i<=99 ; i++) 

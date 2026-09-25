@@ -104,8 +104,18 @@ m_sParam.m_cam_dir.Normalize();
 			b1p = 1;
 		} else {
 			pe_status_living status;
-  		if (physic && physic->GetStatus(&status))
+			int bHaveStatus = physic && physic->GetStatus(&status);
+			if (bHaveStatus)
   			tview += status.camOffset;
+			static bool bCamLog2 = getenv("FARCRY_CAMLOG") != NULL;
+			if (bCamLog2)
+			{
+				pe_status_pos sp;
+				if (physic) physic->GetStatus(&sp);
+				fprintf(stderr, "CAMOFF status %d offset %.3f %.3f %.3f physpos %.3f %.3f %.3f q %.4f %.4f %.4f %.4f type %d\n", bHaveStatus,
+					bHaveStatus ? status.camOffset.x : 0.f, bHaveStatus ? status.camOffset.y : 0.f, bHaveStatus ? status.camOffset.z : 0.f,
+					sp.pos.x, sp.pos.y, sp.pos.z, sp.q.w, sp.q.v.x, sp.q.v.y, sp.q.v.z, physic ? physic->GetType() : -1);
+			}
 			camdir = m_sParam.m_cam_dir;
 			cam_dist = range;//m_cam_dist;
 			cam_kstiffness=m_sParam.m_cam_kstiffness; cam_kdamping=m_sParam.m_cam_kdamping;
@@ -224,6 +234,11 @@ m_sParam.m_cam_dir.Normalize();
 	}
 //*/
   	SetPos((Vec3d) campos);
+	// FARCRY_CAMLOG=1: trace the third-person camera per call, to diagnose view jitter.
+	static bool bCamLog = getenv("FARCRY_CAMLOG") != NULL;
+	if (bCamLog)
+		fprintf(stderr, "CAM3P dt %.5f target %.3f %.3f %.3f look %.2f %.2f %.2f dist %.3f hitdelta %.3f dangle %.4f idle %.2f pos %.3f %.3f %.3f\n",
+			frameTime, center.x, center.y, center.z, angles0.x, angles0.y, angles0.z, dist, m_fDeltaDist, dangle, m_fTimeIdle, campos.x, campos.y, campos.z);
 //	m_camera.m_OldPosition = campos;
   	Vec3d cam_angles;	
 	if (b1p) {

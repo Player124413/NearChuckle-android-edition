@@ -23,7 +23,6 @@ _DECLARE_SCRIPTABLEEX(CUIVideoPanel)
 CUIVideoPanel::CUIVideoPanel()
 	: m_pSwapBuffer(0), m_szVideoFile(""), m_bKeepAspect(1), m_bLooping(0), m_bFinished(false), m_bPaused(false)
 {
-	m_cColor = color4f(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 ////////////////////////////////////////////////////////////////////// 
@@ -50,12 +49,14 @@ int CUIVideoPanel::LoadVideo(const string& szFileName, bool bSound)
 	m_szVideoFile = szFileName;
 	m_bFinished = false;
 	m_bPaused = false;
+#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.m_onFinished = [this]() {
-		if (m_bLooping)
+		if(m_bLooping)
 			m_videoPlayer.Rewind();
 		else
 			m_bFinished = true;
 	};
+#endif
 	return 1;
 }
 
@@ -66,10 +67,15 @@ LRESULT CUIVideoPanel::Update(unsigned int iMessage, WPARAM wParam, LPARAM lPara
 
 	// update texture
 	m_videoPlayer.Present();
+#ifdef CRY_NO_FFMPEG
+	if (!m_videoPlayer.IsPlaying())
+	{
+		m_bFinished = true;
+	}
+#endif
 
 	if (m_bFinished)
 	{
-		m_bFinished = false;
 		if (m_bLooping)
 		{
 			m_videoPlayer.Rewind();
@@ -77,8 +83,17 @@ LRESULT CUIVideoPanel::Update(unsigned int iMessage, WPARAM wParam, LPARAM lPara
 		else
 		{
 			Stop();
-			OnFinished();
-			return 1;
+#ifdef LINUX
+			// Hack to prevent OnFinished from calling itself again somewhere in Lua, which 
+			// causes issues such as adding StartLevel commands multiple times, or use
+			// after free crashes when completing the final cutscene.
+			if (iMessage == 29)
+#else
+			if (true)
+#endif
+			{
+				OnFinished();
+			}
 		}
 	}
 
@@ -91,7 +106,6 @@ int CUIVideoPanel::Play()
 {
 	if (m_videoPlayer.GetTextureId() == -1)
 		return 0;
-	m_bFinished = false;
 	m_videoPlayer.Start();
 	m_bPaused = false;
 	return 1;
@@ -100,7 +114,6 @@ int CUIVideoPanel::Play()
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::Stop()
 {
-	m_bFinished = false;
 	m_videoPlayer.Stop();
 	m_videoPlayer.Terminate();
 	return 1;
@@ -200,41 +213,59 @@ int CUIVideoPanel::Draw(int iPass)
 
 		if (m_bKeepAspect)
 		{
-			IRenderer *rend = m_pUISystem->GetIRenderer();
-			float vw = (float)m_videoPlayer.GetWidth();
-			float vh = (float)m_videoPlayer.GetHeight();
-			float rw = rend ? (float)rend->GetWidth() : 800.0f;
-			float rh = rend ? (float)rend->GetHeight() : 600.0f;
+			float fAspect = m_videoPlayer.GetWidth() / (float)m_videoPlayer.GetHeight();
 
-			if (vw > 0.0f && vh > 0.0f && rw > 0.0f && rh > 0.0f)
+			if (fAspect < 1.0f)
 			{
-				float phys_rect_w = pAbsoluteRect.fWidth * (rw / 800.0f);
-				float phys_rect_h = pAbsoluteRect.fHeight * (rh / 600.0f);
-				float phys_rect_aspect = phys_rect_w / phys_rect_h;
-				float video_aspect = vw / vh;
-
-				float phys_w, phys_h;
-				if (phys_rect_aspect > video_aspect)
-				{
-					phys_h = phys_rect_h;
-					phys_w = phys_rect_h * video_aspect;
-				}
-				else
-				{
-					phys_w = phys_rect_w;
-					phys_h = phys_rect_w / video_aspect;
-				}
-				fWidth = phys_w * (800.0f / rw);
-				fHeight = phys_h * (600.0f / rh);
+				fWidth = fHeight * fAspect;
+			}
+			else
+			{
+				fHeight = fWidth / fAspect;
 			}
 		}
 
+		if (fWidth > pAbsoluteRect.fWidth)
+		{
+			float fRatio = pAbsoluteRect.fWidth / fWidth;
+
+			fWidth *= fRatio;
+			fHeight *= fRatio;
+		}
+		if (fHeight > pAbsoluteRect.fHeight)
+		{
+			float fRatio = pAbsoluteRect.fHeight / fHeight;
+
+			fWidth *= fRatio;
+			fHeight *= fRatio;
+		}
+
 		UIRect pRect;
+
 		pRect.fLeft = pAbsoluteRect.fLeft + (pAbsoluteRect.fWidth - fWidth) * 0.5f;
 		pRect.fTop = pAbsoluteRect.fTop + (pAbsoluteRect.fHeight - fHeight) * 0.5f;
 		pRect.fWidth = fWidth;
 		pRect.fHeight = fHeight;
+#ifdef CRY_NO_FFMPEG
+		IRenderer *rend = m_pUISystem->GetIRenderer();
 
+		float window_ratio = (float)rend->GetWidth() / (float)rend->GetHeight();
+		float video_ratio = m_videoPlayer.GetWidth() / (float)m_videoPlayer.GetHeight();
+
+		float ratio_scale = (window_ratio / video_ratio);
+		float wscale = 800.0f / ratio_scale;
+
+		if (ratio_scale > 1.0f)
+		{
+			pRect.fLeft = (float)(800.0f - wscale) / 2.0f;
+			pRect.fWidth = (float)800.0f / ratio_scale;
+		}
+		else
+		{
+			pRect.fLeft = 0.0f;
+			pRect.fWidth = 800.0f;
+		}
+#endif
 		if (m_bKeepAspect)
 		{
 			m_pUISystem->DrawQuad(pAbsoluteRect, m_cColor);

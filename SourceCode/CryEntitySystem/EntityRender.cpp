@@ -32,7 +32,7 @@ bool CEntity::DrawEntity(const SRendParams & _EntDrawParams)
 {
 	FUNCTION_PROFILER( m_pISystem,PROFILE_3DENGINE );
 
-  int nRecursionLevel = (int)(INT_PTR)m_pISystem->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
+  int nRecursionLevel = (int)(intptr_t)m_pISystem->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
 
 	if(nRecursionLevel==0)
 	{ // movement detection (if no recursion)

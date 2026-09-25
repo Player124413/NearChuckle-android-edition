@@ -222,7 +222,7 @@ CSystem::CSystem():
 	m_pSizer = NULL;
 
 	m_pCVarQuit=NULL;
-#ifndef __linux
+#ifndef LINUX
 	m_pDownloadManager = 0;
 #endif
 	// default game MOD is root
@@ -297,12 +297,7 @@ WIN_HMODULE CSystem::LoadDLL( const char *dllName,bool bQuitIfNotFound)
 	if (!handle)      
 	{
 #if defined(LINUX)
-		CryLogAlways("Error: LoadDLL failed to load '%s' (dlerror: %s)", dllName, CryGetLastErrorString());
-		printf ("Error loading DLL: %s, error :  %s\n", dllName, CryGetLastErrorString());
-#else
-		CryLogAlways("Error: LoadDLL failed to load '%s' (dlerror: %s)", dllName, dlerror() ? dlerror() : "unknown");
-#endif
-#if defined(LINUX)
+		printf ("Error loading DLL: %s, error :  %s\n", dllName, dlerror());
 		if (bQuitIfNotFound)
 			Quit();
 		else
@@ -382,7 +377,7 @@ void CSystem::SetDevMode( bool bEnable )
 ///////////////////////////////////////////////////
 void CSystem::ShutDown(bool bRelaunch)
 {		
-	CryLogAlways("System Shutdown (bRelaunch=%d, m_bQuit=%d)", (int)bRelaunch, (int)m_bQuit);
+	CryLogAlways("System Shutdown");
 	
 	if (m_pISound)
 	{
@@ -538,7 +533,7 @@ void CSystem::ShutDown(bool bRelaunch)
 	SAFE_DELETE(m_pSizer);
 	SAFE_DELETE(m_pStreamEngine);
 	SAFE_DELETE(m_pDefaultValidator);
-#ifndef __linux
+#ifndef LINUX
 	SAFE_RELEASE(m_pDownloadManager);
 #endif
 	if (m_pLog)
@@ -558,19 +553,12 @@ void CSystem::ShutDown(bool bRelaunch)
 /////////////////////////////////////////////////////////////////////////////////
 void CSystem::Quit()
 {
-	CryLogAlways("CSystem::Quit() called (current m_bQuit=%d)", (int)m_bQuit);
 	m_bQuit=true;
 #ifdef WIN32
 	if (m_bEditor)
 	{
 		PostQuitMessage(0);
 	}
-#endif
-#if defined(LINUX) || defined(__ANDROID__)
-	SDL_Event ev;
-	memset(&ev, 0, sizeof(ev));
-	ev.type = SDL_EVENT_QUIT;
-	SDL_PushEvent(&ev);
 #endif
 }
 /////////////////////////////////////////////////////////////////////////////////
@@ -892,10 +880,7 @@ bool CSystem::Update( int updateFlags, int nPauseMode )
 		{
 			switch (event.type)
 			{
-			case SDL_EVENT_QUIT:
-				CryLogAlways("SDL_EVENT_QUIT received, calling Quit()");
-				Quit();
-				break;
+			case SDL_EVENT_QUIT: Quit(); break;
 			case SDL_EVENT_TEXT_INPUT: break; //ignore
 			case SDL_EVENT_WINDOW_SHOWN:
 			case SDL_EVENT_WINDOW_RESTORED:
@@ -1091,7 +1076,7 @@ bool CSystem::Update( int updateFlags, int nPauseMode )
 
 	//////////////////////////////////////////////////////////////////////
 	//update sound system
-  if (m_pISound && !bNoUpdate)
+  if ((nPauseMode!=1) && m_pISound && !bNoUpdate)
 	{
 		FRAME_PROFILER( "SysUpdate:Sound",this,PROFILE_SYSTEM );
 
@@ -1112,7 +1097,7 @@ bool CSystem::Update( int updateFlags, int nPauseMode )
 		m_pIMusic->Update();
 		m_Time.MeasureTime("MusicSysUp");
 	}
-#ifndef __linux
+#ifndef LINUX
 	if (m_pDownloadManager && !bNoUpdate)
 	{
 		m_pDownloadManager->Update();
@@ -1229,7 +1214,7 @@ void CSystem::VTunePause()
 //////////////////////////////////////////////////////////////////////////
 void CSystem::Deltree(const char *szFolder, bool bRecurse)
 {
-#ifndef __linux
+#ifndef LINUX
 	__finddata64_t fd;
 	string filespec = szFolder;
 	filespec += "*.*";
@@ -1337,11 +1322,6 @@ void CSystem::OpenBasicPaks()
 	// [marco] removed as it could lead to severe security hacks.
 	//m_pIPak->OpenPacks( "*.pak" );
 	m_pIPak->OpenPacks( "",paksFolder.c_str() );
-#ifdef __ANDROID__
-	// The shader cache pak is ours, staged on primary storage even when the game data is on secondary storage.
-	if (const char* szShaderPak = getenv("FARCRY_SHADER_PAK"))
-		m_pIPak->OpenPack("", szShaderPak);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////

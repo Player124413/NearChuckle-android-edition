@@ -9,13 +9,13 @@
 
 #include "RenderPCH.h"
 #include "DriverD3D9.h"
-#ifndef __linux
+#ifndef LINUX
 #include <dxerr.h>
 #endif
 #include "D3DCGVProgram.h"
 #include "D3DCGPShader.h"
 
-#ifndef __linux
+#ifndef LINUX
 #include <SDL_syswm.h>
 #else
 #define lstrcat strcat
@@ -29,7 +29,7 @@ static char THIS_FILE[] = __FILE__;
 
 HWND Cry_GetHWND(SDL_Window* window)
 {
-#ifndef __linux
+#ifndef LINUX
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     SDL_GetWindowWMInfo(window, &wmInfo);
@@ -110,7 +110,7 @@ void CD3D9Renderer::DestroyWindow(void)
 
 void CD3D9Renderer::RestoreGamma(void)
 {
-#ifndef __linux
+#ifndef LINUX
   if (!(GetFeatures() & RFT_HWGAMMA))
     return;
 
@@ -147,7 +147,7 @@ void CD3D9Renderer::RestoreGamma(void)
 
 void CD3D9Renderer::SetDeviceGamma(ushort *r, ushort *g, ushort *b)
 {
-#ifndef __linux
+#ifndef LINUX
   ushort gamma[3][256];
   int i;
 
@@ -630,7 +630,7 @@ void CD3D9Renderer::ShutDown(bool bReInit)
 #endif
   FinalCleanup();
   CName::mfExitSubsystem();
-#ifndef __linux
+#ifndef LINUX
   if (m_hLibHandle3DC)
   {
     ::FreeLibrary((HINSTANCE)m_hLibHandle3DC);
@@ -733,7 +733,7 @@ bool CD3D9Renderer::SetWindow(int width, int height, bool fullscreen, WIN_HWND h
 //  return true;
 
     Uint32 windowFlags = 0;
-#ifdef __linux
+#ifdef LINUX
     windowFlags |= SDL_WINDOW_VULKAN;
 #endif
     if (fullscreen)
@@ -814,7 +814,7 @@ WIN_HWND CD3D9Renderer::Init(int x,int y,int width,int height,unsigned int cbpp,
     m_bEditor = true;
 
 #ifdef USE_3DC
-#ifndef __linux
+#ifndef LINUX
   m_hLibHandle3DC = ::LoadLibrary("CompressATI.dll");
   if (!m_hLibHandle3DC)
     m_hLibHandle3DC = ::LoadLibrary("CompressATI2.dll");
@@ -826,7 +826,7 @@ WIN_HWND CD3D9Renderer::Init(int x,int y,int width,int height,unsigned int cbpp,
 #else
   CompressTextureATI = 0;
   DeleteDataATI = 0;
-#endif //__linux
+#endif //LINUX
 #endif
 
   // Save the new dimensions
@@ -2081,7 +2081,7 @@ HRESULT CD3D9Renderer::AdjustWindowForChange()
 {
   if (m_bEditor)
     return S_OK;
-#ifdef __linux
+#ifdef LINUX
     return S_OK;
 #endif
 
@@ -2118,7 +2118,7 @@ HRESULT CD3D9Renderer::InitDeviceObjects()
   D3DADAPTER_IDENTIFIER9 *ai = &pAI->AdapterIdentifier;
   iLog->Log ( "D3D Adapter: Driver name: %s\n", ai->Driver);
   iLog->Log ( "D3D Adapter: Driver description: %s\n", ai->Description);
-  #ifndef __linux
+  #ifndef LINUX
   iLog->Log ( "D3D Adapter: Driver version: %d.%02d.%02d.%04d\n", HIWORD( ai->DriverVersion.u.HighPart ), LOWORD( ai->DriverVersion.u.HighPart ), HIWORD(ai->DriverVersion.u.LowPart), LOWORD(ai->DriverVersion.u.LowPart));
   // Unique driver/device identifier:
   #endif

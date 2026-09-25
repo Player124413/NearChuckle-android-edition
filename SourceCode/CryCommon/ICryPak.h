@@ -195,7 +195,7 @@ struct ICryPak
 
 	// given the source relative path, constructs the full path to the file according to the flags
 	// returns the pointer to the constructed path (can be either szSourcePath, or szDestPath, or NULL in case of error
-	virtual const char* AdjustFileName (const char *src, char dst[g_nMaxPath], unsigned nFlags, bool *bFoundInPak=NULL) = 0;
+	const char* AdjustFileName(const char *szSourcePath, char szDestPath[g_nMaxPath], unsigned nFlags = 0);
 
   virtual bool Init (const char *szBasePath)=0;
   virtual void Release()=0;
@@ -252,13 +252,13 @@ struct ICryPak
   virtual intptr_t 
   FindFirst(
   const char *pDir, 
-#ifndef __linux
+#ifndef LINUX
   struct _finddata_t *fd
 #else
  struct dirent* fd
 #endif
   )=0;
-#ifndef __linux
+#ifndef LINUX
   virtual int FindNext(intptr_t handle, struct _finddata_t *fd)=0;
 #else
   virtual int FindNext(intptr_t handle, struct dirent* fd)=0;

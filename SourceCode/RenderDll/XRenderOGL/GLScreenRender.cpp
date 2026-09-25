@@ -98,20 +98,6 @@ inline void CopyScreenToTexture(CGLRenderer *pRenderer, STexPic *pTex)
 // CreateRenderTarget - texture targets creation helper
 // Last Update: 28/05/2003
 
-// The screen passes draw a 0..1 quad in Set2DMode, but ModelViewProj otherwise comes from the current
-// object's cached matrix, which clipped the quad (CryVision covered only part of the screen); upload the 2D one.
-static void SetScreenMVP(CCGVProgram_GL *vp)
-{
-  SCGBind *pBind = vp->mfGetParameterBind("ModelViewProj");
-  if (!pBind)
-    return;
-  float fModelView[16], fProjection[16];
-  gRenDev->GetModelViewMatrix(fModelView);
-  gRenDev->GetProjectionMatrix(fProjection);
-  Matrix44 mvp = GetTransposed44(Matrix44(fModelView) * Matrix44(fProjection));
-  vp->mfParameter(pBind, mvp.GetData(), 4);
-}
-
 bool CreateRenderTarget(CGLRenderer *pRenderer, STexPic *&pTex, int iWidth, int iHeight, bool bUseAlpha, bool bLockable)
 {
   // check if parameters are valid
@@ -774,7 +760,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
           fpGlareAmount->mfSet(true, 0);
           pRenderer->EF_CommitPS();
           pRenderer->EF_CommitVS();
-          SetScreenMVP(vpGlare);
 
           // set texture coordinates scale (needed for rectangular textures in gl ..)         
           float pfTexel01[4]= { (float)pScreenAvg->m_Width, (float)pScreenAvg->m_Height, -0.5f, -0.5f};        
@@ -840,7 +825,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         fpRenderModeCold->mfSet(true, 0); 
         pRenderer->EF_CommitPS();
         pRenderer->EF_CommitVS();
-        SetScreenMVP(vpGlare);
 
         float pfScale01[]={ (float) pScreenTex->m_Width, (float) pScreenTex->m_Height, 0, 0};    
         vpGlare->mfParameter4f("vTexCoordScale01", pfScale01); 
@@ -875,7 +859,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       fpGlareMap->mfSet(true, 0);
       pRenderer->EF_CommitPS();
       pRenderer->EF_CommitVS();
-      SetScreenMVP(vpGlare);
 
       // set default image enhancing values
       float pGlareMapConsts[]= { 0.2f, 0.2f, 0.2f, 1.0f };                 
@@ -1031,7 +1014,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         fpGlare->mfSet(true, 0); 
         pRenderer->EF_CommitPS();
         pRenderer->EF_CommitVS();
-        SetScreenMVP(vpGlare);
 
         // due to cg bug, need to pass 2 diferent constants..
         float pCurrContrast01[]= { 0.0f, 0.0f, 0.0f, m_pVars->m_pCurrContrast.b }; 
@@ -1122,7 +1104,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         fpHeatSource->mfSet(true, 0);  
         pRenderer->EF_CommitPS();
         pRenderer->EF_CommitVS();
-        SetScreenMVP(vpNightGlare);
 
         // set texture coordinates scale (needed for rectangular textures in gl ..)
         float pfScale01[4]={ (float)pScreenTex->m_Width, (float)pScreenTex->m_Height, 1, 1};    
@@ -1179,7 +1160,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         fpHeatSourceDecode->mfSet(true, 0); 
         pRenderer->EF_CommitPS();
         pRenderer->EF_CommitVS();
-        SetScreenMVP(vpNightGlare);
 
         // set texture coordinates scale (needed for rectangular textures in gl ..)
         float pfScale01[4]={ (float)pScreenTex->m_Width, (float)pScreenTex->m_Height, 1, 1};    
@@ -1214,7 +1194,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       fpGlareMap->mfSet(true, 0);
       pRenderer->EF_CommitPS();
       pRenderer->EF_CommitVS();
-      SetScreenMVP(vpGlare);
 
       // set default image enhancing values
       float pGlareMapConsts[]= { 0.2f, 0.2f, 0.2f, 1.0f };                 
@@ -1270,7 +1249,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       fpNightGlare->mfSet(true, 0); 
       pRenderer->EF_CommitPS();
       pRenderer->EF_CommitVS();
-      SetScreenMVP(vpNightGlare);
 
       // setup noise parameters
       static float fOffsetU=0, fOffsetV=0;    
@@ -1390,7 +1368,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     fpFlashBang->mfSet(true, 0);
     pRenderer->EF_CommitPS();
     pRenderer->EF_CommitVS();
-    SetScreenMVP(vpFlashBang);
 
     // set texture coordinates scale (needed for rectangular textures in gl ..)    
     float pfScale01[4]={ (float)pScreenTex->m_Width, (float)pScreenTex->m_Height, (float)pTex->m_Width, (float)pTex->m_Height};     
@@ -1507,7 +1484,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     fpBluryMap->mfSet(true, NULL);
     pRenderer->EF_CommitPS();
     pRenderer->EF_CommitVS();
-    SetScreenMVP(vpBluryMap);
 
     // set constants
     float pBluryParams[]= { m_pVars->m_pBlurColor.r, m_pVars->m_pBlurColor.g, m_pVars->m_pBlurColor.b, m_pVars->m_fBlurAmount };
@@ -1556,7 +1532,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     fpCartoon->mfSet(true, NULL);
     pRenderer->EF_CommitPS();
     pRenderer->EF_CommitVS();
-    SetScreenMVP(vpCartoon);
 
     // set vertex program consts      
     // setup texture offsets, for texture neighboors sampling
@@ -1588,7 +1563,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     fpCartoonSilhouete->mfSet(true, NULL);
     pRenderer->EF_CommitPS();
     pRenderer->EF_CommitVS();
-    SetScreenMVP(vpCartoon);
 
     s1=1.0f;    
     t1=1.0f; 
@@ -1674,7 +1648,6 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       fpMotion->mfSet(true, NULL);
       pRenderer->EF_CommitPS();
       pRenderer->EF_CommitVS();
-      SetScreenMVP(vpMotion);
 
       // setup texture stages/states
       SetTexture(pRenderer, pTex, 0, GL_NEAREST, GL_NEAREST, 1);

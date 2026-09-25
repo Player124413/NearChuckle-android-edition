@@ -142,6 +142,7 @@ template	<class T> class list2;
 #define R_DX9_RENDERER	2
 #define R_NULL_RENDERER	3
 #define R_CUBAGL_RENDERER	4
+#define R_GLES_RENDERER	5
 
 //////////////////////////////////////////////////////////////////////
 // Render features

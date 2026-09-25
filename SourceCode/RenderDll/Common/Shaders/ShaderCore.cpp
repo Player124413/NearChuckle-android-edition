@@ -225,7 +225,7 @@ SShader& SShader::operator = (const SShader& src)
 
   mfFree();
   
-  int Offs = (int)(INT_PTR)&(((SShader *)0)->m_Id);
+  int Offs = (int)(intptr_t)&(((SShader *)0)->m_Id);
   byte *d = (byte *)this;
   byte *s = (byte *)&src;
   memcpy(&d[Offs], &s[Offs], sizeof(SShader)-Offs);
@@ -2682,7 +2682,7 @@ SShaderCacheHeaderItem *CShader::GetCacheItem(SShaderCache *pCache, int nMask)
 
 static void sConvert(const char *Path)
 {
-#ifndef __linux
+#ifndef LINUX
 	struct _finddata_t fileinfo;
 #else
 	dirent fileinfo;

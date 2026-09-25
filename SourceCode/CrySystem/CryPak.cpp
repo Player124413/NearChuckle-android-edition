@@ -32,11 +32,7 @@
 #endif
 
 #ifdef LINUX
-#ifdef __ANDROID__
-#include <dirent.h>
-#else
 #include <sys/dir.h>
-#endif
 #include <unistd.h>
 #else
 #	include <direct.h>
@@ -63,9 +59,6 @@ m_mapMissingFiles ( std::less<const string>(), MissingFileMapAllocator(g_pBigHea
 	char szCurrentDir[0x800];
 #ifndef LINUX
 	if (GetCurrentDirectory(sizeof(szCurrentDir), szCurrentDir))
-#elif defined(__ANDROID__)
-	if (CryGameRoot() ? (strncpy(szCurrentDir, CryGameRoot(), sizeof(szCurrentDir) - 2), szCurrentDir[sizeof(szCurrentDir) - 2] = 0, true)
-	                  : getcwd(szCurrentDir, sizeof(szCurrentDir)) != NULL)
 #else
 	if (getcwd( szCurrentDir, sizeof(szCurrentDir) ))
 #endif
@@ -232,22 +225,10 @@ const char* CCryPak::AdjustFileName(const char *src, char *dst, unsigned nFlags,
 		return dst;
 	}
 
-#ifdef __ANDROID__
-	// The game root replaces the cwd: realpath() cannot see a virtual secondary-storage path.
-	const char* szRoot = CryGameRoot();
-	if (szRoot)
-		while (src[0] == '.' && (src[1] == '/' || src[1] == '\\'))
-			src += 2;
-	rp = szRoot ? NULL : realpath(buf, dst);
-	if (!rp)
-	{
-		rp = szRoot ? strdup(szRoot) : realpath(".", NULL);
-#else
 	rp = realpath(buf, dst);
 	if (!rp)
 	{
 		rp = realpath(".", NULL);
-#endif
 		if (!rp)
 		{
 			fprintf(stderr, "realpath failed for .!\n");
@@ -318,11 +299,6 @@ const char* CCryPak::AdjustFileName(const char *src, char *dst, unsigned nFlags,
 		}
 	}
 
-#ifdef __ANDROID__
-	// Both storages are case-insensitive (FUSE and SAFFAL's own lookup), and casepath() walks from the real "/".
-	if (szRoot)
-		return dst;
-#endif
 	corrected = (char*)alloca(strlen(dst) + 3);
 	if (casepath(dst, corrected))
 	{
@@ -546,107 +522,6 @@ return (false);
 }*/
 
 
-#ifdef __ANDROID__
-static string Lower(string s) { for (size_t i = 0; i < s.length(); i++) s[i] = (char)tolower((unsigned char)s[i]); return s; }
-
-//////////////////////////////////////////////////////////////////////////
-// The listing of one directory under the game root, read once. A directory resolves its parent first, so a
-// missing folder near the root settles its whole subtree without asking the storage again.
-const CCryPak::SLooseDir& CCryPak::LooseDir(const string& strPath, size_t nRoot)
-{
-	string strKey = Lower(strPath);
-	std::map<string, SLooseDir>::iterator it = m_mapLooseDirs.find(strKey);
-	if (it != m_mapLooseDirs.end())
-		return it->second;
-	size_t nSlash = strPath.rfind('/');
-	if (nSlash != string::npos && nSlash >= nRoot) // down to the root's own children
-	{
-		const SLooseDir& parent = LooseDir(strPath.substr(0, nSlash), nRoot);
-		if (!parent.bExists || !parent.setNames.count(Lower(strPath.substr(nSlash + 1))))
-		{
-			SLooseDir& dir = m_mapLooseDirs[strKey];
-			dir.bExists = false;
-			return dir;
-		}
-	}
-	SLooseDir& dir = m_mapLooseDirs[strKey];
-	DIR* pDir = opendir(strPath.c_str());
-	dir.bExists = pDir != NULL;
-	if (pDir)
-	{
-		while (struct dirent* d = readdir(pDir))
-			dir.setNames.insert(Lower(d->d_name));
-		closedir(pDir);
-	}
-	return dir;
-}
-
-// False only when the file is certainly absent: a path under the game root whose directory listing
-// does not contain it. Anything else may exist and is left to the real call.
-bool CCryPak::LooseFileMayExist(const char* szFullPath)
-{
-	const char* szRoot = CryGameRoot();
-	size_t nRoot = szRoot ? strlen(szRoot) : 0;
-	if (!nRoot || strncmp(szFullPath, szRoot, nRoot) || szFullPath[nRoot] != '/')
-		return true;
-	// The retail loose shader cache holds only D3D and NV variants (2800 files); the ES renderer's ARB cache
-	// is our pak, and listing those folders through SAF alone cost 6 s of a level load.
-	if (!strncasecmp(szFullPath + nRoot + 1, "shaders/cache/", 14))
-		return false;
-	return LooseFileUnder(szFullPath, szRoot);
-}
-
-// The listing check itself, for any root (the game folder, or the cache folder's mirror of it).
-bool CCryPak::LooseFileUnder(const char* szFullPath, const char* szRoot)
-{
-	size_t nRoot = szRoot ? strlen(szRoot) : 0;
-	if (!nRoot || strncmp(szFullPath, szRoot, nRoot) || szFullPath[nRoot] != '/')
-		return true;
-	if (strstr(szFullPath, "/./") || strstr(szFullPath, "/../"))
-		return true; // not a plain path: leave it to the storage
-	const char* szSlash = strrchr(szFullPath, '/');
-	AUTO_LOCK(m_csLoose);
-	const SLooseDir& dir = LooseDir(string(szFullPath, szSlash - szFullPath), nRoot);
-	return dir.bExists && dir.setNames.count(Lower(szSlash + 1)) != 0;
-}
-
-// A path in the game folder, re-rooted in the cache folder: generated files (terrain, shader script and
-// lightmap caches) are written there instead of into the game data, and read back from there first.
-bool CCryPak::CacheMirror(const char* szFullPath, char* szOut, size_t nOut)
-{
-	const char* szRoot = CryGameRoot();
-	const char* szCache = CryCacheRoot();
-	size_t nRoot = szRoot ? strlen(szRoot) : 0;
-	if (!nRoot || !szCache || strncmp(szFullPath, szRoot, nRoot) || szFullPath[nRoot] != '/')
-		return false;
-	snprintf(szOut, nOut, "%s%s", szCache, szFullPath + nRoot);
-	return true;
-}
-
-// The same for a directory, for scans that would otherwise opendir() every folder a pak holds.
-bool CCryPak::LooseDirMayExist(const char* szFullPath)
-{
-	const char* szRoot = CryGameRoot();
-	size_t nRoot = szRoot ? strlen(szRoot) : 0;
-	if (!nRoot || strncmp(szFullPath, szRoot, nRoot) || szFullPath[nRoot] != '/' || strstr(szFullPath, "/./") || strstr(szFullPath, "/../"))
-		return true;
-	string strDir(szFullPath);
-	while (strDir.length() > nRoot + 1 && strDir[strDir.length() - 1] == '/')
-		strDir.erase(strDir.length() - 1);
-	AUTO_LOCK(m_csLoose);
-	return LooseDir(strDir, nRoot).bExists;
-}
-
-// Something was written or created under the game root: list again on the next probe.
-void CCryPak::ForgetLooseFiles()
-{
-	AUTO_LOCK(m_csLoose);
-	m_mapLooseDirs.clear();
-}
-
-static bool IsReadMode(const char* szMode) { return !strpbrk(szMode, "wa+"); }
-#endif
-
 //////////////////////////////////////////////////////////////////////////
 FILE *CCryPak::FOpen(const char *pName, const char *szMode,char *szFileGamePath,int nLen)
 {
@@ -657,11 +532,6 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,char *szFileGamePath,
 	if (nLen>g_nMaxPath)
 		nLen=g_nMaxPath;
 	strncpy(szFileGamePath,szFullPath,nLen);
-#ifdef __ANDROID__
-	if (IsReadMode(szMode) && !LooseFileMayExist(szFullPath))
-		fp = NULL;
-	else
-#endif
 	fp = fopen (szFullPath, szMode);
 
 	if (fp)
@@ -695,11 +565,7 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,unsigned nFlags2)
 		// security checks - if the file is not found in the pak and we are not in
 		// devmode, do not open it
 
-#ifdef __ANDROID__
-		if (szModPath && (bFoundInPak || (!bFoundInPak && !nVarPakPriority)) && (!IsReadMode(szMode) || LooseFileMayExist(szModPath)))
-#else
 		if (szModPath && (bFoundInPak || (!bFoundInPak && !nVarPakPriority)))
-#endif
 		{
 			fp = fopen (szModPath, szMode);
 			if (fp)
@@ -717,16 +583,7 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,unsigned nFlags2)
 
 	const char *szFullPath = AdjustFileName(pName, szFullPathBuf, 0);
 
-#ifdef __ANDROID__
-	// Nothing is written into the game data: writes go to its mirror in the cache folder, and a file
-	// already generated there is read in preference to the game folder, as a loose file would be.
-	char szCacheBuf[g_nMaxPath];
-	if (CacheMirror(szFullPath, szCacheBuf, sizeof(szCacheBuf)) && (!IsReadMode(szMode) || LooseFileUnder(szCacheBuf, CryCacheRoot())))
-		szFullPath = szCacheBuf;
-	if (!nVarPakPriority && (!IsReadMode(szMode) || LooseFileMayExist(szFullPath))) // if the file system files have priority now..
-#else
 	if (!nVarPakPriority) // if the file system files have priority now..
-#endif
 	{
 		fp = fopen (szFullPath, szMode);
 		if (fp)
@@ -808,9 +665,6 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,unsigned nFlags2)
 			return NULL;
 
 		FILE *file = fopen (szFullPath, szMode);
-#ifdef __ANDROID__
-		ForgetLooseFiles();
-#endif
 		if (file)
 			RecordFile( pName );
 		else
@@ -825,11 +679,7 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,unsigned nFlags2)
 	CCachedFileData_AutoPtr pFileData = GetFileData (szFullPath);
 	if (!pFileData)
 	{
-#ifdef __ANDROID__
-		if (nVarPakPriority && LooseFileMayExist(szFullPath)) // if the pak files had more priority, we didn't attempt fopen before- try it now
-#else
 		if (nVarPakPriority) // if the pak files had more priority, we didn't attempt fopen before- try it now
-#endif
 		{
 			fp = fopen (szFullPath, szMode);
 			if (fp)
@@ -1446,11 +1296,7 @@ bool CCryPak::OpenPacksCommon(const char* szDir, char *cWork, unsigned nFlags)
 	}
 
 	p1 = buf;
-#ifdef __ANDROID__
-	rp = CryGameRoot() ? strdup(CryGameRoot()) : realpath(".", NULL);
-#else
 	rp = realpath(".", NULL);
-#endif
 	if (!rp)
 	{
 		closedir(fdir);
@@ -1487,20 +1333,12 @@ bool CCryPak::OpenPacksCommon(const char* szDir, char *cWork, unsigned nFlags)
 
 bool CCryPak::ClosePacks(const char *pWildcardIn, unsigned nFlags)
 {
-#ifdef __ANDROID__
-	char buf[g_nMaxPath];
-#else
 	char buf[256];
-#endif
 	string wildcard, pak;
 	char* p1, *ext;
 	DIR *fdir;
 	struct dirent *d;
-#ifdef __ANDROID__
-	AdjustFileName(pWildcardIn, buf, nFlags); // relative scans fail on secondary storage (no cwd)
-#else
 	strcpy(buf, pWildcardIn);
-#endif
 
 	p1 = strrchr(buf, '*');
 	if (p1)
@@ -1891,11 +1729,7 @@ void CCryPakFindData::ScanFS(CCryPak*pPak, const char *szDirIn)
 		}
 	}
 
-#ifdef __ANDROID__
-	fdir = pPak->LooseDirMayExist(buf) ? opendir(buf) : NULL;
-#else
 	fdir = opendir(buf);
-#endif
 	if (fdir == NULL)
 	{
 #ifdef _DEBUG
@@ -2111,12 +1945,6 @@ size_t CCryPakFindData::sizeofThis()const
 
 bool CCryPak::MakeDir(const char* szPath)
 {
-#ifdef __ANDROID__
-	ForgetLooseFiles();
-	char szCacheBuf[g_nMaxPath];
-	if (CacheMirror(szPath, szCacheBuf, sizeof(szCacheBuf)))
-		szPath = szCacheBuf; // folders for generated files go to the cache folder too
-#endif
 #ifdef LINUX
 	struct stat st;
 #endif

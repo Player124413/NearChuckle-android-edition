@@ -105,10 +105,10 @@ if (${ARCH_TYPE} STREQUAL "x86")
         ijl15.lib
         nvDXTlib.lib
     )
-    set(DXLIB_PATH ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Lib)
+    set(DXLIB_PATH ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Lib)
 else() #x64
     set(ARCH_LIBS)
-    set(DXLIB_PATH ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Lib64)
+    set(DXLIB_PATH ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Lib64)
     list(APPEND SRC_FILES
     "../Common/Textures/Image/jpeg6/jcomapi.cpp"
     "../Common/Textures/Image/jpeg6/jdapimin.cpp"
@@ -137,11 +137,11 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
-    ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll
-    ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Include
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/RenderDll
+    ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Include
     {CMAKE_SOURCE_DIR}/SourceCode/RenderDll/XRenderD3D9/CG/
-    ${CMAKE_SOURCE_DIR}/Externals/SDL/include
+    ${farcry_SOURCE_DIR}/Externals/SDL/include
     ${DXVK_INC_PATH}
 )
 

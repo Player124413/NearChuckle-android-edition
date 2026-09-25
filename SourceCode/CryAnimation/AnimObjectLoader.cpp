@@ -325,7 +325,7 @@ void CAnimObjectLoader::LoadAnimations( const char *cgaFile )
 	ICryPak *pack = g_GetISystem()->GetIPak();
 
 	// Search files that match filter specification.
-#ifndef __linux
+#ifndef LINUX
 	_finddata_t fd;
 #else
 	dirent fd;

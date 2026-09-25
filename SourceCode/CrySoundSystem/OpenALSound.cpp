@@ -6,7 +6,6 @@
 
 #include <AL/al.h>
 #include <AL/alc.h>
-#include <AL/alext.h>
 #include <cstdio>
 #include <cstdint>
 #include <vector>
@@ -54,7 +53,6 @@ typedef struct
 	int channel;
 	ALenum format;
 	int rate;
-	bool paused; // by the game, to tell from the stop a lost device leaves
 } ALStream_t;
 
 ALCdevice* aldevice;
@@ -71,35 +69,6 @@ CS_TELLCALLBACK my_ftell;
 
 #define SOURCE_OUT_OF_BOUNDS 0
 
-// Sample channels are FMOD-style handles, (generation << 8) | source: a sound that finished keeps its handle,
-// and with a bare index its later stop, pause, volume or position landed on whatever played there next.
-static int s_nSourceGen[MAX_SOURCES];
-static int s_nStaleCalls;
-static bool s_bSourcePaused[MAX_SOURCES];
-
-typedef ALCboolean (ALC_APIENTRY *PFNREOPENDEVICE)(ALCdevice*, const ALCchar*, const ALCint*);
-static PFNREOPENDEVICE s_pfnReopenDevice;
-
-// FARCRY_SND_DEBUG=1: source/stream dumps and stream play, stop and pause calls on stderr.
-static bool SndDebug()
-{
-	static int n = -1;
-	if (n < 0)
-		n = getenv("FARCRY_SND_DEBUG") != NULL;
-	return n != 0;
-}
-
-// Source index of a sample handle, or -1 once that source has been given to another sound.
-static int SampleSource(int channel, const char* szFunc)
-{
-	int i = channel & 0xff;
-	if (channel >= 0x100 && i < MAX_SOURCES && (channel >> 8) == s_nSourceGen[i])
-		return i;
-	if (SndDebug())
-		fprintf(stderr, "SND: stale channel 0x%x in %s (%d so far)\n", channel, szFunc, ++s_nStaleCalls);
-	return -1;
-}
-
 ALuint GetSourceOfChannel(int channel)
 {
 	size_t i;
@@ -107,12 +76,6 @@ ALuint GetSourceOfChannel(int channel)
 	{
 		__builtin_trap();
 		return SOURCE_OUT_OF_BOUNDS;
-	}
-
-	if (channel >= 0x100)
-	{
-		i = SampleSource(channel, __func__);
-		return i == (size_t)-1 ? SOURCE_OUT_OF_BOUNDS : sources[i];
 	}
 
 	if (channel >= MAX_SOURCES)
@@ -127,18 +90,10 @@ ALuint GetSourceOfChannel(int channel)
 		__builtin_trap();
 		return SOURCE_OUT_OF_BOUNDS;
 	}
-	__builtin_trap();
-	return SOURCE_OUT_OF_BOUNDS;
-}
-
-static void MarkPaused(ALuint source, bool paused)
-{
-	for (int i = 0; i < MAX_SOURCES; i++)
-		if (sources[i] == source)
-			s_bSourcePaused[i] = paused;
-	for (size_t i = 0; i < streams.size(); i++)
-		if (streams[i]->source == source)
-			streams[i]->paused = paused;
+	else
+	{
+		return sources[channel];
+	}
 }
 
 ALSample_t* GetSampleFromName(const char* filename)
@@ -167,9 +122,7 @@ int audio_next_available_source(void)
 			return -1;
 		}
 		alGetSourcei(sources[i], AL_SOURCE_STATE, &status);
-		// Not a paused one: its buffer cannot be replaced, so the new play would resume the old sound
-		// (a menu sound over the game's paused ones).
-		if (status == AL_STOPPED || status == AL_INITIAL)
+		if (status != AL_PLAYING)
 		{
 			return (ALint)i;
 		}
@@ -184,8 +137,6 @@ DLL_API signed char     F_API CS_Init(int mixrate, int maxsoftwarechannels, unsi
 	alcontext = alcCreateContext(aldevice, 0);
 	alcMakeContextCurrent(alcontext);
 	alGenSources(MAX_SOURCES, sources);
-	if (aldevice && alcIsExtensionPresent(aldevice, "ALC_EXT_disconnect"))
-		s_pfnReopenDevice = (PFNREOPENDEVICE)alcGetProcAddress(aldevice, "alcReopenDeviceSOFT");
 	return 1;
 }
 
@@ -275,9 +226,6 @@ DLL_API signed char     F_API CS_SetPriority(int channel, int priority)
 DLL_API signed char     F_API CS_SetPaused(int channel, signed char paused)
 {
 	ALuint source = GetSourceOfChannel(channel);
-	if (channel >= MAX_SOURCES && SndDebug())
-		fprintf(stderr, "SND: SetPaused stream channel %d paused %d\n", channel, (int)paused);
-	MarkPaused(source, paused != 0);
 
 	if (paused)
 	{
@@ -714,7 +662,6 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 			stream->userdata = (int)userdata;
 #endif
 			stream->channel = CS_FREE;
-			stream->paused = false;
 			streams.push_back(stream);
 
 			AL_LOG("OpenAL %s: There are now %lu streams.\n", __func__, streams.size());
@@ -784,7 +731,6 @@ DLL_API CS_STREAM* F_API CS_Stream_Create(CS_STREAMCALLBACK callback, int length
 	stream->callback = callback;
 	stream->userdata = userdata;
 	stream->channel = CS_FREE;
-	stream->paused = false;
 	stream->format = (mode & CS_MONO) ? ((mode & CS_8BITS) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16)
 	                                  : ((mode & CS_8BITS) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16);
 	stream->rate = samplerate > 0 ? samplerate : 44100;
@@ -847,7 +793,6 @@ static void RewindOGG(ALStream_t* strm)
 
 DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 {
-	if (SndDebug()) fprintf(stderr, "SND: %s %p\n", __func__, stream);
 	ALStream_t* strm = (ALStream_t*)stream;
 	int i;
 	if (channel != CS_FREE)
@@ -861,7 +806,6 @@ DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 	alSource3f(strm->source, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	alSourcePlay(strm->source);
-	strm->paused = false;
 
 	for (i = 0; i < streams.size(); i++)
 	{
@@ -877,7 +821,6 @@ DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 
 DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, CS_DSPUNIT* dsp, signed char startpaused)
 {
-	if (SndDebug()) fprintf(stderr, "SND: %s %p\n", __func__, stream);
 	ALStream_t* strm = (ALStream_t*)stream;
 	int i;
 	ALuint stream_buf;
@@ -892,8 +835,6 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 	alSource3f(strm->source, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
-	if (strm->callback != &StreamOGGCallback)
-		memset(strm->buffer, 0, strm->len);
 	strm->callback((CS_STREAM*)stream, strm->buffer,
 				strm->len, strm->userdata);
 
@@ -906,7 +847,6 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 	{
 		alSourcePause(strm->source);
 	}
-	strm->paused = startpaused != 0;
 
 	for (i = 0; i < streams.size(); i++)
 	{
@@ -932,9 +872,7 @@ DLL_API signed char     F_API CS_Stream_Stop(CS_STREAM* stream)
 	}
 
 	strm = (ALStream_t*)stream;
-	if (SndDebug()) fprintf(stderr, "SND: CS_Stream_Stop %p channel %d\n", stream, strm->channel);
 	strm->channel = CS_FREE;
-	strm->paused = false;
 	alSourceStop(strm->source);
 	// A stopped file stream plays from the start next time.
 	if (strm->callback == &StreamOGGCallback)
@@ -1092,29 +1030,19 @@ static void UpdateStream(ALStream_t* stream)
 	// frame longer than a chunk, and a starved source stops and was never restarted.
 	bool bOgg = stream->callback == &StreamOGGCallback;
 	AL_OGG_Userdata_t* ogg = bOgg ? (AL_OGG_Userdata_t*)(intptr_t)stream->userdata : NULL;
-	// As in FMOD, a stream runs only between CS_Stream_Play and CS_Stream_Stop (every user plays and
-	// stops its streams). A stopped music stream kept being refilled here while its callback, no longer
-	// playing, wrote nothing: the last 100 ms chunk repeated at 10 Hz in the menu after death. A file
-	// stream may still prefill before its first play.
-	if (stream->channel == CS_FREE && !(bOgg && state == AL_INITIAL))
+	// A stopped source reports every queued buffer as processed: refilling an idle file stream decoded two chunks a frame.
+	if (bOgg && stream->channel == CS_FREE && state == AL_STOPPED)
 		return;
 	// Vorbis is decoded on the game thread, so keep file streams' lead short (~0.5 s) and their fills gentle.
-	// Bink video audio (libbinkdec's buffer size) is one fill per update: the video calls CS_Update once per
-	// decoded frame and its callback hands over that frame's audio on every call until the update returns,
-	// so topping up repeated each frame's audio several times.
-	bool bBink = stream->len == 138240;
 	int target = bOgg ? 6 : MIN_QUEUED_BUFFERS;
-	int maxFills = bOgg ? 2 : (bBink ? 1 : 4);
-	for (int fills = 0; num_queued_buffers < target && fills < maxFills; fills++)
+	for (int fills = 0; num_queued_buffers < target && fills < (bOgg ? 2 : 4); fills++)
 	{
 		if (ogg && ogg->ended)
 			break;
-		if (!bOgg)
-			memset(stream->buffer, 0, stream->len); // a callback that writes nothing gives silence, not the last chunk again
 		stream->callback((CS_STREAM*)stream, stream->buffer,
 			stream->len, stream->userdata);
 
-		if (bBink)
+		if (stream->len == 138240)
 		{
 			bytes_processed = BytesFromBinkDec(stream->buffer, stream->len);
 		}
@@ -1131,97 +1059,21 @@ static void UpdateStream(ALStream_t* stream)
 		num_queued_buffers++;
 	}
 
+	// Callback streams (music, video) start themselves; file streams only once CS_Stream_Play did.
 	// Restart a starved source only; a paused one stays paused (menu pause, PlayEx's paused start).
-	if ((state == AL_STOPPED || state == AL_INITIAL) && num_queued_buffers > 0 && stream->channel != CS_FREE && !stream->paused)
+	if ((state == AL_STOPPED || state == AL_INITIAL) && num_queued_buffers > 0 && (!bOgg || stream->channel != CS_FREE))
 	{
 		alSourcePlay(stream->source);
-	}
-}
-
-// FARCRY_SND_DEBUG=1: every 120 updates, every source that is playing or paused and every stream.
-static void DebugDumpSources()
-{
-	static int nCalls;
-	if (!SndDebug() || ++nCalls % 120)
-		return;
-	for (int i = 0; i < MAX_SOURCES; i++)
-	{
-		ALint state = 0, looping = 0, buf = 0, queued = 0;
-		alGetSourcei(sources[i], AL_SOURCE_STATE, &state);
-		if (state != AL_PLAYING && state != AL_PAUSED)
-			continue;
-		alGetSourcei(sources[i], AL_LOOPING, &looping);
-		alGetSourcei(sources[i], AL_BUFFER, &buf);
-		alGetSourcei(sources[i], AL_BUFFERS_QUEUED, &queued);
-		const char* szName = "?";
-		for (size_t n = 0; n < buffers.size(); n++)
-			if ((ALint)buffers[n]->buf == buf)
-				szName = buffers[n]->filename;
-		fprintf(stderr, "SND: source %d %s loop %d buf %d queued %d %s\n", i, state == AL_PLAYING ? "PLAYING" : "PAUSED", looping, buf, queued, szName);
-	}
-	for (size_t i = 0; i < streams.size(); i++)
-	{
-		ALint state = 0, queued = 0;
-		alGetSourcei(streams[i]->source, AL_SOURCE_STATE, &state);
-		alGetSourcei(streams[i]->source, AL_BUFFERS_QUEUED, &queued);
-		fprintf(stderr, "SND: stream %d %s channel %d state 0x%x queued %d len %d\n", (int)i,
-			streams[i]->callback == &StreamOGGCallback ? "ogg" : "callback", streams[i]->channel, state, queued, streams[i]->len);
-	}
-}
-
-// A lost output (Android route changes: headphones, Bluetooth, calls) leaves openal-soft disconnected, every
-// source stopped and silent for good. Reopen it in place: sources and buffers survive, the loops are resumed
-// and streams restart themselves in UpdateStream. FARCRY_SND_FAKE_DISCONNECT (dev hook "env") fakes one.
-static void CheckDevice()
-{
-	static int nCalls;
-	static bool bReopenFailed;
-	if (!aldevice || ++nCalls % 30)
-		return;
-	ALCint connected = 1;
-	alcGetIntegerv(aldevice, ALC_CONNECTED, 1, &connected);
-	if (getenv("FARCRY_SND_FAKE_DISCONNECT"))
-	{
-		unsetenv("FARCRY_SND_FAKE_DISCONNECT");
-		for (int i = 0; i < MAX_SOURCES; i++)
-			alSourceStop(sources[i]);
-		for (size_t i = 0; i < streams.size(); i++)
-			alSourceStop(streams[i]->source);
-		connected = 0;
-	}
-	if (connected)
-		return;
-	if (!s_pfnReopenDevice || !s_pfnReopenDevice(aldevice, NULL, NULL))
-	{
-		if (!bReopenFailed)
-			fprintf(stderr, "OpenAL: output device lost, %s\n", s_pfnReopenDevice ? "reopen failed, retrying" : "no ALC_SOFT_reopen_device");
-		bReopenFailed = true;
-		return;
-	}
-	fprintf(stderr, "OpenAL: output device lost, reopened\n");
-	bReopenFailed = false;
-	for (int i = 0; i < MAX_SOURCES; i++)
-	{
-		ALint looping = 0, buf = 0;
-		alGetSourcei(sources[i], AL_LOOPING, &looping);
-		alGetSourcei(sources[i], AL_BUFFER, &buf);
-		if (!looping || !buf)
-			continue;
-		alSourcePlay(sources[i]);
-		if (s_bSourcePaused[i])
-			alSourcePause(sources[i]);
 	}
 }
 
 DLL_API void            F_API CS_Update()
 {
 	size_t i;
-	CheckDevice();
 	for (i = 0; i < streams.size(); i++)
 	{
 		UpdateStream(streams[i]);
 	}
-	DebugDumpSources();
 }
 
 DLL_API void            F_API CS_SetSpeakerMode(unsigned int speakermode)
@@ -1274,22 +1126,21 @@ DLL_API signed char     F_API CS_3D_SetAttributes(int channel, float *pos, float
 DLL_API signed char     F_API CS_3D_SetAttributes(int channel, const float *pos, const float *vel)
 #endif
 {
-	int i = channel < 0x100 ? -1 : SampleSource(channel, __func__);
-	if (i < 0)
+	if (channel < 0 || channel >= MAX_SOURCES)
 	{
 		return 0;
 	}
 
-	alSourcei(sources[i], AL_SOURCE_RELATIVE, AL_FALSE);
+	alSourcei(sources[channel], AL_SOURCE_RELATIVE, AL_FALSE);
 
 	if (pos)
 	{
-		alSource3f(sources[i], AL_POSITION, pos[0], pos[1], pos[2]);
+		alSource3f(sources[channel], AL_POSITION, pos[0], pos[1], pos[2]);
 	}
 	
 	if (vel)
 	{
-		alSource3f(sources[i], AL_VELOCITY, vel[0], vel[1], vel[2]);
+		alSource3f(sources[channel], AL_VELOCITY, vel[0], vel[1], vel[2]);
 	}
 	
 	return 1;
@@ -1340,7 +1191,7 @@ DLL_API void            F_API CS_3D_Listener_GetAttributes(float *pos, float *ve
 #endif
 DLL_API signed char     F_API CS_IsPlaying(int channel)
 {
-	int status = 0;
+	int status;
 	ALuint source = GetSourceOfChannel(channel);
 	alGetSourcei(source, AL_SOURCE_STATE, &status);
 	if (status == AL_PLAYING)
@@ -1361,14 +1212,14 @@ DLL_API unsigned int    F_API CS_GetLoopMode(int channel)
 }
 DLL_API unsigned int    F_API CS_GetCurrentPosition(int channel)
 {
-	int currbytes = 0, size;
-	int i = channel < 0x100 ? -1 : SampleSource(channel, __func__);
-	if (i < 0)
+	int currbytes, size;
+	if (channel < 0 || channel >= MAX_SOURCES)
 	{
+		//__builtin_trap();
 		return SOURCE_OUT_OF_BOUNDS;
 	}
 
-	alGetSourcei(sources[i], AL_BYTE_OFFSET, &currbytes);
+	alGetSourcei(sources[channel], AL_BYTE_OFFSET, &currbytes);
 
 	return currbytes;
 }
@@ -1494,8 +1345,6 @@ DLL_API int             F_API CS_PlaySoundEx(int channel, CS_SAMPLE *sptr, CS_DS
 	}
 
 	alSourcei(src, AL_BUFFER, samp->buf);
-	if (SndDebug())
-		fprintf(stderr, "SND: play source %d buf %d loop %d\n", i, samp->buf, (samp->flags & CS_LOOP_NORMAL) ? 1 : 0);
 	alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
 	alSource3f(src, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(src, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
@@ -1505,32 +1354,31 @@ DLL_API int             F_API CS_PlaySoundEx(int channel, CS_SAMPLE *sptr, CS_DS
 	{
 		alSourcePause(src);
 	}
-	s_bSourcePaused[i] = startpaused != 0;
-
-	s_nSourceGen[i] = (s_nSourceGen[i] & 0x7fffff) + 1;
-	return (s_nSourceGen[i] << 8) | i;
+	
+	return i;
 }
 
 DLL_API signed char     F_API CS_StopSound(int channel)
 {
 	size_t i;
+	if (channel >= MAX_SOURCES)
+	{
+		__builtin_trap();
+		return SOURCE_OUT_OF_BOUNDS;
+	}
+
 	if (channel == CS_FREE)
 	{
 		for (i = 0; i < MAX_SOURCES; i++)
 		{
 			alSourceStop(sources[i]);
 			alSourcei(sources[i], AL_BUFFER, 0);
-			s_bSourcePaused[i] = false;
 		}
 		return 1;
 	}
 
-	int nSource = channel < 0x100 ? -1 : SampleSource(channel, __func__);
-	if (nSource < 0)
-		return 0;
-	alSourceStop(sources[nSource]);
-	alSourcei(sources[nSource], AL_BUFFER, 0);
-	s_bSourcePaused[nSource] = false;
+	alSourceStop(sources[channel]);
+	alSourcei(sources[channel], AL_BUFFER, 0);
 	return 1;
 }
 

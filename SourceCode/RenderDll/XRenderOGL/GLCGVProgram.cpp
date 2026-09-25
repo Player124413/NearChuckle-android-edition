@@ -143,11 +143,6 @@ void CCGVProgram_GL::mfPrecache()
 
 void CCGVProgram_GL::mfReset()
 {
-  if (m_LastVP == this)
-  {
-    m_LastVP = NULL;
-    m_LastTypeVP = 0;
-  }
   for (int i=0; i<m_Insts.Num(); i++)
   {
     m_CurInst = i;
@@ -184,11 +179,6 @@ void CCGVProgram_GL::mfFree()
 
 CCGVProgram_GL::~CCGVProgram_GL()
 {
-  if (m_LastVP == this)
-  {
-    m_LastVP = NULL;
-    m_LastTypeVP = 0;
-  }
   mfFree();
   CVProgram::m_VPrograms[m_Id] = NULL;
 }
@@ -1425,179 +1415,6 @@ struct STempStr
   int nId;
 };
 
-static FILE* TryOpenCachedVPFallback(char* namedst)
-{
-  const char* profiles[] = { "$ARB$", "$GL_Auto$", "$NV$" };
-  const int numProfiles = 3;
-  FILE* fp = NULL;
-
-  const char* hashPos = strchr(namedst, '#');
-  const char* maskPos = strrchr(namedst, '(');
-  const char* extPos = strrchr(namedst, '.');
-  if (!extPos) extPos = namedst + strlen(namedst);
-
-  const char* curProf = NULL;
-  if (strstr(namedst, "$GL_Auto$")) curProf = "$GL_Auto$";
-  else if (strstr(namedst, "$ARB$")) curProf = "$ARB$";
-  else if (strstr(namedst, "$NV$")) curProf = "$NV$";
-
-  // 1. Try profile substitution directly on namedst
-  if (curProf)
-  {
-    for (int p = 0; p < numProfiles; p++)
-    {
-      if (!strcmp(curProf, profiles[p])) continue;
-      char testName[256];
-      const char* pos = strstr(namedst, curProf);
-      int preLen = pos - namedst;
-      snprintf(testName, sizeof(testName), "%.*s%s%s", preLen, namedst, profiles[p], pos + strlen(curProf));
-
-      char asmName[256];
-      StripExtension(testName, asmName);
-      AddExtension(asmName, ".cgasm");
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      fp = iSystem->GetIPak()->FOpen(testName, "r");
-      if (fp) { strcpy(namedst, testName); return fp; }
-    }
-  }
-
-  // 2. Try stripping the mask: e.g. "(8005005)"
-  if (maskPos && extPos && maskPos < extPos)
-  {
-    int noMaskLen = maskPos - namedst;
-    char noMask[256];
-    snprintf(noMask, sizeof(noMask), "%.*s%s", noMaskLen, namedst, extPos);
-
-    for (int p = 0; p < numProfiles; p++)
-    {
-      char variant[256];
-      if (curProf)
-      {
-        const char* pos = strstr(noMask, curProf);
-        if (pos)
-        {
-          int preLen = pos - noMask;
-          snprintf(variant, sizeof(variant), "%.*s%s%s", preLen, noMask, profiles[p], pos + strlen(curProf));
-        }
-        else
-          strncpy(variant, noMask, sizeof(variant));
-      }
-      else
-        strncpy(variant, noMask, sizeof(variant));
-
-      char asmName[256];
-      StripExtension(variant, asmName);
-      AddExtension(asmName, ".cgasm");
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      fp = iSystem->GetIPak()->FOpen(variant, "r");
-      if (fp) { strcpy(namedst, variant); return fp; }
-    }
-  }
-
-  // 3. Try stripping TexCoord Modifiers: everything between "#PosCommon" (or other script) and mask/ext
-  if (hashPos)
-  {
-    const char* modPos = strchr(hashPos, '$');
-    if (modPos)
-    {
-      char noMod[256];
-      int baseLen = modPos - namedst;
-      if (maskPos && maskPos > modPos)
-        snprintf(noMod, sizeof(noMod), "%.*s%s", baseLen, namedst, maskPos);
-      else
-        snprintf(noMod, sizeof(noMod), "%.*s%s", baseLen, namedst, extPos);
-
-      for (int p = 0; p < numProfiles; p++)
-      {
-        char variant[256];
-        if (curProf)
-        {
-          const char* pos = strstr(noMod, curProf);
-          if (pos)
-          {
-            int preLen = pos - noMod;
-            snprintf(variant, sizeof(variant), "%.*s%s%s", preLen, noMod, profiles[p], pos + strlen(curProf));
-          }
-          else
-            strncpy(variant, noMod, sizeof(variant));
-        }
-        else
-          strncpy(variant, noMod, sizeof(variant));
-
-        char asmName[256];
-        StripExtension(variant, asmName);
-        AddExtension(asmName, ".cgasm");
-        fp = iSystem->GetIPak()->FOpen(asmName, "r");
-        if (fp) { strcpy(namedst, asmName); return fp; }
-
-        fp = iSystem->GetIPak()->FOpen(variant, "r");
-        if (fp) { strcpy(namedst, variant); return fp; }
-      }
-
-      snprintf(noMod, sizeof(noMod), "%.*s%s", baseLen, namedst, extPos);
-      for (int p = 0; p < numProfiles; p++)
-      {
-        char variant[256];
-        if (curProf)
-        {
-          const char* pos = strstr(noMod, curProf);
-          if (pos)
-          {
-            int preLen = pos - noMod;
-            snprintf(variant, sizeof(variant), "%.*s%s%s", preLen, noMod, profiles[p], pos + strlen(curProf));
-          }
-          else
-            strncpy(variant, noMod, sizeof(variant));
-        }
-        else
-          strncpy(variant, noMod, sizeof(variant));
-
-        char asmName[256];
-        StripExtension(variant, asmName);
-        AddExtension(asmName, ".cgasm");
-        fp = iSystem->GetIPak()->FOpen(asmName, "r");
-        if (fp) { strcpy(namedst, asmName); return fp; }
-
-        fp = iSystem->GetIPak()->FOpen(variant, "r");
-        if (fp) { strcpy(namedst, variant); return fp; }
-      }
-    }
-  }
-
-  // 4. Try base shader template
-  const char* dollarPos = strchr(namedst, '$');
-  if (dollarPos)
-  {
-    int namePrefixLen = dollarPos - namedst;
-    const char* baseForms[] = {
-      "$ARB$Fog$NoCP#PosCommon",
-      "$ARB$NoFog$NoCP#PosCommon",
-      "$GL_Auto$Fog$NoCP#PosCommon",
-      "$GL_Auto$NoFog$NoCP#PosCommon",
-      "$NV$Fog$NoCP#PosCommon",
-      "$NV$NoFog$NoCP#PosCommon"
-    };
-    for (int b = 0; b < 6; b++)
-    {
-      char asmName[256];
-      char vpName[256];
-      snprintf(asmName, sizeof(asmName), "%.*s%s.cgasm", namePrefixLen, namedst, baseForms[b]);
-      fp = iSystem->GetIPak()->FOpen(asmName, "r");
-      if (fp) { strcpy(namedst, asmName); return fp; }
-
-      snprintf(vpName, sizeof(vpName), "%.*s%s.cgvp", namePrefixLen, namedst, baseForms[b]);
-      fp = iSystem->GetIPak()->FOpen(vpName, "r");
-      if (fp) { strcpy(namedst, vpName); return fp; }
-    }
-  }
-
-  return NULL;
-}
-
 bool CCGVProgram_GL::mfActivate(CVProgram *pPosVP)
 {
   if (!m_Insts[m_CurInst].m_dwHandle)
@@ -1736,51 +1553,27 @@ create:
     }
     if (!statusdst)
     {
-      statusdst = TryOpenCachedVPFallback(namedst);
+#ifdef DISABLE_CG
+      iLog->LogError("Failed to load cached vertex shader %s!\n", namedst);
+      LogMissingShader(namedst, "vertex",
+        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetViewCamera().GetPos());
+#endif
+      return false;
     }
-
-    char *pbuf = NULL;
-    int len = 0;
-    if (statusdst)
+      
+    else
     {
       iSystem->GetIPak()->FSeek(statusdst, 0, SEEK_END);
-      len = iSystem->GetIPak()->FTell(statusdst);
+      int len = iSystem->GetIPak()->FTell(statusdst);
       iSystem->GetIPak()->FSeek(statusdst, 0, SEEK_SET);
-      pbuf = new char [len+1];
+      char *pbuf = new char [len+1];
       iSystem->GetIPak()->FGets(strVer0, 128, statusdst);
       len = iSystem->GetIPak()->FRead(pbuf, 1, len, statusdst);
       pbuf[len] = 0;
       iSystem->GetIPak()->FClose(statusdst);
       statusdst = NULL;
-    }
-    else
-    {
-      iLog->LogWarning("Missing vertex shader '%s' - activating embedded fallback ARB vertex program", namedst);
-      const char* s_FallbackVP = 
-        "!!ARBvp1.0\n"
-        "#const c[12] = 0, 0, 0, 1\n"
-        "#var float4x4 ModelViewProj : $vin.c[0] : c[0], 4 : 1 : 1\n"
-        "#var float4 IN.position : $vin.ATTR0 : ATTR0 : 0 : 1\n"
-        "#var float4 IN.baseTC : $vin.ATTR8 : ATTR8 : 0 : 1\n"
-        "#var float4 IN.color : $vin.ATTR3 : ATTR3 : 0 : 1\n"
-        "#var float4 OUT.position : $vout.HPOS : HPOS : -1 : 1\n"
-        "#var float4 OUT.baseTC : $vout.TEX0 : TEX0 : -1 : 1\n"
-        "#var float4 OUT.color : $vout.COL0 : COL0 : -1 : 1\n"
-        "DP4 result.position.x, vertex.attrib[0], program.env[0];\n"
-        "DP4 result.position.y, vertex.attrib[0], program.env[1];\n"
-        "DP4 result.position.z, vertex.attrib[0], program.env[2];\n"
-        "DP4 result.position.w, vertex.attrib[0], program.env[3];\n"
-        "MOV result.texcoord[0], vertex.attrib[8];\n"
-        "MOV result.texcoord[1], vertex.attrib[8];\n"
-        "MOV result.color, vertex.attrib[3];\n"
-        "END\n";
-      len = strlen(s_FallbackVP);
-      pbuf = new char[len + 1];
-      strcpy(pbuf, s_FallbackVP);
-      m_CGProfileType = CG_PROFILE_ARBVP1;
-    }
 
-    {
       if (!bCreate && (m_Flags & PSFI_AUTOENUMTC))
       {
         if (strstr(pbuf, "!!ARBvp1.0"))
@@ -2060,11 +1853,6 @@ bool CCGVProgram_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
       rd->Logv(SRendItem::m_RecurseLevel, "--- Reset CGVProgram \"%s\"\n", m_Name.c_str());
 #endif
     mfDisable();
-    if (m_LastVP == this)
-    {
-      m_LastVP = NULL;
-      m_LastTypeVP = 0;
-    }
     rd->m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
   }
   else
@@ -2107,13 +1895,6 @@ bool CCGVProgram_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
     if ((int)m_Insts[Type].m_dwHandle == -1)
     {
       m_LastTypeVP = Mask;
-      mfDisable();
-      if (m_LastVP == this)
-      {
-        m_LastVP = NULL;
-        m_LastTypeVP = 0;
-      }
-      rd->m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
       return false;
     }
 
@@ -2123,13 +1904,6 @@ bool CCGVProgram_GL::mfSet(bool bEnable, SShaderPassHW *slw, int nFlags)
       if (!mfActivate(pPosVP))
       {
         m_Insts[Type].m_dwHandle = -1;
-        mfDisable();
-        if (m_LastVP == this)
-        {
-          m_LastVP = NULL;
-          m_LastTypeVP = 0;
-        }
-        rd->m_RP.m_PersFlags &= ~RBPF_VSNEEDSET;
         return false;
       }
       m_LastVP = NULL;

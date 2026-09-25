@@ -16,14 +16,14 @@ static char THIS_FILE[] = __FILE__;
 #include "CG/cgGL.h"
 #include "GLCGVProgram.h"
 #include "GLCGPShader.h"
+#ifdef GLES_RENDERER
+#include "GLES/gles_layer.h"
+#endif
 #ifdef USE_SDL
 #ifdef _WIN32
 #include <SDL_syswm.h>
 #else
 #endif
-#endif
-#ifdef __linux
-#include <dlfcn.h>
 #endif
 
 #ifdef USE_3DC
@@ -55,7 +55,7 @@ void CGLRenderer::CheckGammaSupport(void)
 
 void CGLRenderer::SetDeviceGamma(ushort *r, ushort *g, ushort *b)
 {
-#ifndef __linux
+#ifndef LINUX
   ushort gamma[3][256];
   int i;
 
@@ -182,6 +182,9 @@ void CGLRenderer::FreeLibrary()
 
 bool CGLRenderer::LoadLibrary()
 {
+#ifdef GLES_RENDERER
+  strcpy(m_LibName, "OpenGL ES 3.0 (SDL)");
+#endif
 #ifdef WIN32
   strcpy(m_LibName, "OpenGL32.dll");
 
@@ -196,7 +199,6 @@ bool CGLRenderer::LoadLibrary()
 
   return true;
 #else
-  strcpy(m_LibName, "OpenGL/EGL (SDL)");
   return true;
 #endif
 }
@@ -216,72 +218,12 @@ static PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
   assert(funcname);
 #endif
 
-#ifdef __ANDROID__
-static void DummyGLVoid(void) {}
-static GLint DummyGLInt(void) { return 0; }
-static GLboolean DummyGLBool(void) { return GL_FALSE; }
-static const GLubyte* DummyGLString(GLenum) { return (const GLubyte*)""; }
-#endif
-
 bool CGLRenderer::FindExt( const char* Name )
 {
-  if (!Name || !Name[0])
-    return false;
-
-  // "GL" or "_GL" represents standard OpenGL core functions, always supported
-  if (strcmp(Name, "GL") == 0 || strcmp(Name, "_GL") == 0)
-    return true;
-
   char *str = (char*)glGetString(GL_EXTENSIONS);
-  if (str && strstr(str, Name))
+  if (strstr(str, Name))
     return true;
-
-#ifdef __linux
-  // In OpenGL 3.0+ / Core Profile (e.g. Mesa Zink), glGetString(GL_EXTENSIONS) is deprecated and returns NULL.
-  // Query via glGetStringi if available.
-#ifndef GL_NUM_EXTENSIONS
-#define GL_NUM_EXTENSIONS 0x821D
-#endif
-  typedef const GLubyte * (*PFNGLGETSTRINGIPROC) (GLenum name, GLuint index);
-  static PFNGLGETSTRINGIPROC pfnGetStringi = nullptr;
-  static bool triedGetStringi = false;
-  if (!triedGetStringi)
-  {
-    triedGetStringi = true;
-    pfnGetStringi = (PFNGLGETSTRINGIPROC)SDL_GL_GetProcAddress("glGetStringi");
-    if (!pfnGetStringi)
-      pfnGetStringi = (PFNGLGETSTRINGIPROC)::dlsym(RTLD_DEFAULT, "glGetStringi");
-  }
-  if (!str && pfnGetStringi && cryglGetIntegerv)
-  {
-    GLint numExtensions = 0;
-    cryglGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-    for (GLint i = 0; i < numExtensions; ++i)
-    {
-      const char* ext = (const char*)pfnGetStringi(GL_EXTENSIONS, i);
-      if (ext && strcmp(ext, Name) == 0)
-        return true;
-    }
-  }
-#endif
-
-#ifdef __ANDROID__
-  // Fallback for Android/Zink if driver doesn't explicitly expose extension strings
-  if (strcmp(Name, "GL_ARB_vertex_program") == 0 ||
-      strcmp(Name, "GL_ARB_fragment_program") == 0 ||
-      strcmp(Name, "GL_ARB_multitexture") == 0 ||
-      strcmp(Name, "GL_ARB_texture_compression") == 0 ||
-      strcmp(Name, "GL_ARB_vertex_buffer_object") == 0 ||
-      strcmp(Name, "GL_ARB_texture_cube_map") == 0 ||
-      strcmp(Name, "GL_EXT_texture_filter_anisotropic") == 0 ||
-      strcmp(Name, "GL_EXT_texture_env_combine") == 0 ||
-      strcmp(Name, "GL_ARB_texture_env_combine") == 0)
-  {
-    return true;
-  }
-#endif
-
-#ifndef __linux
+#ifndef LINUX
   GET_GL_PROC(PFNWGLGETEXTENSIONSSTRINGARBPROC,wglGetExtensionsStringARB);
   if(wglGetExtensionsStringARB)
   {
@@ -293,70 +235,26 @@ bool CGLRenderer::FindExt( const char* Name )
   return false;
 }
 
-#ifdef __linux
-static void* s_glHandles[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
-static bool s_handlesInited = false;
-static void EnsureGLHandlesLoaded()
-{
-  if (!s_handlesInited)
-  {
-    s_handlesInited = true;
-    s_glHandles[0] = dlopen("libGL.so", RTLD_NOW | RTLD_GLOBAL);
-    s_glHandles[1] = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
-    s_glHandles[2] = dlopen("libGLESv3.so", RTLD_NOW | RTLD_GLOBAL);
-    s_glHandles[3] = dlopen("libGLESv2.so", RTLD_NOW | RTLD_GLOBAL);
-    s_glHandles[4] = dlopen("libGLESv1_CM.so", RTLD_NOW | RTLD_GLOBAL);
-  }
-}
-#endif
-
 void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, byte& Supports, bool AllowExt )
 {
   if (Name[0] == 'p')
     Name = &Name[1];
-#ifdef WIN32 // FIX_LINUX
+#ifdef GLES_RENDERER
+  ProcAddress = GLES_GetProcAddress(Name);
+#elif defined(WIN32) // FIX_LINUX
   if( !ProcAddress )
     ProcAddress = GetProcAddress( (HINSTANCE)m_hLibHandle, Name );
   if( !ProcAddress )
     ProcAddress = GetProcAddress( (HINSTANCE)m_hLibHandleGDI, Name );
 #else
-#ifdef __linux
-  EnsureGLHandlesLoaded();
-  // Check libGL.so first if available (e.g. gl4es desktop GL translation)
-  if (!ProcAddress && s_glHandles[0])
-    ProcAddress = ::dlsym(s_glHandles[0], Name);
-  if (!ProcAddress && s_glHandles[1])
-    ProcAddress = ::dlsym(s_glHandles[1], Name);
-#endif
-  if (!ProcAddress)
-    ProcAddress = (void *)(uintptr_t)SDL_GL_GetProcAddress( Name );
-#ifdef __linux
-  if (!ProcAddress)
-    ProcAddress = ::dlsym(RTLD_DEFAULT, Name);
-  if (!ProcAddress)
-  {
-    for (int i = 2; i < 5; ++i)
-    {
-      if (s_glHandles[i])
-      {
-        ProcAddress = ::dlsym(s_glHandles[i], Name);
-        if (ProcAddress)
-          break;
-      }
-    }
-  }
-#endif
+  ProcAddress = (void *)SDL_GL_GetProcAddress( Name );
 #endif
   if( !ProcAddress && Supports && AllowExt )
   {
 #ifndef USE_SDL
     ProcAddress = pwglGetProcAddress( Name ); 
 #else
-    ProcAddress = (void *)(uintptr_t)SDL_GL_GetProcAddress( Name );
-#ifdef __linux
-    if (!ProcAddress)
-      ProcAddress = ::dlsym(RTLD_DEFAULT, Name);
-#endif
+    ProcAddress = (void *)SDL_GL_GetProcAddress( Name );
 #endif
   }
     
@@ -364,19 +262,7 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
   {
     if( Supports )
       iLog->Log("Warning:   Missing function '%s' for '%s' support\n", Name, SupportName );
-#ifndef __ANDROID__
     Supports = 0;
-#else
-    // On Android, provide safe dummy stubs so invocations never jump to 0x0
-    if (strcmp(Name, "glGetString") == 0)
-      ProcAddress = (void*)DummyGLString;
-    else if (strcmp(Name, "glGetError") == 0)
-      ProcAddress = (void*)DummyGLInt;
-    else if (strcmp(Name, "glIsEnabled") == 0 || strcmp(Name, "glIsTexture") == 0)
-      ProcAddress = (void*)DummyGLBool;
-    else
-      ProcAddress = (void*)DummyGLVoid;
-#endif
   }
 }
 
@@ -395,11 +281,7 @@ bool CGLRenderer::CheckOGLExtensions(void)
 
   iLog->Log("\n...Check OpenGL extensions\n");
 
-  SUPPORTS_GL = 1;
   FindProcs( true );
-#ifdef __ANDROID__
-  SUPPORTS_GL = 1;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -1063,12 +945,6 @@ bool CGLRenderer::CheckOGLExtensions(void)
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __ANDROID__
-  // Disable texture_rectangle on Android / gl4es (GLES has no sampler2DRect in shaders)
-  SUPPORTS_GL_NV_texture_rectangle = 0;
-  SUPPORTS_GL_EXT_texture_rectangle = 0;
-#endif
-
   if (!SUPPORTS_GL_NV_texture_rectangle)
     iLog->Log("  ...GL_NV_texture_rectangle not found.\n");
   else
@@ -1269,41 +1145,13 @@ bool CGLRenderer::CheckOGLExtensions(void)
   m_MaxActiveTexturesARB_VP = crymin(m_MaxActiveTexturesARB_VP, MAX_TMU);
   m_MaxActiveTexturesARBFixed = crymin(m_MaxActiveTexturesARBFixed, MAX_TMU);
 
-#ifdef __ANDROID__
-  // Force enable critical features for Android / Mesa Zink
-  SUPPORTS_GL = 1;
-  SUPPORTS_GL_ARB_multitexture = 1;
-  SUPPORTS_GL_ARB_vertex_program = 1;
-  SUPPORTS_GL_ARB_fragment_program = 1;
-  SUPPORTS_GL_ARB_vertex_buffer_object = 1;
-  SUPPORTS_GL_ARB_texture_compression = 1;
-  SUPPORTS_GL_ARB_texture_cube_map = 1;
-  SUPPORTS_GL_EXT_texture_filter_anisotropic = 1;
-
-  m_Features |= RFT_HW_VS | RFT_HW_PS20 | RFT_HW_TS | RFT_MULTITEXTURE | RFT_COMPRESSTEXTURE | RFT_ALLOWANISOTROPIC | RFT_FOGVP | RFT_HW_ENVBUMPPROJECTED | RFT_BUMP;
-  m_Features &= ~RFT_HW_MASK;
-  m_Features |= RFT_HW_RADEON;
-  if (m_MaxActiveTexturesARB_VP < 8)
-    m_MaxActiveTexturesARB_VP = 8;
-  if (m_MaxActiveTexturesARBFixed < 4)
-    m_MaxActiveTexturesARBFixed = 4;
-  m_numtmus = m_MaxActiveTexturesARB_VP;
-
-  iLog->Log("Android GL Features forced: VS=%d, PS20=%d, TS=%d, GPU=0x%x, TMUs=%d\n",
-    (m_Features & RFT_HW_VS) ? 1 : 0,
-    (m_Features & RFT_HW_PS20) ? 1 : 0,
-    (m_Features & RFT_HW_TS) ? 1 : 0,
-    m_Features & RFT_HW_MASK,
-    m_numtmus);
-#endif
-
   return true;
 }
 
 void CGLRenderer::MakeCurrent()
 {
   int i;
-#ifndef __linux
+#ifndef LINUX
 
   if (pwglGetCurrentContext() == m_RContexts[0]->m_hRC)
     return;
@@ -1326,7 +1174,7 @@ void CGLRenderer::MakeCurrent()
 
 void CGLRenderer::ShareResources( IRenderer *renderer )
 {
-#ifndef __linux
+#ifndef LINUX
   // Ignore share with myself!
   if (renderer == this)
     return;
@@ -1689,83 +1537,23 @@ HWND CGLRenderer::SetMode(int x,int y,int width,int height,unsigned int cbpp, in
     m_height = height;
   }
 #else
-#ifdef __ANDROID__
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-#endif
     Uint32 windowFlags = SDL_WINDOW_OPENGL;
-#ifdef __ANDROID__
-    SDL_DisplayID dispID = SDL_GetPrimaryDisplay();
-    const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(dispID);
-    if (mode && mode->w > 0 && mode->h > 0)
-    {
-        int dispW = (mode->w > mode->h) ? mode->w : mode->h;
-        int dispH = (mode->w > mode->h) ? mode->h : mode->w;
-        width = dispW;
-        height = dispH;
-    }
-#endif
     m_width = width;
     m_height = height;
 
+#ifdef GLES_RENDERER
+    GLES_SetContextAttributes();
+#endif
     SDL_Window* win = SDL_CreateWindow(szWinTitle,
         width,
         height,
         windowFlags);
 
-#ifdef __ANDROID__
-    if (!win)
-    {
-        // On Android, SDLActivity creates the primary window; retrieve it if CreateWindow reports single-window conflict
-        int numWindows = 0;
-        SDL_Window** windows = SDL_GetWindows(&numWindows);
-        if (windows && numWindows > 0 && windows[0])
-        {
-            win = windows[0];
-            iLog->Log("Reusing existing Android SDL window %p (count=%d)\n", win, numWindows);
-        }
-    }
-    if (!win)
-    {
-        // Try fullscreen with native dimensions (0, 0)
-        win = SDL_CreateWindow(szWinTitle, 0, 0, windowFlags | SDL_WINDOW_FULLSCREEN);
-    }
-    if (win)
-    {
-        int actualW = 0, actualH = 0;
-        SDL_GetWindowSizeInPixels(win, &actualW, &actualH);
-        if (actualW <= 0 || actualH <= 0)
-        {
-            SDL_GetWindowSize(win, &actualW, &actualH);
-        }
-        if (actualW > 0 && actualH > 0)
-        {
-            m_width = actualW;
-            m_height = actualH;
-            if (iConsole)
-            {
-                if (ICVar* cvW = iConsole->GetCVar("r_Width")) cvW->Set(actualW);
-                if (ICVar* cvH = iConsole->GetCVar("r_Height")) cvH->Set(actualH);
-            }
-        }
-    }
-    else
-    {
-        iLog->Log("Error: Could not create or find SDL window: %s\n", SDL_GetError());
-    }
-#endif
-
-    if (fullscreen && win)
+    if (fullscreen)
     {
         SDL_SetWindowFullscreen(win, true);
     }
-    if (win)
-        SDL_SyncWindow(win);
+    SDL_SyncWindow(win);
 #endif
   m_VX = m_VY = 0;
   m_VWidth = m_width;
@@ -1816,7 +1604,7 @@ typedef PROC (WINAPI * PFNWGLGETPROCADDRESSPROC) (LPCSTR str);
 // rendering context.
 int CGLRenderer::_wglExtensionSupported(const char *extension)
 {
-#ifndef __linux
+#ifndef LINUX
   // Lazy initialization - We don't know if we've initialized this yet, so do it here.
   wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC) pwglGetProcAddress("wglGetExtensionsStringEXT");
   wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) pwglGetProcAddress("wglGetExtensionsStringARB");
@@ -2086,13 +1874,6 @@ exr:
     ShutDown();
     return NULL;
   }
-#ifdef USE_SDL
-  if (!win)
-  {
-    iLog->Log("Error: SetMode failed to create or get SDL window\n");
-    goto exr;
-  }
-#endif
   if (!m_RContexts.Num())
   {
     SRendContext *rc = new SRendContext;
@@ -2111,152 +1892,43 @@ exr:
   }
 #ifndef USE_SDL
   rc->m_Glhwnd = (HWND)Glhwnd;
-  CreateRContext(rc, Glhdc, hGLrc, cbpp, zbpp, sbits, true);
 #else
   rc->m_Window = win;
-#ifdef __ANDROID__
-  // 1. Try Desktop OpenGL 2.1 Compatibility (supported by Mesa Zink)
-  SDL_GL_ResetAttributes();
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  rc->m_Context = SDL_GL_CreateContext(win);
-
-  // 1b. Try Desktop OpenGL 2.1 without profile mask (EGL rejects profile mask for versions < 3.2)
-  if (!rc->m_Context)
-  {
-    iLog->Log("SDL_GL_CreateContext retry: Desktop GL 2.1 bare (SDL error: %s)\n", SDL_GetError());
-    SDL_GL_ResetAttributes();
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    rc->m_Context = SDL_GL_CreateContext(win);
-  }
-
-  // 1c. Try Desktop OpenGL 3.0 Compatibility (supported by Mesa Zink)
-  if (!rc->m_Context)
-  {
-    iLog->Log("SDL_GL_CreateContext retry: Desktop GL 3.0 Compatibility (SDL error: %s)\n", SDL_GetError());
-    SDL_GL_ResetAttributes();
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    rc->m_Context = SDL_GL_CreateContext(win);
-  }
-
-  // 2. Try GLES 3.0
-  if (!rc->m_Context)
-  {
-    iLog->Log("SDL_GL_CreateContext fallback 1: GLES 3.0 (SDL error: %s)\n", SDL_GetError());
-    SDL_GL_ResetAttributes();
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    rc->m_Context = SDL_GL_CreateContext(win);
-  }
-
-  // 3. Try GLES 2.0
-  if (!rc->m_Context)
-  {
-    iLog->Log("SDL_GL_CreateContext fallback 2: GLES 2.0 (SDL error: %s)\n", SDL_GetError());
-    SDL_GL_ResetAttributes();
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    rc->m_Context = SDL_GL_CreateContext(win);
-  }
-
-  // 4. Default context attributes
-  if (!rc->m_Context)
-  {
-    iLog->Log("SDL_GL_CreateContext fallback 3: default attributes (SDL error: %s)\n", SDL_GetError());
-    SDL_GL_ResetAttributes();
-    rc->m_Context = SDL_GL_CreateContext(win);
-  }
-#else
-  rc->m_Context = SDL_GL_CreateContext(win);
-#endif
-  if (rc->m_Context)
-  {
-    if (!SDL_GL_MakeCurrent(win, rc->m_Context))
-    {
-      iLog->Log("SDL_GL_MakeCurrent failed: %s\n", SDL_GetError());
-      return NULL;
-    }
-  }
-  else
-  {
-    iLog->Log("SDL_GL_CreateContext failed: %s\n", SDL_GetError());
-    return NULL;
-  }
-  m_CurrContext = rc;
 #endif
 
-#ifdef __linux
-  // If gl4es is available, wire its proc address loader and initialize the state for the active context
-  EnsureGLHandlesLoaded();
-  void* hGL = s_glHandles[0] ? s_glHandles[0] : RTLD_DEFAULT;
-  typedef void (*pfn_set_getprocaddress)(void*(*)(const char*));
-  pfn_set_getprocaddress p_set_getprocaddress = (pfn_set_getprocaddress)::dlsym(hGL, "set_getprocaddress");
-  if (p_set_getprocaddress)
-  {
-    p_set_getprocaddress((void*(*)(const char*))SDL_GL_GetProcAddress);
-    iLog->Log("gl4es: set_getprocaddress(SDL_GL_GetProcAddress) registered successfully.\n");
-  }
-  typedef void (*pfn_initialize_gl4es)(void);
-  pfn_initialize_gl4es p_init_gl4es = (pfn_initialize_gl4es)::dlsym(hGL, "initialize_gl4es");
-  if (p_init_gl4es)
-  {
-    p_init_gl4es();
-    iLog->Log("gl4es: initialize_gl4es() called successfully on active context.\n");
-  }
-#endif
-
-  // Find functions after context is created and current!
+  // Find functions.
   SUPPORTS_GL = 1;
   FindProcs( false );
-#ifdef __ANDROID__
-  // On Android, ensure core GL support is maintained even if minor legacy procedures are absent
-  SUPPORTS_GL = 1;
-#endif
   if( !SUPPORTS_GL )
   {
     iLog->Log("Error: Library <%s> isn't OpenGL library\n", m_LibName);
     goto exr;
   }
-
-  if (cryglGetIntegerv)
+#ifndef USE_SDL
+  CreateRContext(rc, Glhdc, hGLrc, cbpp, zbpp, sbits, true);
+#else
+  rc->m_Context = SDL_GL_CreateContext(win);
+  if (rc->m_Context)
   {
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_MaxTextureSize);
+    if (!SDL_GL_MakeCurrent(win, rc->m_Context))
+    {
+      iLog->Log("%s\n", SDL_GetError());
+      return NULL;
+    }
+#ifdef GLES_RENDERER
+    if (!GLES_Init())
+      return NULL;
+#endif
   }
   else
   {
-    m_MaxTextureSize = 2048;
+    iLog->Log("%s\n", SDL_GetError());
+    return NULL;
   }
+  m_CurrContext = rc;
+#endif
+
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_MaxTextureSize);
   if (CV_gl_maxtexsize)
   {
     if (CV_gl_maxtexsize < 128)
@@ -2270,29 +1942,21 @@ exr:
   iLog->Log("****** OpenGL Driver Stats ******\n");
   iLog->Log("Driver: %s\n", m_LibName);
   m_VendorName = glGetString(GL_VENDOR);
-  iLog->Log("GL_VENDOR: %s\n", m_VendorName ? (const char*)m_VendorName : "Unknown");
+  iLog->Log("GL_VENDOR: %s\n", m_VendorName);
   m_RendererName = glGetString(GL_RENDERER);
-  iLog->Log("GL_RENDERER: %s\n", m_RendererName ? (const char*)m_RendererName : "Unknown");
+  iLog->Log("GL_RENDERER: %s\n", m_RendererName);
   m_VersionName = glGetString(GL_VERSION);
-  iLog->Log("GL_VERSION: %s\n", m_VersionName ? (const char*)m_VersionName : "Unknown");
+  iLog->Log("GL_VERSION: %s\n", m_VersionName);
   m_ExtensionsName = glGetString(GL_EXTENSIONS);
   iLog->LogToFile("GL_EXTENSIONS:\n");
   char ext[16384];
   char *token;
-  if (m_ExtensionsName)
+  strcpy(ext, (char *)m_ExtensionsName);
+  token = strtok(ext, " ");
+  while (token)
   {
-    strncpy(ext, (char *)m_ExtensionsName, sizeof(ext) - 1);
-    ext[sizeof(ext) - 1] = '\0';
-    token = strtok(ext, " ");
-    while (token)
-    {
-      iLog->LogToFile("  %s\n", token);
-      token = strtok(NULL, " ");
-    }
-  }
-  else
-  {
-    iLog->LogToFile("  (none or modern GL core profile)\n");
+    iLog->LogToFile("  %s\n", token);
+    token = strtok(NULL, " ");
   }
   iLog->LogToFile("\n");
 #ifndef USE_SDL
@@ -2396,23 +2060,6 @@ exr:
     }
   }
 
-#ifdef __ANDROID__
-  // On Android, ensure SM2.0 ARB shaders (ATI R300 path) are active:
-  // Mobile GPUs do not support NV register combiners (SM1.1), which causes black/invisible 3D world and menu island.
-  m_Features &= ~RFT_HW_MASK;
-  m_Features |= RFT_HW_RADEON;
-  nGPU = RFT_HW_RADEON;
-  CV_gl_nv30_ps20 = 1;
-  CV_r_Quality_BumpMapping = 3;
-  CV_r_nops20 = 0;
-  var = iConsole->GetCVar("r_Quality_BumpMapping");
-  if (var)
-    var->Set(3);
-  var = iConsole->GetCVar("r_NoPS20");
-  if (var)
-    var->Set(0);
-#endif
-
   iLog->Log(" ****** OGL CryRenderer Stats ******\n");
   iLog->Log(" Mode: %d x %d (%s)\n", m_width, m_height, fullscreen ? "FullScreen" : "Windowed");
   iLog->Log(" Gamma: %s\n", (m_Features & RFT_HWGAMMA) ? "Hardware" : "Software");
@@ -2497,26 +2144,20 @@ exr:
   Matrix44 m;
   glGetFloatv(GL_MODELVIEW_MATRIX, m.GetData());
 
-  int parms[4] = {0, 0, 0, 0};
+  int parms[4];
 
   glGetIntegerv(GL_MAX_CLIP_PLANES, &m_MaxClipPlanes);
-  if (m_MaxClipPlanes <= 0) m_MaxClipPlanes = 6;
   iLog->Log(" OGL Max Clip Planes=%d", m_MaxClipPlanes);
   glGetIntegerv(GL_MAX_LIGHTS, &m_MaxLightSources);
-  if (m_MaxLightSources <= 0) m_MaxLightSources = 8;
   iLog->Log(" OGL Max Lights=%d", m_MaxLightSources);
   glGetIntegerv(GL_MAX_TEXTURE_SIZE,parms);
-  if (parms[0] <= 0) parms[0] = 2048;
   iLog->Log(" OGL Max Texture size=%dx%d",parms[0],parms[0]);
   glGetIntegerv(GL_MAX_VIEWPORT_DIMS,parms);
-  if (parms[0] <= 0) { parms[0] = width; parms[1] = height; }
   iLog->Log(" OGL Max Viewport dims=%dx%d",parms[0],parms[1]);
-  int nDepth = 0;
+  int nDepth;
   glGetIntegerv(GL_MAX_MODELVIEW_STACK_DEPTH, &nDepth);
-  if (nDepth <= 0) nDepth = 32;
   iLog->Log(" OGL Max ModelView Matrix stack depth=%d", nDepth);
   glGetIntegerv(GL_MAX_PROJECTION_STACK_DEPTH, &nDepth);
-  if (nDepth <= 0) nDepth = 32;
   iLog->Log(" OGL Max Projection Matrix stack depth=%d", nDepth);
   if (nGPU == RFT_HW_GFFX || nGPU == RFT_HW_GF3)
     m_MaxClipPlanes = 0;
@@ -2571,41 +2212,8 @@ exr:
 
   SetGamma(CV_r_gamma+m_fDeltaGamma, CV_r_brightness, CV_r_contrast);
 
-#ifdef USE_SDL
-  int actualW = 0, actualH = 0;
-  if (m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Window)
-  {
-    SDL_GetWindowSizeInPixels(m_RContexts[0]->m_Window, &actualW, &actualH);
-    if (actualW <= 0 || actualH <= 0)
-      SDL_GetWindowSize(m_RContexts[0]->m_Window, &actualW, &actualH);
-  }
-  if (actualW > 0 && actualH > 0)
-  {
-    m_width = actualW;
-    m_height = actualH;
-  }
-  else if (m_width <= 0 || m_height <= 0)
-  {
-    m_width = width;
-    m_height = height;
-  }
-#else
   m_width = width;
   m_height = height;
-#endif
-
-  m_VX = 0;
-  m_VY = 0;
-  m_VWidth = m_width;
-  m_VHeight = m_height;
-
-  SetViewport(0, 0, m_width, m_height);
-
-  if (iConsole)
-  {
-    if (ICVar* cvW = iConsole->GetCVar("r_Width")) cvW->Set(m_width);
-    if (ICVar* cvH = iConsole->GetCVar("r_Height")) cvH->Set(m_height);
-  }
 
   InitVAR();
 
@@ -2629,7 +2237,7 @@ exr:
 #endif
 }
 
-#ifdef __linux
+#ifdef LINUX
 bool CGLRenderer::CreateRContext(SRendContext *rc, WIN_HDC Glhdc, WIN_HGLRC hGLrc, int cbpp, int zbpp, int sbits, bool bAllowFSAA)
 {
   return false;
@@ -2839,7 +2447,7 @@ bool CGLRenderer::CreateRContext(SRendContext *rc, WIN_HDC Glhdc, WIN_HGLRC hGLr
 
 bool CGLRenderer::SetCurrentContext(WIN_HWND hWnd)
 {
-#ifndef __linux
+#ifndef LINUX
   int i;
 
   for (i=0; i<m_RContexts.Num(); i++)
@@ -2874,7 +2482,7 @@ bool CGLRenderer::SetCurrentContext(WIN_HWND hWnd)
 
 bool CGLRenderer::CreateContext(WIN_HWND hWnd, bool bAllowFSAA)
 {
-#ifndef __linux
+#ifndef LINUX
   int i;
 
   for (i=0; i<m_RContexts.Num(); i++)
@@ -2918,7 +2526,7 @@ bool CGLRenderer::CreateContext(WIN_HWND hWnd, bool bAllowFSAA)
 
 bool CGLRenderer::DeleteContext(WIN_HWND hWnd)
 {
-#ifndef __linux
+#ifndef LINUX
   int i;
 
   for (i=0; i<m_RContexts.Num(); i++)
@@ -2947,11 +2555,7 @@ bool CGLRenderer::DeleteContext(WIN_HWND hWnd)
   delete rc;
   m_RContexts.Remove(i, 1);
 #else
-  if (m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Context)
-  {
-    SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
-    m_RContexts[0]->m_Context = NULL;
-  }
+  SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
 #endif
   return true;
 }
@@ -2981,6 +2585,9 @@ extern int nAcceptFOpen;
 
 void CGLRenderer::ShutDown(bool bReInit)
 {
+#ifdef GLES_RENDERER
+  GLES_ReportUnimplemented();
+#endif
   int i;
 
   //  CRendElement::mfLogAllREs();
@@ -3040,10 +2647,9 @@ void CGLRenderer::ShutDown(bool bReInit)
 
   RestoreDeviceGamma();
 
-  if (cryglFinish)
-    glFinish();
+  glFinish();
 #ifndef USE_SDL
-  HWND hWnd = m_RContexts.Num() ? m_RContexts[0]->m_Glhwnd : NULL;
+  HWND hWnd = m_RContexts[0]->m_Glhwnd;
 
   for (i=0; i<m_RContexts.Num(); i++)
   {
@@ -3054,13 +2660,8 @@ void CGLRenderer::ShutDown(bool bReInit)
     DestroyWindow(hWnd);
   }
 #else
-  if (m_RContexts.Num() && m_RContexts[0])
-  {
-    if (m_RContexts[0]->m_Context)
-      SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
-    if (m_RContexts[0]->m_Window)
-      SDL_DestroyWindow(m_RContexts[0]->m_Window);
-  }
+  SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
+  SDL_DestroyWindow(m_RContexts[0]->m_Window);
 #endif
   //ChangeDisplay(m_deskwidth,m_deskheight,m_deskbpp);
   ChangeDisplay(0,0,0);
@@ -3115,7 +2716,7 @@ DLL_EXPORT IRenderer* PackageRenderConstructor(int argc, char* argv[], SCryRende
 
   g_SecondsPerCycle = iSystem->GetSecondsPerCycle();
   g_CpuFlags = iSystem->GetCPUFlags();
-#ifndef __linux
+#ifndef LINUX
   srand( GetTickCount() );
 #else
   srand( SDL_GetTicks() );
@@ -3129,6 +2730,6 @@ void *gGet_D3DDevice()
 }
 void *gGet_glReadPixels()
 {
-  return (void *)(uintptr_t)glReadPixels;
+  return (void *)glReadPixels;
 }
 

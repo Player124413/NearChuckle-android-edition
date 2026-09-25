@@ -53,6 +53,7 @@ void CVars::Init()
 	INIT_CVAR_CHEAT(e_particles_debug,						0, "Debug");
 	INIT_CVAR_SER__(e_particles_max_count,				2048, "Maximum number of particles");
   INIT_CVAR_SER__(e_decals,											1, "Activates drawing of decals (marks from bullets and explosions)");
+	INIT_CVAR_SER__(e_decals_max_count,						512, "Maximum number of decals alive at once (1-512); each costs draw calls per light pass");
   INIT_CVAR_CHEAT(e_bflyes,											1, "Activates drawing of butterflies around the camera");
   INIT_CVAR_CHEAT(e_vegetation_bending,					2, "Debug");
   INIT_CVAR_CHEAT(e_vegetation,									1, "Activates drawing of distributed objects like trees");

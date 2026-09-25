@@ -269,14 +269,25 @@ bool CSoundBuffer::Load(bool bLooping, CSound *pSound)
 	{
 		ASSERT(m_pSoundSystem->m_pStreamEngine);
 		//TRACE("Starting Sound-Streaming for %s.", m_Props.sName.c_str());
-		m_pReadStream = m_pSoundSystem->m_pStreamEngine->StartRead("SoundSystem", m_Props.sName.c_str(), this);
+		IReadStreamPtr ptr=m_pSoundSystem->m_pStreamEngine->StartRead("SoundSystem", m_Props.sName.c_str(), this);
+#ifndef LINUX
+		//On Linux, StartRead will directly call StreamOnComplete, leading to m_pReadStream being set to NULL, then
+		//back to a valid pointer here. This leads to issues stopping certain sounds like mission dialog when skipping
+		//cutscenes, since the Loaded() function returns false in the FreeChannel() function.
+		m_pReadStream = ptr;
+#endif
 		if (pSound->m_nFlags & FLAG_SOUND_LOAD_SYNCHRONOUSLY)
 		{
 			if (m_pReadStream)
 				m_pReadStream->Wait();
 		}
-		if (m_pReadStream && m_pReadStream->IsFinished())
-			m_pReadStream = NULL;
+		else
+		{
+#ifndef LINUX
+			if (m_pReadStream->IsFinished())
+				m_pReadStream=NULL;
+#endif
+		}
 		
 		// Placeholder sound.
 		if (m_pSoundSystem->m_pCVarDebugSound->GetIVal() == 2)
@@ -299,12 +310,10 @@ bool CSoundBuffer::Load(bool bLooping, CSound *pSound)
 bool CSoundBuffer::WaitForLoad()
 {
 	GUARD_HEAP;
-	if (m_pReadStream)
-	{
-		m_pReadStream->Wait();
-		m_pReadStream = NULL;
-	}
-	return !LoadFailure() && (m_Data.m_pData != NULL);
+	if (!Loading())
+		return true;
+	m_pReadStream->Wait();
+	return !LoadFailure();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -359,7 +368,6 @@ void CSoundBuffer::StreamOnComplete(IReadStream *pStream, unsigned nError)
 	FUNCTION_PROFILER( m_pSoundSystem->GetSystem(),PROFILE_SOUND );
 	if (nError)
 	{
-		m_pReadStream = 0;
 		m_bLoadFailure=true;
 		LoadFailed();
 		return;
@@ -373,7 +381,6 @@ void CSoundBuffer::StreamOnComplete(IReadStream *pStream, unsigned nError)
 #endif
   if (!pSample)
 	{
-		m_pReadStream = 0;
 		m_pSoundSystem->m_pILog->LogToFile("Warning: Cannot load sample sound %s\n", m_Props.sName.c_str());
 		m_bLoadFailure=true;
 		LoadFailed();
@@ -383,7 +390,6 @@ void CSoundBuffer::StreamOnComplete(IReadStream *pStream, unsigned nError)
 	SetSample(pSample);
   //CS_Sample_SetMode(pSample, m_bLooping ? CS_LOOP_NORMAL : CS_LOOP_OFF);
   CS_Sample_SetMode(pSample, GetFModFlags(m_bLooping));
-	m_pReadStream = 0;
 	SoundLoaded();
 	//TRACE("Sound-Streaming for %s finished.", m_Props.sName.c_str());
 }

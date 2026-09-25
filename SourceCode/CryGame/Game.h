@@ -484,7 +484,6 @@ public:
 	IRConSystem *GetIRConSystem() { return m_pRConSystem; };
 
 	void SendMessage(const char *str){
-		CryLogAlways("CXGame::SendMessage: '%s'", str ? str : "NULL");
 		m_qMessages.push(str);
 	}
 	bool ExecuteScript(const char *sPath,bool bForceReload=false);
@@ -912,7 +911,7 @@ public:
 	//! sets a timer for a generic script object table
 	int		AddTimer(IScriptObject *pTable,unsigned int nStartTimer,unsigned int nTimer,IScriptObject *pUserData,bool bUpdateDuringPause);
 	void	PlaySubtitle(ISound * pSound);
-#ifdef __linux
+#ifdef LINUX
 	string	GetCorrectedLevelPath(string in);
 #endif
 	bool	OpenPacks(const char *szFolder);

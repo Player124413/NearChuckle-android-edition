@@ -800,15 +800,9 @@ void CSystem::CreateRendererVars()
 		"Usage: r_ColorBits [32/24/16/8]");
 	m_rDepthBits = GetIConsole()->CreateVariable("r_DepthBits", "32", VF_DUMPTODISK|VF_CHEAT);
 	m_rStencilBits = GetIConsole()->CreateVariable("r_StencilBits", "8", VF_DUMPTODISK);	
-#if defined(__linux__) || defined(LINUX) || defined(__ANDROID__)
-	m_rDriver= GetIConsole()->CreateVariable("r_Driver", "OpenGL", VF_DUMPTODISK,
-		"Sets the renderer driver. Default is 'OpenGL'.\n"
-		"Usage: r_Driver OpenGL");
-#else
 	m_rDriver= GetIConsole()->CreateVariable("r_Driver", "Direct3D9", VF_DUMPTODISK,
 		"Sets the renderer driver. Default is 'Direct3D9'.\n"
 		"Usage: r_Driver Direct3D9");
-#endif
   m_rFullscreen = GetIConsole()->CreateVariable("r_Fullscreen", "0", VF_DUMPTODISK,
 		"Toggles fullscreen mode. Default is 0 (windowed).\n"
 		"Usage: r_Fullscreen [0/1]\n"
@@ -885,7 +879,7 @@ void CSystem::UpdateLoadingScreen()
 {
 	if (!m_bEditor)
 	{
-		if ((int)(INT_PTR)GetIRenderer()->EF_Query(EFQ_RecurseLevel) <= 0)
+		if ((int)(intptr_t)GetIRenderer()->EF_Query(EFQ_RecurseLevel) <= 0)
 		{
 			RenderBegin();
 			GetIConsole()->Draw();

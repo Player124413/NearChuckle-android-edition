@@ -352,7 +352,7 @@ GL_PROC(_GL,void,glVertexPointer,(GLint size, GLenum type, GLsizei stride, const
 GL_PROC(_GL,void,glViewport,(GLint x, GLint y, GLsizei width, GLsizei height))
 
 // WGL functions.
-#ifndef __linux
+#ifndef LINUX
 GL_PROC(_GL,BOOL,pwglCopyContext,(HGLRC,HGLRC,UINT))
 GL_PROC(_GL,HGLRC,pwglCreateContext,(HDC))
 GL_PROC(_GL,HGLRC,pwglCreateLayerContext,(HGLRC))

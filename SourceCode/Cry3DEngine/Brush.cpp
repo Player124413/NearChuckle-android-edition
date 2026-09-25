@@ -150,7 +150,7 @@ bool CBrush::DrawEntity(const struct SRendParams & _EntDrawParams)
 //  if(!strstr(m_pStatObj->GetFileName(),"SWR_MP_PumpB.cgf"))
   //  return false;
 
-  int nRecursionLevel = (int)(INT_PTR)GetRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
+  int nRecursionLevel = (int)(intptr_t)GetRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
 
   // some parameters will be modified
 	SRendParams rParms = _EntDrawParams;

@@ -38,7 +38,7 @@ inline DWORD sCycles()
   return L;
 }
 */
-#ifndef __linux
+#ifndef LINUX
 inline double sCycles2()
 {
 #if defined(WIN32) && !defined(WIN64)  
@@ -65,7 +65,7 @@ inline double sCycles2()
 
 static double measure_clock_speed(double& SecondsPerCycle )
 {
-#ifndef __linux
+#ifndef LINUX
   LARGE_INTEGER Freq;
   LARGE_INTEGER c0, c1;
 
@@ -106,7 +106,7 @@ static double measure_clock_speed(double& SecondsPerCycle )
   SetThreadPriority( GetCurrentThread(), thread_priority );
 
 #endif
-#endif //__linux
+#endif //LINUX
   return 1.0e-6/SecondsPerCycle;
 }
 

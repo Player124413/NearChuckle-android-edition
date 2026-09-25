@@ -1560,6 +1560,11 @@ static inline bool IsDXTFormat(int format)
 
 void CGLTexMan::BuildMips(GLenum tgt, byte* src, int wdt, int hgt, int depth, STexPic *ti, int srcFormat, int dstFormat, int blockSize, int DXTSize, int nMips)
 {
+#ifdef LINUX
+  // FARCRY_GLES_DEBUG: which texture name each upload belongs to (the GL layer only sees ids).
+  static bool bDebug = getenv("FARCRY_GLES_DEBUG") != NULL;
+  if (bDebug) { GLint nBound = 0; glGetIntegerv(GL_TEXTURE_BINDING_2D, &nBound); iLog->Log("TEXUP %s bind %d bound %d %dx%d src 0x%x dst 0x%x mips %d\n", ti->GetName(), ti->m_Bind, nBound, wdt, hgt, srcFormat, dstFormat, nMips); }
+#endif
   int offset = 0;
   ti->m_nMips = 0;
   if (nMips)

@@ -1,133 +1,57 @@
-# Near Chuckle - Android Edition
+# Near Chuckle
 
 ![Screenshot of Far Cry on Linux](assets/fort.jpg)
 
-Far Cry (CryEngine 1) ported to Android and Linux via SDL3 with support for Mesa Zink (OpenGL over Vulkan) and custom Turnip GPU drivers.
+Far Cry's leaked source code ported to run on SDL3 and Linux. Thanks to [ugozapad](https://github.com/ugozapad)
+and [q4a](https://github.com/q4a) for their earlier work. Also thanks to [SoapyMan](https://github.com/soapyman/ce1)
+for their work in integrating FFMpeg for Bink video support on their branch.
 
-Based on NearChuckle, with Android architecture inspired by [SCARaw/Android-OpenMW](https://github.com/SCARaw/Android-OpenMW) and [xyzz/openMW-android](https://github.com/xyzz/openMW-android).
+Binaries are available [here](https://rohitcodes.fyi/nearchuckle/files/).
 
----
+You need SDL3, OpenAL-Soft, and OpenGL to compile the port. For macOS (a development host, not a release target) see [BUILDING-macOS.md](BUILDING-macOS.md). You will also need
+the Nvidia Cg toolkit, which is not included, to compile the OpenGL renderer. You can get it here:
+https://developer.nvidia.com/cg-toolkit-download
 
-## Особенности Android порта / Features
+Note: When running NearChuckle with OpenGL in Wayland, you must either use a precompiled shader cache,
+or force the game to run in X11 mode. See "Known issues" below.
 
-### 🚀 Полнофункциональный Лаунчер (Launcher)
-- **Выбор папки с игрой:** Удобный выбор каталога с установленной игрой Far Cry (содержащего `FCData`, `Levels` и т.д.) со встроенным проводником и проверкой целостности файлов.
-- **Поддержка разрешений:** Автоматическое под экран устройства, FHD (1080p), HD (720p - оптимально для FPS), qHD (540p).
-- **Настройка FOV:** Регулировка угла обзора прямо из меню (по умолчанию 90°).
-- **Режим разработчика:** Быстрое включение режима `-DEVMODE`.
-- **Пользовательские аргументы:** Возможность ввода любых консольных переменных и параметров командной строки CryEngine.
+Modify the `CMakeLists.txt` file in `RenderDll/XRenderOGL` and set `CG_LIB_PATH` to
+the path containing `libCgGL.so` and `libCg.so`.
 
-### ⚡ Mesa Zink (OpenGL over Vulkan)
-- Полная реализация десктопного OpenGL 2.1 / 3.x через современный графический API **Vulkan**.
-- Устраняет ограничения мобильного OpenGL ES и обеспечивает корректную работу всех шейдеров Far Cry.
-- Оптимизации Zink для мобильных GPU (`ZINK_DESCRIPTORS=lazy`, переопределения профилей GL/GLSL).
+NearChuckle also supports the Direct3D9 renderer via DXVK for better performance. To compile with
+DXVK, specify `DXVK_INC_PATH` and `DXVK_LIB_PATH`. Example:
 
-### 🎮 Поддержка Turnip драйверов (ZIP архивы)
-- **Установка в 1 клик:** Просто выберите или закиньте `.zip` архив с Turnip драйвером (от Kimchi, Banners-Turnip, WinNative, StevenMXZ, Vauzi или любой совместимый с AdrenoTools).
-- Лаунчер автоматически распакует архив, считает `meta.json` (или обнаружит `libvulkan_freedreno.so`), сгенерирует ICD-манифест и зарегистрирует драйвер.
-- **Rootless перенаправление:** Использование библиотеки `libadrenotools` для подмены системного драйвера Vulkan на кастомный Turnip без root-прав.
-- **Режим GPU Turbo:** Принудительное удержание максимальных частот графического процессора Adreno через ioctl `/dev/kgsl-3d0`.
-- Быстрое переключение между установленными версиями Turnip и системным драйвером устройства.
+`cmake -DDXVK_LIB_PATH=/path/to/libdxvk_d3d9.so/ -DDXVK_INC_PATH=/path/to/dxvk_source/include/native/windows/`
 
-### 🕹️ Качественное сенсорное управление с кнопкой EDIT
-- **Аналоговый джойстик:** Точное и плавное управление ходьбой и бегом персонажа (W, A, S, D).
-- **Область обзора камеры (Touch Look):** Плавное вращение камеры и прицеливание с регулируемой чувствительностью.
-- **Полный набор кнопок действий Far Cry:**
-  - Огонь / Стрельба (ЛКМ)
-  - Прицеливание / Оптический зум (ПКМ)
-  - Прыжок (Space)
-  - Присесть (C)
-  - Лечь / Ползти (Z)
-  - Перезарядка (R)
-  - Взаимодействие / Использовать (F) — посадка в джипы, лодки, дельтапланы, открытие дверей, подбор оружия
-  - Фонарик (L)
-  - Бинокль (B)
-  - ПНВ / Тепловизор CryVision (T)
-  - Граната (G)
-  - Смена оружия (след./пред.)
-  - Пауза / Меню (Esc)
-  - Быстрое сохранение (F5) / Быстрая загрузка (F9)
-  - Консоль (~)
-- **Интерактивный режим редактирования (кнопка EDIT):**
-  - Кнопка **EDIT** доступна прямо во время игры или в отдельном конфигураторе из лаунчера.
-  - **Перемещение:** Нажмите и перетащите любую кнопку или джойстик в любое место экрана.
-  - **Изменение размера:** Кнопки **[Размер +]** и **[Размер -]** в панели инструментов.
-  - **Изменение прозрачности:** Кнопки **[Прозр. +]** и **[Прозр. -]** для тонкой настройки видимости.
-  - **Видимость:** Кнопка **[Скрыть / Показать]** позволяет скрыть ненужные кнопки (в режиме редактирования скрытые кнопки подсвечиваются красным пунктиром, чтобы их можно было вернуть).
-  - **Сброс:** Кнопка **[Сброс]** мгновенно возвращает стандартную раскладку.
-  - **Сохранение:** Позиции, размеры и видимость сохраняются в `SharedPreferences` и применяются моментально.
+Note: When running NearChuckle with DXVK, you will need to supply precompiled shaders since it does not
+include a shader compiler. You can download a mostly complete shader cache in the binary release. The
+cache files are stored as pak files, which you can place in `FCData`. You can also create your own shader
+cache by compiling and running the Windows port, then copying the files created in Shaders/Cache. If NearChuckle
+tries to render a shader it does not have, it will log the error in a file named `MissingShaders.txt` in the same
+directory as `FCData.` Please send any entries to me so that I can generate them.
 
----
+After building, place all of the .so files and the `FarCry` binary in a folder in Far Cry's installation folder
+(containing `FCData`, `Levels`, `Profiles`, `Shaders`). If you built with the supplied CMake Preset, they should
+be in `bin/x64-Debug`. You can simply move `x64-Debug` to the installation folder. Launch `FarCry` from inside the folder it is in.
 
-## Установка и запуск на Android / How to Run
+## Known issues
 
-1. Установите скомпилированный APK файл (`app-release.apk` или `app-debug.apk`) на ваше Android-устройство.
-2. Скопируйте файлы установленной игры Far Cry с ПК на телефон (например, в папку `/sdcard/FarCry/`):
-   - Папка `FCData` (со всеми `.pak` файлами)
-   - Папка `Levels` (со всеми уровнями игры)
-   - Папка `Profiles`
-3. Запустите лаунчер **Far Cry**:
-   - Нажмите **"Выбрать папку"** и укажите папку `/sdcard/FarCry`. Лаунчер проверит наличие файлов и отобразит зелёную отметку `✓ Файлы Far Cry обнаружены`.
-   - В разделе драйверов выберите драйвер или нажмите **"Установить Turnip драйвер из ZIP"**, если у вас есть архив с Turnip.
-   - При желании настройте раскладку кнопок нажав **"Настройка экранных кнопок (EDIT)"**.
-4. Нажмите **"ЗАПУСТИТЬ FAR CRY"** и играйте!
+### Setting FOV
 
----
+The view FOV has a default value of 90. To change this, open the console (tilde), and set the CVar `game_fov`. Example:
 
-## Сборка из исходников / Building
+`\game_fov 105`
 
-### Требования
-- Android NDK r25+ (или r26)
-- Android SDK (API 34)
-- CMake 3.14+
-- Java 17+
+### Broken decals on OpenGL
 
-### Сборка нативных библиотек
-Запустите скрипт сборки:
-```bash
-./buildscripts/build_android.sh --arch arm64 --release --ndk /path/to/android-ndk
-```
-Скрипт автоматически соберет `libFarCry.so`, библиотеки движка `libCry*.so`, рендерер `libXRenderOGL.so` и поместит их в `android/app/src/main/jniLibs/arm64-v8a/`.
+When using the OpenGL renderer, decal texture coordinates will frequently change every frame and look almost like
+Z-fighting. To address this, I added a new CVar - `r_DisableLevelDecalsHack`. Setting this to 1 in the console
+will disable rendering anything that uses a specific render state, which includes static level decals
+as well as the player's multiplayer shirt color. Not ideal, but it's less distracting. The Direct3D9
+renderer via DXVK does not have this issue. The CVar is saved into system.cfg, so don't forget to disable
+it if you decide to switch renderers.
 
-### Сборка APK
-Перейдите в каталог `android` и соберите APK с помощью Gradle:
-```bash
-cd android
-./gradlew assembleRelease
-```
-Готовый APK файл будет находиться в:
-`android/app/build/outputs/apk/release/app-release-unsigned.apk` (или debug).
+### "The profile is not supported" error messages in console
 
----
-
-## Структура проекта
-
-```
-NearChuckle-android-wip-edition/
-├── android/                        # Android приложение
-│   ├── app/
-│   │   ├── src/main/AndroidManifest.xml
-│   │   ├── src/main/java/
-│   │   │   ├── org/libsdl/app/     # SDL3 Android runtime
-│   │   │   └── com/nearchuckle/farcry/
-│   │   │       ├── LauncherActivity.java      # Главный лаунчер
-│   │   │       ├── GameActivity.java          # Запуск движка + Zink + Turnip
-│   │   │       ├── ConfigureControlsActivity.java # Редактор кнопок
-│   │   │       ├── controls/                  # Сенсорное управление + Edit mode
-│   │   │       └── driver/                    # Менеджер Turnip ZIP архивов
-│   │   └── src/main/cpp/
-│   │       ├── driver_loader.cpp              # JNI хук для кастомных драйверов
-│   │       └── adrenotools/                   # Rootless замена Vulkan драйвера
-│   └── build.gradle
-├── buildscripts/
-│   └── build_android.sh            # Скрипт сборки библиотек NDK
-├── Externals/SDL/include/          # Заголовочные файлы SDL3
-└── SourceCode/                     # Исходный код движка Far Cry (CryEngine 1)
-```
-
-## Лицензия / Credits
-- Crytek Far Cry (CryEngine 1)
-- [NearChuckle](https://github.com/Player124413/NearChuckle-android-wip-edition)
-- [SCARaw/Android-OpenMW](https://github.com/SCARaw/Android-OpenMW) & [xyzz/openMW-android](https://github.com/xyzz/openMW-android) за референсы архитектуры лаунчера и сенсорного управления
-- [bylaws/libadrenotools](https://github.com/bylaws/libadrenotools) за библиотеку загрузки кастомных Adreno Turnip драйверов
-- Mesa 3D Graphics Library (Zink & Turnip Freedreno)
+The CG compiler does not work under Wayland. You can either run the game in X11, or download
+a cache of precompiled shaders and place it in `FCData`. Precompiled shaders are available [here](https://rohitcodes.fyi/nearchuckle/files/shadercache).

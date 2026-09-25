@@ -10,26 +10,6 @@
 
 static GLuint sSceneFBO, sSceneColor, sSceneDepth;   // colour renderbuffer, depth-stencil texture
 static int sSceneW, sSceneH;
-
-// The scene renders at FARCRY_RENDER_SIZE=WxH, or at FARCRY_RENDER_SCALE (0.25-1) of the window, never
-// above the window, and is scaled up at the swap (letterboxed with FARCRY_RENDER_ASPECT=1). The Android
-// engine sizes r_Width/r_Height the same way (SystemInit.cpp).
-void GLES_RenderSize(int pw, int ph, int* w, int* h)
-{
-  *w = pw; *h = ph;
-  const char* size = getenv("FARCRY_RENDER_SIZE");
-  int rw = 0, rh = 0;
-  if (size && sscanf(size, "%dx%d", &rw, &rh) == 2 && rw >= 64 && rh >= 64)
-  {
-    float fit = (float)pw / rw < (float)ph / rh ? (float)pw / rw : (float)ph / rh;
-    if (fit < 1.0f) { rw = (int)(rw * fit); rh = (int)(rh * fit); }
-    *w = rw; *h = rh;
-    return;
-  }
-  float s = getenv("FARCRY_RENDER_SCALE") ? (float)atof(getenv("FARCRY_RENDER_SCALE")) : 1.0f;
-  if (s >= 0.25f && s < 1.0f) { *w = (int)(pw * s); *h = (int)(ph * s); }
-}
-static void EnsureScene(int pw, int ph) { int w, h; GLES_RenderSize(pw, ph, &w, &h); GLES_SceneFBOEnsure(w, h); }
 static GLuint sScratchFBO;
 
 static void DestroyScene()
@@ -71,53 +51,9 @@ bool GLES_SceneFBOEnsure(int w, int h)
     return false;
   }
   sSceneW = w; sSceneH = h;
-  // The renderer sets no viewport for the menus and videos and relies on the window's default one.
-  es_glViewport(0, 0, w, h);
-  es_glScissor(0, 0, w, h);
   GLES_Log("GLES: scene framebuffer %dx%d", w, h);
   return true;
 }
-
-#ifdef __ANDROID__
-// The touch overlay draws from inside SDL_GL_SwapWindow (a swap callback in the OpenTouch SDL fork)
-// with its own program, attributes, buffers, texture unit 0 and fixed state, and none of the
-// layer's shadows see it. Snapshot the native state it touches and put everything back afterwards.
-struct SOverlaySaved
-{
-  GLboolean blend, cull, depth, scissor, depthMask;
-  GLint blendSrc, blendDst, elementBuffer, viewport[4], scissorBox[4];
-};
-
-static void SaveForOverlay(SOverlaySaved& s)
-{
-  s.blend = es_glIsEnabled(GL_BLEND);
-  s.cull = es_glIsEnabled(GL_CULL_FACE);
-  s.depth = es_glIsEnabled(GL_DEPTH_TEST);
-  s.scissor = es_glIsEnabled(GL_SCISSOR_TEST);
-  es_glGetBooleanv(GL_DEPTH_WRITEMASK, &s.depthMask);
-  es_glGetIntegerv(0x80C9 /*GL_BLEND_SRC_RGB*/, &s.blendSrc);
-  es_glGetIntegerv(0x80C8 /*GL_BLEND_DST_RGB*/, &s.blendDst);
-  es_glGetIntegerv(0x8895 /*GL_ELEMENT_ARRAY_BUFFER_BINDING*/, &s.elementBuffer);
-  es_glGetIntegerv(GL_VIEWPORT, s.viewport);
-  es_glGetIntegerv(GL_SCISSOR_BOX, s.scissorBox);
-}
-
-static void RestoreAfterOverlay(const SOverlaySaved& s)
-{
-  if (s.blend) es_glEnable(GL_BLEND); else es_glDisable(GL_BLEND);
-  if (s.cull) es_glEnable(GL_CULL_FACE); else es_glDisable(GL_CULL_FACE);
-  if (s.depth) es_glEnable(GL_DEPTH_TEST); else es_glDisable(GL_DEPTH_TEST);
-  if (s.scissor) es_glEnable(GL_SCISSOR_TEST); else es_glDisable(GL_SCISSOR_TEST);
-  es_glDepthMask(s.depthMask);
-  es_glBlendFunc(s.blendSrc, s.blendDst);
-  es_glBindBuffer(ES_ELEMENT_ARRAY_BUFFER, s.elementBuffer);
-  es_glViewport(s.viewport[0], s.viewport[1], s.viewport[2], s.viewport[3]);
-  es_glScissor(s.scissorBox[0], s.scissorBox[1], s.scissorBox[2], s.scissorBox[3]);
-  GLES_ReissueProgram();
-  GLES_ReissueAttribArrays();
-  GLES_ReissueTextureUnit0();
-}
-#endif
 
 void GLES_SwapWindow(SDL_Window* win)
 {
@@ -135,28 +71,8 @@ void GLES_SwapWindow(SDL_Window* win)
     bool scissor = es_glIsEnabled(GL_SCISSOR_TEST) != 0;
     if (scissor) es_glDisable(GL_SCISSOR_TEST);
     es_glBindFramebuffer(ES_READ_FRAMEBUFFER, sSceneFBO);
-    // The frame's depth-stencil is finished with: a tiler then skips writing it back to memory.
-    static const GLenum depthStencil[] = { 0x821A /* DEPTH_STENCIL_ATTACHMENT */ };
-    es_glInvalidateFramebuffer(ES_READ_FRAMEBUFFER, 1, depthStencil);
     es_glBindFramebuffer(ES_DRAW_FRAMEBUFFER, 0);
-    int x0 = 0, y0 = 0, x1 = pw, y1 = ph;
-    static bool aspect = getenv("FARCRY_RENDER_ASPECT") && atoi(getenv("FARCRY_RENDER_ASPECT"));
-    if (aspect && (long long)sSceneW * ph != (long long)sSceneH * pw)
-    {
-      // Letterbox: the largest rect of the scene's aspect, centred, with black bars.
-      if ((long long)sSceneW * ph > (long long)sSceneH * pw) { int h = (int)((long long)pw * sSceneH / sSceneW); y0 = (ph - h) / 2; y1 = y0 + h; }
-      else { int w = (int)((long long)ph * sSceneW / sSceneH); x0 = (pw - w) / 2; x1 = x0 + w; }
-      GLboolean mask[4]; GLfloat clear[4];
-      es_glGetBooleanv(GL_COLOR_WRITEMASK, mask);
-      es_glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
-      es_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-      es_glClearColor(0, 0, 0, 1);
-      es_glClear(GL_COLOR_BUFFER_BIT);
-      es_glColorMask(mask[0], mask[1], mask[2], mask[3]);
-      es_glClearColor(clear[0], clear[1], clear[2], clear[3]);
-    }
-    bool same = sSceneW == x1 - x0 && sSceneH == y1 - y0;
-    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, x0, y0, x1, y1, GL_COLOR_BUFFER_BIT, same ? GL_NEAREST : GL_LINEAR);
+    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, 0, 0, pw, ph, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     // If the surface still has alpha, the compositor honours it (macOS/ANGLE, Android): the sky
     // pass leaves alpha 0 and shows black on screen while screenshots look fine. Write alpha 1.
     static int alphaBits = -1;
@@ -175,15 +91,8 @@ void GLES_SwapWindow(SDL_Window* win)
     }
     if (scissor) es_glEnable(GL_SCISSOR_TEST);
   }
-#ifdef __ANDROID__
-  SOverlaySaved saved;
-  SaveForOverlay(saved);
   SDL_GL_SwapWindow(win);
-  RestoreAfterOverlay(saved);
-#else
-  SDL_GL_SwapWindow(win);
-#endif
-  EnsureScene(pw, ph);
+  GLES_SceneFBOEnsure(pw, ph);
   es_glBindFramebuffer(ES_FRAMEBUFFER, sSceneFBO);
 }
 

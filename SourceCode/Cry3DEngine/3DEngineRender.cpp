@@ -175,7 +175,7 @@ void C3DEngine::RenderScene(unsigned int dwDrawFlags)
 #endif
   
 	// it's correct only before StartEf()
-  int nRecursionLevel = (int)(INT_PTR)GetRenderer()->EF_Query(EFQ_RecurseLevel);
+  int nRecursionLevel = (int)(intptr_t)GetRenderer()->EF_Query(EFQ_RecurseLevel);
 	assert(nRecursionLevel>=0);
 	m_pObjManager->m_nRenderStackLevel = m_pTerrain->m_nRenderStackLevel = nRecursionLevel;
 	if(m_pObjManager->m_nRenderStackLevel<0 || m_pObjManager->m_nRenderStackLevel>1)
@@ -1585,10 +1585,7 @@ void C3DEngine::DrawShadowSpotOnTerrain(Vec3d vPos, float fRadius)
 		}
 
 		if(verts.Count())
-		{
-			CVertexBuffer vb(&verts[0].xyz.x, VERTEX_FORMAT_P3F_COL4UB_TEX2F);
-			GetRenderer()->DrawTriStrip(&vb, verts.Count());
-		}
+			GetRenderer()->DrawTriStrip(&(CVertexBuffer (&verts[0].xyz.x,VERTEX_FORMAT_P3F_COL4UB_TEX2F)),verts.Count());
 	}
 }
 
