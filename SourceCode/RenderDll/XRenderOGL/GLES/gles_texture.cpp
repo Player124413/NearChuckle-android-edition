@@ -148,7 +148,7 @@ static void __stdcall gles_glBindTexture(GLenum target, GLuint id)
 {
   STexUnitState& u = g_es.unit[g_es.activeUnit];
   BoundSlot(u, target) = id;
-  if (id) Obj(id, target);
+  if (id && !GLES_FindTexture(id)) Obj(id, target);
   GLES_NativeBindTexture(g_es.activeUnit, NativeTarget(target), id);
 }
 

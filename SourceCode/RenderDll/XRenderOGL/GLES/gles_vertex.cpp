@@ -494,21 +494,21 @@ static size_t RingAlloc(SRing& r, size_t bytes)
 }
 
 // Mode 4 draw-time redirection: an array or index pointer into a ring-backed buffer binds the ring.
-// Last buffer ResolveRing looked up: a draw's attributes nearly always share one buffer.
-static GLuint sResolveId;
-static SESBuffer* sResolveBuf;
-void GLES_ForgetBufferCache() { sResolveId = 0; sResolveBuf = NULL; }
+// Direct-mapped cache in front of g_esBuffers: each draw resolves its vertex and index buffers.
+static struct { GLuint id; SESBuffer* buf; } sResolveCache[64];
+void GLES_ForgetBufferCache() { memset(sResolveCache, 0, sizeof(sResolveCache)); }
 
 static void ResolveRing(GLuint& buffer, const void*& ptr)
 {
   if (!buffer || MapMode() != 4) return;
-  if (buffer != sResolveId)
+  unsigned slot = buffer & 63;
+  if (sResolveCache[slot].id != buffer)
   {
     std::map<GLuint, SESBuffer>::iterator it = g_esBuffers.find(buffer);
     if (it == g_esBuffers.end()) return;
-    sResolveId = buffer; sResolveBuf = &it->second;
+    sResolveCache[slot].id = buffer; sResolveCache[slot].buf = &it->second;
   }
-  SESBuffer& b = *sResolveBuf;
+  SESBuffer& b = *sResolveCache[slot].buf;
   if (!b.ranges.empty())
   {
     size_t off = (uintptr_t)ptr;
