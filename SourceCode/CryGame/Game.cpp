@@ -1201,9 +1201,9 @@ bool CXGame::Update()
 #ifdef __ANDROID__
 			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
 			{
-				// Joypad mode runs mouse look through a stick dead zone that eats slow swipes; XPlayer's AnalogMove covers the sticks.
-				if (cl_use_joypad->GetIVal())
-					cl_use_joypad->Set(0);
+				// The player scales speed by stick deflection only in joypad mode (keys still set 1).
+				if (!cl_use_joypad->GetIVal())
+					cl_use_joypad->Set(1);
 				ApplyTouchInput(m_pClient, m_pSystem);
 			}
 #endif
