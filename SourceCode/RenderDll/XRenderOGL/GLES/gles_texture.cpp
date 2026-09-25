@@ -58,13 +58,13 @@ void GLES_ReissueTextureUnit0()
 int GLES_NativeActiveUnit() { return sNativeActiveUnit; }
 
 // Direct-mapped cache in front of g_esTextures: every draw looks up each enabled unit's texture.
-static struct { GLuint id; STextureObj* obj; } sTexCache[256];
+static struct { GLuint id; STextureObj* obj; } sTexCache[4096];
 void GLES_ForgetTextureCache() { memset(sTexCache, 0, sizeof(sTexCache)); }
 
 STextureObj* GLES_FindTexture(GLuint id)
 {
   if (!id) return NULL;
-  unsigned slot = id & 255;
+  unsigned slot = id & 4095;
   if (sTexCache[slot].id == id) return sTexCache[slot].obj;
   std::map<GLuint, STextureObj>::iterator it = g_esTextures.find(id);
   if (it == g_esTextures.end()) return NULL;
@@ -158,7 +158,7 @@ static void __stdcall gles_glDeleteTextures(GLsizei n, const GLuint* ids)
   for (GLsizei i = 0; i < n; i++)
   {
     g_esTextures.erase(ids[i]);
-    if (sTexCache[ids[i] & 255].id == ids[i]) sTexCache[ids[i] & 255].id = 0;
+    if (sTexCache[ids[i] & 4095].id == ids[i]) sTexCache[ids[i] & 4095].id = 0;
     for (int un = 0; un < GLES_MAX_UNITS; un++)
     {
       STexUnitState& u = g_es.unit[un];

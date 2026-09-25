@@ -10,6 +10,20 @@
 
 static GLuint sSceneFBO, sSceneColor, sSceneDepth;   // colour renderbuffer, depth-stencil texture
 static int sSceneW, sSceneH;
+
+// FARCRY_RENDER_SCALE (0.25-1): the scene renders at a fraction of the window and is scaled up at the
+// swap. The engine sizes r_Width/r_Height with the same factor (GLES_RenderScale).
+float GLES_RenderScale()
+{
+  static float s = -1.0f;
+  if (s < 0.0f)
+  {
+    s = getenv("FARCRY_RENDER_SCALE") ? (float)atof(getenv("FARCRY_RENDER_SCALE")) : 1.0f;
+    if (!(s >= 0.25f && s <= 1.0f)) s = 1.0f;
+  }
+  return s;
+}
+static int Scaled(int n) { return n > 0 ? (int)(n * GLES_RenderScale()) : n; }
 static GLuint sScratchFBO;
 
 static void DestroyScene()
@@ -71,8 +85,11 @@ void GLES_SwapWindow(SDL_Window* win)
     bool scissor = es_glIsEnabled(GL_SCISSOR_TEST) != 0;
     if (scissor) es_glDisable(GL_SCISSOR_TEST);
     es_glBindFramebuffer(ES_READ_FRAMEBUFFER, sSceneFBO);
+    // The frame's depth-stencil is finished with: a tiler then skips writing it back to memory.
+    static const GLenum depthStencil[] = { 0x821A /* DEPTH_STENCIL_ATTACHMENT */ };
+    es_glInvalidateFramebuffer(ES_READ_FRAMEBUFFER, 1, depthStencil);
     es_glBindFramebuffer(ES_DRAW_FRAMEBUFFER, 0);
-    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, 0, 0, pw, ph, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    es_glBlitFramebuffer(0, 0, sSceneW, sSceneH, 0, 0, pw, ph, GL_COLOR_BUFFER_BIT, (sSceneW == pw && sSceneH == ph) ? GL_NEAREST : GL_LINEAR);
     // If the surface still has alpha, the compositor honours it (macOS/ANGLE, Android): the sky
     // pass leaves alpha 0 and shows black on screen while screenshots look fine. Write alpha 1.
     static int alphaBits = -1;
@@ -92,7 +109,7 @@ void GLES_SwapWindow(SDL_Window* win)
     if (scissor) es_glEnable(GL_SCISSOR_TEST);
   }
   SDL_GL_SwapWindow(win);
-  GLES_SceneFBOEnsure(pw, ph);
+  GLES_SceneFBOEnsure(Scaled(pw), Scaled(ph));
   es_glBindFramebuffer(ES_FRAMEBUFFER, sSceneFBO);
 }
 

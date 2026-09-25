@@ -344,10 +344,17 @@ static void __stdcall gles_glTexCoordPointer(GLint size, GLenum type, GLsizei st
 static void __stdcall gles_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid* p) { SetPointer(g_es.color2Array, size, type, stride, p); }
 
 static void __stdcall gles_glGenBuffersARB(GLsizei n, GLuint* ids) { es_glGenBuffers(n, ids); }
+// Direct-mapped cache in front of g_esBuffers: each draw resolves its vertex and index buffers.
+static struct { GLuint id; SESBuffer* buf; } sResolveCache[4096];
+void GLES_ForgetBufferCache() { memset(sResolveCache, 0, sizeof(sResolveCache)); }
+
 static void __stdcall gles_glDeleteBuffersARB(GLsizei n, const GLuint* ids)
 {
-  for (GLsizei i = 0; i < n; i++) g_esBuffers.erase(ids[i]);
-  GLES_ForgetBufferCache();
+  for (GLsizei i = 0; i < n; i++)
+  {
+    g_esBuffers.erase(ids[i]);
+    if (sResolveCache[ids[i] & 4095].id == ids[i]) sResolveCache[ids[i] & 4095].id = 0;
+  }
   es_glDeleteBuffers(n, ids);
 }
 static void __stdcall gles_glBindBufferARB(GLenum target, GLuint id)
@@ -494,14 +501,10 @@ static size_t RingAlloc(SRing& r, size_t bytes)
 }
 
 // Mode 4 draw-time redirection: an array or index pointer into a ring-backed buffer binds the ring.
-// Direct-mapped cache in front of g_esBuffers: each draw resolves its vertex and index buffers.
-static struct { GLuint id; SESBuffer* buf; } sResolveCache[64];
-void GLES_ForgetBufferCache() { memset(sResolveCache, 0, sizeof(sResolveCache)); }
-
 static void ResolveRing(GLuint& buffer, const void*& ptr)
 {
   if (!buffer || MapMode() != 4) return;
-  unsigned slot = buffer & 63;
+  unsigned slot = buffer & 4095;
   if (sResolveCache[slot].id != buffer)
   {
     std::map<GLuint, SESBuffer>::iterator it = g_esBuffers.find(buffer);

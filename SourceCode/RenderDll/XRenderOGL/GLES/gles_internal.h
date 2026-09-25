@@ -166,6 +166,7 @@
   ES_PROC(GLenum, glCheckFramebufferStatus, (GLenum)) \
   ES_PROC(void, glCopyTexImage2D, (GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint)) \
   ES_PROC(void, glBlitFramebuffer, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)) \
+  ES_PROC(void, glInvalidateFramebuffer, (GLenum, GLsizei, const GLenum*)) \
   ES_PROC(void, glGenRenderbuffers, (GLsizei, GLuint*)) \
   ES_PROC(void, glDeleteRenderbuffers, (GLsizei, const GLuint*)) \
   ES_PROC(void, glBindRenderbuffer, (GLenum, GLuint)) \
