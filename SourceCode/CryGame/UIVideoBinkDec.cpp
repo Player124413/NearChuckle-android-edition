@@ -211,34 +211,27 @@ void CUIVideoBinkDecoder::BinkDecReset()
 	Bink_GotoFrame( m_player->binkHandle, 0 );
 }
 
+// BT.601 YUV 4:2:0 to BGRA in 16.16 fixed point (the float per-texel version was most of the menu's frame).
 void CUIVideoBinkDecoder::DrawYUV(void)
 {
-	int i, j, k, si, sj;
-	MoviePlayerData* player = m_player;
-	uint8_t Y, U, V;
-	float R, G, B;
-
-	for (i = k = 0; i < player->vidHeight; i++)
+	const MoviePlayerData* player = m_player;
+	const int w = player->vidWidth, h = player->vidHeight;
+	for (int i = 0; i < h; i++)
 	{
-		for (j = 0; j < player->vidWidth; j++)
+		const uint8_t* py = player->yuvBuffer[0].data + i * player->yuvBuffer[0].pitch;
+		const uint8_t* pu = player->yuvBuffer[1].data + (i >> 1) * player->yuvBuffer[1].pitch;
+		const uint8_t* pv = player->yuvBuffer[2].data + (i >> 1) * player->yuvBuffer[2].pitch;
+		uint8_t* out = m_frameBuffer + i * w * 4;
+		for (int j = 0; j < w; j++, out += 4)
 		{
-			Y = player->yuvBuffer[0].data[(i * player->yuvBuffer[0].pitch) + j];
-			si = (i % 2 == 0) ? i / 2 : (i - 1) / 2;
-			sj = (j % 2 == 0) ? j / 2 : (j - 1) / 2;
-
-			U = player->yuvBuffer[1].data[si * player->yuvBuffer[1].pitch + sj];
-			V = player->yuvBuffer[2].data[si * player->yuvBuffer[2].pitch + sj];
-
-			R = (float)Y + 1.4075f * ((float)V - 128.0f);
-			G = (float)Y - 0.3455f * ((float)U - 128.0f) - 0.7169f * ((float)V - 128.0f);
-			B = (float)Y + 1.7790f * ((float)U - 128.0f);
-
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k] = (uint8_t)B;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 1] = (uint8_t)G;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 2] = (uint8_t)R;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 3] = 255;
-
-			k += 3;
+			const int Y = py[j] << 16, U = pu[j >> 1] - 128, V = pv[j >> 1] - 128;
+			const int R = (Y + 92242 * V) >> 16;
+			const int G = (Y - 22643 * U - 46983 * V) >> 16;
+			const int B = (Y + 116589 * U) >> 16;
+			out[0] = (uint8_t)(B < 0 ? 0 : B > 255 ? 255 : B);
+			out[1] = (uint8_t)(G < 0 ? 0 : G > 255 ? 255 : G);
+			out[2] = (uint8_t)(R < 0 ? 0 : R > 255 ? 255 : R);
+			out[3] = 255;
 		}
 	}
 }
@@ -300,12 +293,16 @@ void CUIVideoBinkDecoder::Present()
 		}
 	}
 
+	bool bNewFrame = !player->hasFrame;
 	while(player->framePos < desiredFrame)
 	{
 		player->framePos = Bink_GetNextFrame(player->binkHandle, player->yuvBuffer);
+		bNewFrame = true;
 	}
 
-	DrawYUV();
+	// The game renders faster than the video plays: convert and upload only frames that changed.
+	if (bNewFrame)
+		DrawYUV();
 
 	if (m_audioStream)
 	{
@@ -314,8 +311,9 @@ void CUIVideoBinkDecoder::Present()
 
 	player->lastFramePos = player->framePos;
 
-	GetISystem()->GetIRenderer()->UpdateTextureInVideoMemory(m_textureId,
-		m_frameBuffer, 0, 0, player->vidWidth, player->vidHeight, eTF_8888);
+	if (bNewFrame)
+		GetISystem()->GetIRenderer()->UpdateTextureInVideoMemory(m_textureId,
+			m_frameBuffer, 0, 0, player->vidWidth, player->vidHeight, eTF_8888);
 
 	player->hasFrame = true;
 }
