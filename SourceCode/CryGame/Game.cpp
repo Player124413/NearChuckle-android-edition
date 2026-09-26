@@ -791,24 +791,6 @@ bool CXGame::IsInPause(IProcess *pProcess)
 // Touch input for this frame, drained every frame so nothing stale fires later.
 static FarCryTouchInput s_TouchInput;
 
-// The scope button has no release, and hold-to-aim weapons (no ZoomDeadSwitch) only leave the scope on
-// one; player.lua's ZoomToggle handler takes 2 as "leave" for every weapon.
-static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
-{
-	IScriptSystem* pSS = pSystem->GetIScriptSystem();
-	IEntity* pPlayer = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
-	if (!pSS || !pPlayer)
-		return;
-	static const char szQuery[] = "_fcScopeUp = (ClientStuff and ClientStuff.vlayers and ClientStuff.vlayers:IsActive(\"WeaponScope\")) and 1 or 0";
-	int nUp = 0;
-	pSS->ExecuteBuffer(szQuery, sizeof(szQuery) - 1);
-	pSS->GetGlobalValue("_fcScopeUp", nUp);
-	if (nUp)
-		pPlayer->SendScriptEvent(ScriptEvent_ZoomToggle, 2);
-	else
-		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
-}
-
 // Turn the drained touch state into client actions by name (docs/porting/phase2.md).
 static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 {
@@ -842,7 +824,7 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			case FC_IMP_PREV_WEAPON:   pClient->OnAction(ACTION_PREV_WEAPON, 1.0f, etPressing); break;
 			case FC_IMP_CROUCH_TOGGLE: pClient->OnAction(ACTION_MOVEMODE_TOGGLE, 1.0f, etPressing); break;
 			case FC_IMP_PRONE:         pClient->OnAction(ACTION_MOVEMODE2, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_TOGGLE:   TouchZoomToggle(pClient, pSystem); break;
+			case FC_IMP_ZOOM_TOGGLE:   pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing); break;
 			case FC_IMP_BINOCULARS:    pClient->OnAction(ACTION_ITEM_0, 1.0f, etPressing); break;
 			case FC_IMP_FIREMODE:      pClient->OnAction(ACTION_FIREMODE, 1.0f, etPressing); break;
 			case FC_IMP_CYCLE_GRENADE: pClient->OnAction(ACTION_CYCLE_GRENADE, 1.0f, etPressing); break;
@@ -1218,7 +1200,12 @@ bool CXGame::Update()
 			assert(m_pClient);
 #ifdef __ANDROID__
 			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
+			{
+				// Joypad mode runs mouse look through a stick dead zone that eats slow swipes; XPlayer's AnalogMove covers the sticks.
+				if (cl_use_joypad->GetIVal())
+					cl_use_joypad->Set(0);
 				ApplyTouchInput(m_pClient, m_pSystem);
+			}
 #endif
 			m_pClient->Update();
 			
@@ -1837,7 +1824,11 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 #ifdef LINUX
 		DIR *fdir;
 
+#ifdef __ANDROID__
+		fdir = opendir(CryGameRoot() ? (string(CryGameRoot()) + "/" + sLevelFolder).c_str() : sLevelFolder.c_str());
+#else
 		fdir = opendir(sLevelFolder.c_str());
+#endif
 		if (!fdir)
 		{
 			sLevelFolder = GetCorrectedLevelPath(sLevelFolder);
@@ -2415,7 +2406,11 @@ string CXGame::GetPlayerProfilePath()
 		m_pSystem->GetIPak()->MakeDir(szPath); // nested; CopyTree's mkdir is not
 		struct stat st;
 		char szSrc[1024];
-		if (stat((sProfiles + "default").c_str(), &st) != 0 && casepath("Profiles/Player", szSrc))
+		// The game root when the launcher gave one (secondary storage: no cwd to resolve against, and
+		// both storages are case-insensitive), else a case-corrected path from the cwd.
+		bool bSrc = CryGameRoot() ? (snprintf(szSrc, sizeof(szSrc), "%s/Profiles/Player", CryGameRoot()), stat(szSrc, &st) == 0)
+		                          : casepath("Profiles/Player", szSrc) != 0;
+		if (stat((sProfiles + "default").c_str(), &st) != 0 && bSrc)
 		{
 			printf("Seeding player profiles from %s\n", szSrc);
 			CopyTree(szSrc, sProfiles.substr(0, sProfiles.length() - 1));
