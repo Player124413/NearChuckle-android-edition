@@ -2,6 +2,7 @@
   gles_texture.cpp : texture objects, format conversion, parameters.
 =============================================================================*/
 #include "gles_internal.h"
+#include <set>
 #if defined(__APPLE__)
 #include <execinfo.h>
 #endif
@@ -41,7 +42,7 @@ void GLES_NativeBindTexture(int unit, GLenum target, GLuint id)
   int slot = TargetSlot(target);
   if (sNativeBound[unit][slot] == id) return;
   if (sNativeActiveUnit != unit) { es_glActiveTexture(ES_TEXTURE0 + unit); sNativeActiveUnit = unit; }
-  es_glBindTexture(target, id);
+  es_glBindTexture(target, GLES_NativeTexName(id, target));
   sNativeBound[unit][slot] = id;
 }
 
@@ -52,7 +53,7 @@ void GLES_NoteActiveUnit(int unit) { sNativeActiveUnit = unit; }
 void GLES_ReissueTextureUnit0()
 {
   es_glActiveTexture(ES_TEXTURE0);
-  es_glBindTexture(GL_TEXTURE_2D, sNativeBound[0][0]);
+  es_glBindTexture(GL_TEXTURE_2D, GLES_NativeTexName(sNativeBound[0][0]));
   es_glActiveTexture(ES_TEXTURE0 + sNativeActiveUnit);
 }
 int GLES_NativeActiveUnit() { return sNativeActiveUnit; }
@@ -80,8 +81,41 @@ static STextureObj& Obj(GLuint id, GLenum target)
     o.id = id;
     o.target = NativeTarget(target);
     o.isRect = (target == ES_TEXTURE_RECTANGLE_NV);
+    es_glGenTextures(1, &o.native);
   }
   return o;
+}
+
+// The texture manager picks its own names (0x1000 + id) and binds them without glGenTextures. Mali's
+// allocator does not skip those, so its generated names (the overlay's, the renderer's fonts and shadow
+// maps) ran into them. The driver only ever sees names it generated; the renderer keeps its own.
+GLuint GLES_NativeTexName(GLuint id, GLenum target)
+{
+  if (!id) return 0;
+  STextureObj* o = GLES_FindTexture(id);
+  return o ? o->native : Obj(id, target).native;
+}
+
+// Renderer-side names for glGenTextures: small and never one the texture manager or a live texture uses,
+// as the renderer tells its raw GL textures from the texture manager's by value (below 0x1000).
+static std::set<GLuint> sGenerated;
+static GLuint sNextName = 1;
+
+static void __stdcall gles_glGenTextures(GLsizei n, GLuint* ids)
+{
+  for (GLsizei i = 0; i < n; i++)
+  {
+    while (sGenerated.count(sNextName) || g_esTextures.count(sNextName))
+      sNextName++;
+    if (sNextName >= 0x1000) GLES_Log("GLES: glGenTextures reached the texture manager's names (%u)", sNextName);
+    ids[i] = sNextName++;
+    sGenerated.insert(ids[i]);
+  }
+}
+
+static GLboolean __stdcall gles_glIsTexture(GLuint id)
+{
+  return id && (sGenerated.count(id) || g_esTextures.count(id)) ? GL_TRUE : GL_FALSE;
 }
 
 static void CheckNativeTarget(const char* what, const STextureObj* o);
@@ -98,7 +132,7 @@ void GLES_WatchTexture(const char* what, GLuint id)
   GLint drawFbo = 0, readFbo = 0;
   es_glGetIntegerv(0x8CA6, &drawFbo); es_glGetIntegerv(0x8CAA, &readFbo);
   GLuint fbo = 0; es_glGenFramebuffers(1, &fbo); es_glBindFramebuffer(ES_READ_FRAMEBUFFER, fbo);
-  es_glFramebufferTexture2D(ES_READ_FRAMEBUFFER, ES_COLOR_ATTACHMENT0, GL_TEXTURE_2D, watched, 0);
+  es_glFramebufferTexture2D(ES_READ_FRAMEBUFFER, ES_COLOR_ATTACHMENT0, GL_TEXTURE_2D, it->second.native, 0);
   GLubyte t[4] = { 0, 0, 0, 0 };
   int lum = -2;
   if (es_glCheckFramebufferStatus(ES_READ_FRAMEBUFFER) == 0x8CD5) { es_glReadPixels(it->second.width / 2, it->second.height / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, t); lum = (t[0] + t[1] + t[2]) / 3; }
@@ -129,7 +163,7 @@ static void CheckNativeTarget(const char* what, const STextureObj* o)
   GLint au = 0, b = 0;
   es_glGetIntegerv(0x84E0 /* GL_ACTIVE_TEXTURE */, &au);
   es_glGetIntegerv(0x8069 /* GL_TEXTURE_BINDING_2D */, &b);
-  if ((GLuint)b != o->id) GLES_Log("GLES: MISMATCH %s meant tex %u on unit %d but native unit %d has %d bound (shadow native unit %d)", what, o->id, g_es.activeUnit, au - 0x84C0, b, sNativeActiveUnit);
+  if ((GLuint)b != o->native) GLES_Log("GLES: MISMATCH %s meant tex %u on unit %d but native unit %d has %d bound (shadow native unit %d)", what, o->id, g_es.activeUnit, au - 0x84C0, b, sNativeActiveUnit);
 }
 
 STextureObj* GLES_BoundTexture(int unit, GLenum& samplerTarget)
@@ -155,8 +189,12 @@ static void __stdcall gles_glBindTexture(GLenum target, GLuint id)
 static void __stdcall gles_glDeleteTextures(GLsizei n, const GLuint* ids)
 {
   if (g_esDebug) for (GLsizei i = 0; i < n; i++) GLES_Log("GLES: glDeleteTextures %u", ids[i]);
+  std::vector<GLuint> natives;
   for (GLsizei i = 0; i < n; i++)
   {
+    std::map<GLuint, STextureObj>::iterator it = g_esTextures.find(ids[i]);
+    if (it != g_esTextures.end() && it->second.native) natives.push_back(it->second.native);
+    if (sGenerated.erase(ids[i]) && ids[i] < sNextName) sNextName = ids[i];
     g_esTextures.erase(ids[i]);
     if (sTexCache[ids[i] & 4095].id == ids[i]) sTexCache[ids[i] & 4095].id = 0;
     for (int un = 0; un < GLES_MAX_UNITS; un++)
@@ -169,7 +207,7 @@ static void __stdcall gles_glDeleteTextures(GLsizei n, const GLuint* ids)
       if (u.bound1D == ids[i]) u.bound1D = 0;
     }
   }
-  es_glDeleteTextures(n, ids);
+  if (!natives.empty()) es_glDeleteTextures((GLsizei)natives.size(), &natives[0]);
   for (GLsizei i = 0; i < n; i++)
     for (int un = 0; un < GLES_MAX_UNITS; un++)
       for (int s = 0; s < 4; s++)
@@ -546,7 +584,7 @@ static void __stdcall gles_glCopyTexSubImage2D(GLenum target, GLint level, GLint
   if (IsDepthFormat(o->internalFormat))
   {
     if (xo || yo) GLES_Log("GLES: glCopyTexSubImage2D of depth with an offset is not supported");
-    else GLES_CopySceneDepth(o->id, nativeTarget, level, x, y, w, h);
+    else GLES_CopySceneDepth(o->native, nativeTarget, level, x, y, w, h);
     return;
   }
   es_glCopyTexSubImage2D(nativeTarget, level, xo, yo, x, y, w, h);
@@ -562,7 +600,7 @@ static void __stdcall gles_glCopyTexImage2D(GLenum target, GLint level, GLenum i
   if (IsDepthFormat(internalFormat))
   {
     AllocDepthTexture(*o, nativeTarget, level, w, h);
-    GLES_CopySceneDepth(o->id, nativeTarget, level, x, y, w, h);
+    GLES_CopySceneDepth(o->native, nativeTarget, level, x, y, w, h);
   }
   else
   {
@@ -650,7 +688,7 @@ static GLboolean __stdcall gles_glAreTexturesResident(GLsizei n, const GLuint*, 
 void GLES_RegisterTexture(std::map<std::string, void*>& t)
 {
 #define REG(name) t[#name] = (void*)gles_##name;
-  REG(glBindTexture) REG(glDeleteTextures) REG(glTexImage2D) REG(glTexSubImage2D)
+  REG(glGenTextures) REG(glIsTexture) REG(glBindTexture) REG(glDeleteTextures) REG(glTexImage2D) REG(glTexSubImage2D)
   REG(glCompressedTexImage2DARB) REG(glCompressedTexSubImage2DARB) REG(glCopyTexSubImage2D) REG(glCopyTexImage2D)
   REG(glTexParameteri) REG(glTexParameterf) REG(glTexParameteriv) REG(glTexParameterfv)
   REG(glGetTexLevelParameteriv) REG(glPrioritizeTextures) REG(glAreTexturesResident) REG(glGetCompressedTexImageARB)

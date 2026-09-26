@@ -123,7 +123,7 @@ static const SForward sForwardTable[] = {
   { "glColorMask", "glColorMask" }, { "glCullFace", "glCullFace" }, { "glFrontFace", "glFrontFace" },
 
   { "glFinish", "glFinish" }, { "glFlush", "glFlush" }, { "glPolygonOffset", "glPolygonOffset" },
-  { "glGenTextures", "glGenTextures" }, { "glIsTexture", "glIsTexture" }, { "glLineWidth", "glLineWidth" },
+  { "glLineWidth", "glLineWidth" },
   { NULL, NULL }
 };
 

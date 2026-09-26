@@ -71,7 +71,7 @@ static void __stdcall gles_glGetTexImage(GLenum target, GLint level, GLenum form
   GLint prevFBO = 0;
   es_glGetIntegerv(0x8CA6 /* GL_FRAMEBUFFER_BINDING */, &prevFBO);
   es_glBindFramebuffer(ES_FRAMEBUFFER, sReadFBO);
-  es_glFramebufferTexture2D(ES_FRAMEBUFFER, ES_COLOR_ATTACHMENT0, attachTarget, id, level);
+  es_glFramebufferTexture2D(ES_FRAMEBUFFER, ES_COLOR_ATTACHMENT0, attachTarget, o.native, level);
   GLenum status = es_glCheckFramebufferStatus(ES_FRAMEBUFFER);
   if (status != ES_FRAMEBUFFER_COMPLETE)
   {

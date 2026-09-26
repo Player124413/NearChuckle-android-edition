@@ -244,6 +244,7 @@ struct SESArray
 struct STextureObj
 {
   GLuint id;
+  GLuint native;          // driver-generated name; the renderer's own names never reach the driver
   GLenum target;          // native target
   bool isRect;
   int width, height, depth;
@@ -342,6 +343,7 @@ void GLES_InitState();
 void GLES_ForgetBufferCache();
 void GLES_ForgetTextureCache();
 struct STextureObj* GLES_FindTexture(GLuint id);
+GLuint GLES_NativeTexName(GLuint id, GLenum target = GL_TEXTURE_2D);
 void GLES_RegisterState(std::map<std::string, void*>& t);
 void GLES_RegisterTexture(std::map<std::string, void*>& t);
 void GLES_RegisterVertex(std::map<std::string, void*>& t);
