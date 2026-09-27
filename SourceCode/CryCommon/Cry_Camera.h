@@ -265,6 +265,9 @@ public:
 
 	inline void	SetFov(float fov)	{ m_fov=fov; }
 	inline float GetFov() const { return(m_fov); }	
+	//! Vertical FOV. The FOV is horizontal at 4:3; wider screens keep the 4:3 vertical angle (Hor+)
+	//! rather than cropping it, so the view and the first-person weapon frame as on a 4:3 display.
+	inline float GetVertFov() const { return m_fov * (m_ProjectionRatio < 0.75f ? 0.75f : m_ProjectionRatio); }
 
 	inline float GetProjRatio() const { return(m_ProjectionRatio); }
 	inline void	SetProjRatio(float	fProjectionRatio) { m_ProjectionRatio=fProjectionRatio; }
@@ -364,7 +367,7 @@ inline void CCamera::Update(int nWidth=-1,int nHeight=-1) {
 
 	//calculate the Left/Top edge of the Projection plane (relative to camerapos (0,0,0) and not rotated) 
 	m_edge_plt.x	=-m_ViewSurfaceX*0.5f; 
-	m_edge_plt.y	= cry_cosf(m_fov*m_ProjectionRatio*0.5f) / cry_sinf(m_fov*m_ProjectionRatio*0.5f) * m_ViewSurfaceZ*0.50f;
+	m_edge_plt.y	= cry_cosf(GetVertFov()*0.5f) / cry_sinf(GetVertFov()*0.5f) * m_ViewSurfaceZ*0.50f;
 	m_edge_plt.z	= m_ViewSurfaceZ*0.5f;
 
 	//	m_edge_plt.x	+=100;

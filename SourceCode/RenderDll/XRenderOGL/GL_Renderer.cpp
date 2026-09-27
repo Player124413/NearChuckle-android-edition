@@ -2254,7 +2254,7 @@ int CGLRenderer::SetPolygonMode(int mode)
 ///////////////////////////////////////////
 void CGLRenderer::SetPerspective(const CCamera &cam)
 {
-    gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
+    gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
 }
 
 ///////////////////////////////////////////
@@ -2264,7 +2264,7 @@ void CGLRenderer::SetCamera(const CCamera &cam)
   glLoadIdentity();
   // camera.fov is for horizontal -> GL needs it vertical
   // projection.ratio is height/width -> GL needs width/height
-  gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
+  gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
   glMatrixMode(GL_MODELVIEW);
 
   Matrix44 mat = cam.GetVCMatrixD3D9();

@@ -518,7 +518,7 @@ bool CREFlare::mfCheckVis(CCObject *obj)
     glLoadIdentity();
     // camera.fov is for horizontal -> GL needs it vertical
     // projection.ratio is height/width -> GL needs width/height
-    gluPerspective(rd->m_prevCamera.GetFov()/(gf_PI/180.0f)*rd->m_prevCamera.GetProjRatio(), 1.0f/rd->m_prevCamera.GetProjRatio(), rd->m_prevCamera.GetZMin(), rd->m_prevCamera.GetZMax());
+    gluPerspective(rd->m_prevCamera.GetVertFov()/(gf_PI/180.0f), 1.0f/rd->m_prevCamera.GetProjRatio(), rd->m_prevCamera.GetZMin(), rd->m_prevCamera.GetZMax());
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
