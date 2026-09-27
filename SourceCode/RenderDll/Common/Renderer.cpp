@@ -1659,6 +1659,63 @@ ShadowMapFrustum * CRenderer::MakeShadowMapFrustum(ShadowMapFrustum * lof, Shado
   return lof;
 }
 
+// 2D art made for 4:3 (scope and binocular masks, the radar) goes into a 4:3 box on a wider screen
+// so round things stay round; the 2D draws scale to the viewport. Mode 1 centres the box and carries
+// art reaching its edges on to the screen edges (Extend2DBoxEdges), 2 keeps it at the left edge.
+static int s_nPrev[4];   // viewport outside the box
+static int s_nMode;
+static int s_nWidth;     // screen width outside the box
+static bool s_bExtending;
+
+void CRenderer::Set2DBox43(int nMode)
+{
+  if (s_nMode)
+  {
+    // Leave the current box first; the 2D code took the box for the screen width meanwhile.
+    m_width = s_nWidth;
+    SetViewport(s_nPrev[0], s_nPrev[1], s_nPrev[2], s_nPrev[3]);
+  }
+  int w43 = m_height * 4 / 3;
+  s_nMode = (w43 < m_width) ? nMode : 0;
+  if (!s_nMode)
+    return;
+  GetViewport(&s_nPrev[0], &s_nPrev[1], &s_nPrev[2], &s_nPrev[3]);
+  SetViewport(nMode == 1 ? (m_width - w43) / 2 : s_nPrev[0], s_nPrev[1], w43, s_nPrev[3]);
+  // Square pixels inside the box, so rotated 2D images (the compass) keep their shape.
+  s_nWidth = m_width;
+  m_width = w43;
+}
+
+// In the centred box, 2D art reaching the box's left or right edge carries on to the screen edge with
+// its outermost texel column, so a mask's surround covers the sides too.
+void CRenderer::Extend2DBoxEdges(float x, float y, float w, float h, int nTex, float s0, float t0, float s1, float t1, float r, float g, float b, float a, float z)
+{
+  if (s_nMode != 1 || s_bExtending || nTex <= 0)
+    return;
+  float xl = w >= 0 ? x : x + w, xr = w >= 0 ? x + w : x;
+  bool bLeft = xl <= 0.5f, bRight = xr >= 799.5f;
+  if (!bLeft && !bRight)
+    return;
+  // Texture u at each screen edge of the quad, nudged inside so filtering stays on the edge column.
+  float uL = w >= 0 ? s0 : s1, uR = w >= 0 ? s1 : s0;
+  float uInL = uL + (uR - uL) * 0.002f, uInR = uR + (uL - uR) * 0.002f;
+  int nBox[4];
+  GetViewport(&nBox[0], &nBox[1], &nBox[2], &nBox[3]);
+  int nBoxWidth = m_width;
+  m_width = s_nWidth;
+  SetViewport(s_nPrev[0], s_nPrev[1], s_nPrev[2], s_nPrev[3]);
+  s_bExtending = true;
+  // Exactly the side strips: an overlap would apply a multiplied mask twice along the box edges.
+  float fSide = (s_nWidth - nBoxWidth) * 0.5f * 800.0f / s_nWidth;
+  if (bLeft)
+    Draw2dImage(0, y, fSide, h, nTex, uInL, t0, uInL, t1, 0, r, g, b, a, z);
+  if (bRight)
+    Draw2dImage(800 - fSide, y, fSide, h, nTex, uInR, t0, uInR, t1, 0, r, g, b, a, z);
+  s_bExtending = false;
+  m_width = nBoxWidth;
+  SetViewport(nBox[0], nBox[1], nBox[2], nBox[3]);
+}
+
 void CRenderer::GetViewport(int *x, int *y, int *width, int *height)
 {
   *x = m_VX;

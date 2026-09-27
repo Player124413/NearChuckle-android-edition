@@ -227,6 +227,8 @@ public:
   virtual	void	SetViewport(int x=0, int y=0, int width=0, int height=0)=0;
   virtual	void	SetScissor(int x=0, int y=0, int width=0, int height=0)=0;
   virtual void  GetViewport(int *x, int *y, int *width, int *height);
+  virtual void  Set2DBox43(int nMode);
+  void Extend2DBoxEdges(float x, float y, float w, float h, int nTex, float s0, float t0, float s1, float t1, float r, float g, float b, float a, float z);
 
   virtual void	SetState(int State) { EF_SetState(State); }
 	virtual void	SetCullMode	(int mode=R_CULL_BACK)=0;

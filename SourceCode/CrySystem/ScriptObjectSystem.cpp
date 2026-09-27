@@ -215,6 +215,8 @@ void CScriptObjectSystem::InitializeTemplate(IScriptSystem *pSS)
   REG_FUNC(CScriptObjectSystem,GetScreenFxParamInt);
   REG_FUNC(CScriptObjectSystem,GetScreenFxParamFloat);
   REG_FUNC(CScriptObjectSystem,SetScissor);
+  REG_FUNC(CScriptObjectSystem,Set2DBox43);
+  REG_FUNC(CScriptObjectSystem,Get2DBox43Scale);
 
   // CW: added for script based system analysis
   REG_FUNC( CScriptObjectSystem, GetCPUQuality );
@@ -1780,6 +1782,25 @@ int CScriptObjectSystem::SetScissor(IFunctionHandler *pH)
                                         m_pSystem->GetIRenderer()->ScaleCoordY((float)h));
 
   return pH->EndFunction();
+}
+
+// 2D draws go into a 4:3 box on wide screens: 1 centred, edges extended (scope masks), 2 at the left
+// edge (radar), 0 full screen.
+int CScriptObjectSystem::Set2DBox43(IFunctionHandler *pH)
+{
+  CHECK_PARAMETERS(1);
+  int nMode = 0;
+  pH->GetParam(1, nMode);
+  m_pSystem->GetIRenderer()->Set2DBox43(nMode);
+  return pH->EndFunction();
+}
+
+// Width of that 4:3 box relative to the screen (1 at 4:3 and narrower), for 2D art queued in a batch.
+int CScriptObjectSystem::Get2DBox43Scale(IFunctionHandler *pH)
+{
+  IRenderer* pRenderer = m_pSystem->GetIRenderer();
+  float fScale = pRenderer->GetHeight() * (4.0f / 3.0f) / pRenderer->GetWidth();
+  return pH->EndFunction(fScale < 1.0f ? fScale : 1.0f);
 }
 
 int CScriptObjectSystem::ActivateLight(IFunctionHandler *pH)

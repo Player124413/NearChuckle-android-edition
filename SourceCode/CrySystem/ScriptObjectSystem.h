@@ -90,6 +90,8 @@ public:
   int GetScreenFxParamInt(IFunctionHandler *pH);//const char*, const char*
   int GetScreenFxParamFloat(IFunctionHandler *pH);//const char*, const char*    
   int SetScissor(IFunctionHandler *pH);//int, int, int, int
+  int Set2DBox43(IFunctionHandler *pH);//int
+  int Get2DBox43Scale(IFunctionHandler *pH);
 
 	// CW: added for script based system analysis
 	int GetCPUQuality( IFunctionHandler *pH );

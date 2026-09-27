@@ -1775,6 +1775,9 @@ void CGLRenderer::Draw2dImage(float xpos,float ypos,float w,float h,int texture_
 { 
   PROFILE_FRAME(Draw_2DImage);
 
+  if (!angle)
+    Extend2DBoxEdges(xpos, ypos, w, h, texture_id, s0, t0, s1, t1, r, g, b, a, z);
+
   xpos=(float)ScaleCoordX(xpos);
   ypos=(float)ScaleCoordY(ypos)-1.0f;
 	w=(float)ScaleCoordX(w)+1.0f;

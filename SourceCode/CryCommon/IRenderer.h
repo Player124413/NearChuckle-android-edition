@@ -1119,6 +1119,9 @@ struct IRenderer//: public IRendererCallbackServer
   virtual bool DestroyRenderTarget (int nHandle)=0;
   virtual bool SetRenderTarget (int nHandle)=0;
   virtual float EF_GetWaterZElevation(float fX, float fY)=0;
+  //! Map the 800x600 2D space to a 4:3 box on wide screens: 1 centred (art reaching its edges is
+  //! extended to the screen edges), 2 at the left edge, 0 full screen again (no-op at 4:3 and narrower).
+  virtual void Set2DBox43(int nMode)=0;
 };
 
 

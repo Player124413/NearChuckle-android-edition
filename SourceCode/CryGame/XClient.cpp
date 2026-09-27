@@ -945,6 +945,58 @@ void CXClient::Update()
 
 	if (m_wPlayerID != INVALID_WID)
 	{
+		// Scope and binocular masks and the radar are drawn for 4:3; on wide screens a drawn mask goes in
+		// a centred 4:3 box (aim-mode zoom has no mask and stays full screen) and the radar with its frame
+		// (the stealth meter) in one at the left edge. Checked every frame since reloading the scripts
+		// replaces these tables.
+		static bool s_bBoxInstalled = false;
+		if (!s_bBoxInstalled)
+		{
+			static const char szBox[] =
+				"function _FCScopeMask(s)\n"
+				" local f = s.overlay_func\n"
+				" if not f or (s.fade and s.state == 1) then return nil end\n"
+				" if AimModeZoomHUD and f == AimModeZoomHUD.DrawHUD then return nil end\n"
+				" if DefaultZoomHUD and f == DefaultZoomHUD.DrawHUD and not DefaultZoomHUD.MulMask then return nil end\n"
+				" return 1\n"
+				"end\n"
+				"function _FCBox43()\n"
+				" if not (ClientStuff and ClientStuff.vlayers and ClientStuff.vlayers.layers) then return end\n"
+				" for _,name in {\"WeaponScope\",\"Binoculars\"} do\n"
+				"  local l = ClientStuff.vlayers.layers[name]\n"
+				"  if l and l.obj and l.obj.DrawOverlay and not l.obj._fcBox43 then\n"
+				"   local f = l.obj.DrawOverlay\n"
+				"   local scope = (name == \"WeaponScope\")\n"
+				"   l.obj.DrawOverlay = function(...)\n"
+				"    local b = (not %scope) or _FCScopeMask(arg[1])\n"
+				"    if b then System:Set2DBox43(1) end\n"
+				"    call(%f, arg)\n"
+				"    if b then System:Set2DBox43(0) end\n"
+				"   end\n"
+				"   l.obj._fcBox43 = 1\n"
+				"  end\n"
+				" end\n"
+				" if Hud and Hud.DrawRadar and Hud.DrawStealthMeter and not Hud._fcBox43 then\n"
+				"  local r = Hud.DrawRadar\n"
+				"  Hud.DrawRadar = function(...) System:Set2DBox43(2) call(%r, arg) System:Set2DBox43(0) end\n"
+				"  local m = Hud.DrawStealthMeter\n"
+				"  Hud.DrawStealthMeter = function(...)\n"
+				"   local self = arg[1]\n"
+				"   local k = System:Get2DBox43Scale()\n"
+				"   if k >= 1 or not self.rend then return call(%m, arg) end\n"
+				"   local p = self.rend.PushQuad\n"
+				"   self.rend.PushQuad = function(rend, qx, qy, qw, qh, e, cr, cg, cb, ca) %p(rend, qx * %k, qy, qw * %k, qh, e, cr, cg, cb, ca) end\n"
+				"   call(%m, arg)\n"
+				"   self.rend.PushQuad = p\n"
+				"  end\n"
+				"  Hud._fcBox43 = 1\n"
+				" end\n"
+				"end\n";
+			s_bBoxInstalled = m_pScriptSystem->ExecuteBuffer(szBox, sizeof(szBox) - 1);
+		}
+		m_pScriptSystem->BeginCall("_FCBox43");
+		m_pScriptSystem->EndCall();
+
 		m_pScriptSystem->BeginCall("ClientStuff","OnUpdate");
 		m_pScriptSystem->PushFuncParam(m_pClientStuff);
 		m_pScriptSystem->EndCall();
