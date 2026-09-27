@@ -285,10 +285,27 @@ static std::string BuildFFPFragment(const SFFPKey& k)
   return s;
 }
 
-// The GL alpha test still applies after an ARB fragment program.
+// The GL alpha test and user clip planes still apply around an ARB fragment program.
 static std::string ARBFragmentWithAlphaTest(const SARBProgram& fp, const SFFPKey& k)
 {
   std::string s = fp.glsl;
+  char buf[64];
+  if (k.clipMask)
+  {
+    std::string decl, test;
+    for (int i = 0; i < 6; i++) if (k.clipMask & (1 << i))
+    {
+      sprintf(buf, "in float v_clip%d;\n", i); decl += buf;
+      sprintf(buf, "  if (v_clip%d < 0.0) discard;\n", i); test += buf;
+    }
+    size_t hdr = s.find("out vec4 fragColor;");
+    size_t body = s.find("void main() {\n");
+    if (hdr != std::string::npos && body != std::string::npos && hdr < body)
+    {
+      s.insert(body + 14, test);
+      s.insert(hdr, decl);
+    }
+  }
   if (!k.alphaTest) return s;
   size_t pos = s.find("  fragColor = oColor;");
   if (pos == std::string::npos) return s;
@@ -297,6 +314,27 @@ static std::string ARBFragmentWithAlphaTest(const SARBProgram& fp, const SFFPKey
   s.insert(hdr, inject);
   pos = s.find("  fragColor = oColor;");
   s.insert(pos, AlphaTestCode(k, "oColor"));
+  return s;
+}
+
+// ARB vertex programs skip user clip planes in GL, but NVIDIA drivers applied them and Far Cry's
+// water reflection relies on it; the planes arrive in clip space (see GLES_PrepareDraw).
+static std::string ARBVertexWithClip(const SARBProgram& vp, const SFFPKey& k)
+{
+  std::string s = vp.glsl;
+  if (!k.clipMask) return s;
+  size_t body = s.find("void main() {\n");
+  size_t end = s.rfind('}');
+  if (body == std::string::npos || end == std::string::npos || end < body) return s;
+  std::string decl = "uniform vec4 u_clipPlane[6];\n", calc;
+  char buf[96];
+  for (int i = 0; i < 6; i++) if (k.clipMask & (1 << i))
+  {
+    sprintf(buf, "out float v_clip%d;\n", i); decl += buf;
+    sprintf(buf, "  v_clip%d = dot(u_clipPlane[%d], gl_Position);\n", i, i); calc += buf;
+  }
+  s.insert(end, calc);
+  s.insert(body, decl);
   return s;
 }
 
@@ -328,7 +366,7 @@ static SPipeProgram Build(const SPipeKey& k, const SARBProgram* vp, const SARBPr
 {
   SPipeProgram p;
   memset(&p, 0, sizeof(p));
-  std::string vsrc = vp ? vp->glsl : BuildFFPVertex(k.ffp);
+  std::string vsrc = vp ? ARBVertexWithClip(*vp, k.ffp) : BuildFFPVertex(k.ffp);
   std::string fsrc = fp ? ARBFragmentWithAlphaTest(*fp, k.ffp) : BuildFFPFragment(k.ffp);
   static bool debug = getenv("FARCRY_GLES_DEBUG") != NULL;
   if (debug) GLES_Log("GLES: program #%d (vp %u, fp %u) sources:\n%s\n%s", (int)sPrograms.size() + 1, k.vp, k.fp, vsrc.c_str(), fsrc.c_str());
@@ -438,8 +476,8 @@ static void BuildKey(SPipeKey& k, const SARBProgram* vp, const SARBProgram* fp)
     if (g_es.lighting)
       for (int i = 0; i < GLES_MAX_LIGHTS; i++) if (g_es.light[i].enabled) f.lightMask |= (1 << i);
     f.colorMaterial = (g_es.lighting && g_es.colorMaterial) ? 1 : 0;
-    for (int i = 0; i < 6; i++) if (g_es.clipPlane[i]) f.clipMask |= (1 << i);
   }
+  for (int i = 0; i < 6; i++) if (g_es.clipPlane[i]) f.clipMask |= (1 << i);
   if (!fp)
   {
     for (int i = 0; i < GLES_MAX_UNITS; i++)
@@ -539,6 +577,18 @@ bool GLES_PrepareDraw()
   {
     es_glUniform4fv(p.uEnvV, p.envVCount, GLES_ARB_Env(true));
     p.envVersionV = GLES_ARB_EnvVersion(true);
+  }
+  if (vp && k.ffp.clipMask && p.uClipPlane >= 0)
+  {
+    // Eye-space planes to clip space (plane * inverse projection), as NVIDIA's drivers did.
+    float inv[16], planes[6][4] = {};
+    if (GLES_MatrixInvert(g_es.projection.m[g_es.projection.depth], inv))
+      for (int i = 0; i < 6; i++)
+      {
+        const float* e = g_es.clipPlaneEq[i];
+        for (int j = 0; j < 4; j++) planes[i][j] = e[0]*inv[j*4+0] + e[1]*inv[j*4+1] + e[2]*inv[j*4+2] + e[3]*inv[j*4+3];
+      }
+    es_glUniform4fv(p.uClipPlane, 6, &planes[0][0]);
   }
   if (fp && p.uEnvF >= 0 && p.envFCount > 0 && p.envVersionF != GLES_ARB_EnvVersion(false))
   {

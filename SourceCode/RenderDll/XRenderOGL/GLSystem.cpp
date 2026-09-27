@@ -2168,8 +2168,10 @@ exr:
   iLog->Log(" OGL Max ModelView Matrix stack depth=%d", nDepth);
   glGetIntegerv(GL_MAX_PROJECTION_STACK_DEPTH, &nDepth);
   iLog->Log(" OGL Max Projection Matrix stack depth=%d", nDepth);
+#ifndef GLES_RENDERER
   if (nGPU == RFT_HW_GFFX || nGPU == RFT_HW_GF3)
     m_MaxClipPlanes = 0;
+#endif
 
   CheckError("CGLRenderer::Init");
 
