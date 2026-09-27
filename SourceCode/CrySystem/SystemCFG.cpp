@@ -214,6 +214,48 @@ void CSystemConfiguration::ParseSystemConfig()
 	fclose(pFile);
 }
 
+#ifdef __ANDROID__
+// The Advanced Video menu's High preset (Scripts/MenuScreens/Options/VideoAdv.lua). The engine defaults
+// match no preset, so a first run would show most options as "Custom".
+static const char* s_szHighSpec[][2] = {
+  { "ca_EnableDecals", "1" }, { "ca_ambient_light_intensity", "0.2" }, { "ca_ambient_light_range", "10" },
+  { "cl_projectile_light", "1" }, { "cl_weapon_light", "1" }, { "e_EntitySuppressionLevel", "0" },
+  { "e_active_shadow_maps_receving", "1" }, { "e_beach", "1" }, { "e_cgf_load_lods", "1" },
+  { "e_decals", "1" }, { "e_decals_life_time_scale", "2.0" }, { "e_detail_texture_quality", "1" },
+  { "e_flocks", "1" }, { "e_light_maps_quality", "2" }, { "e_max_entity_lights", "3" },
+  { "e_obj_lod_ratio", "10" }, { "e_overlay_geometry", "1" }, { "e_particles_lod", "1.0" },
+  { "e_particles_max_count", "4096" }, { "e_shadow_maps", "1" }, { "e_shadow_maps_view_dist_ratio", "15" },
+  { "e_stencil_shadows", "1" }, { "e_stencil_shadows_only_from_strongest_light", "0" },
+  { "e_use_global_fog_in_fog_volumes", "0" }, { "e_vegetation_min_size", "0" },
+  { "e_vegetation_sprites_distance_ratio", "1.0" }, { "es_EnableCloth", "1" }, { "p_lightrange", "15" },
+  { "r_Beams", "1" }, { "r_CoronaFade", "0.1625" }, { "r_Coronas", "1" }, { "r_CryvisionType", "0" },
+  { "r_DetailDistance", "8" }, { "r_DetailNumLayers", "1" }, { "r_DetailTextures", "1" },
+  { "r_DisableSfx", "0" }, { "r_EnvCMResolution", "2" }, { "r_EnvCMupdateInterval", "0.1" },
+  { "r_EnvLCMupdateInterval", "0.1" }, { "r_EnvLightCMSize", "8" }, { "r_EnvTexResolution", "3" },
+  { "r_EnvTexUpdateInterval", "0.05" }, { "r_Flares", "1" }, { "r_Glare", "1" }, { "r_GlareQuality", "2" },
+  { "r_HeatHaze", "1" }, { "r_MotionBlur", "1" }, { "r_ProcFlares", "1" }, { "r_Quality_BumpMapping", "2" },
+  { "r_Quality_Reflection", "0" }, { "r_ScopeLens_fx", "1" }, { "r_ShadowBlur", "1" },
+  { "r_TexBumpResolution", "0" }, { "r_TexResolution", "0" }, { "r_TexSkyResolution", "0" },
+  { "r_Vegetation_PerpixelLight", "1" }, { "r_VolumetricFog", "1" }, { "r_WaterReflections", "1" },
+  { "r_WaterRefractions", "1" }, { "r_WaterUpdateFactor", "0.01" }, { "r_checkSunVis", "2" },
+  { "sys_skiponlowspec", "0" }, { "GL_TextureFilter", "GL_LINEAR_MIPMAP_LINEAR" },
+  { "r_Texture_Anisotropic_Level", "1" },
+};
+
+// First run: no saved config anywhere, so start from the High preset.
+static bool WriteDefaultSystemConfig(const char* szPath)
+{
+	FILE* f = fopen(szPath, "wb");
+	if (!f)
+		return false;
+	fputs("-- [System-Configuration]\r\n-- First-run defaults: the High preset of the Advanced Video options.\r\n\r\n", f);
+	for (size_t i = 0; i < sizeof(s_szHighSpec) / sizeof(s_szHighSpec[0]); i++)
+		fprintf(f, "%s = \"%s\"\r\n", s_szHighSpec[i][0], s_szHighSpec[i][1]);
+	fclose(f);
+	return true;
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 void CSystem::LoadConfiguration(const string &sFilename)
 {
@@ -228,7 +270,14 @@ void CSystem::LoadConfiguration(const string &sFilename)
 		if (!strchr(sFilename.c_str(), '/') && access(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf)), R_OK) == 0)
 			sPath = szBuf;
 		else if (sFilename[0] != '/' && CryGameRoot())
+		{
 			sPath = string(CryGameRoot()) + "/" + sFilename; // no cwd on secondary storage
+			FILE* f = fopen(sPath.c_str(), "rb");
+			if (f)
+				fclose(f);
+			else if (sFilename == "system.cfg" && WriteDefaultSystemConfig(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf))))
+				sPath = szBuf;
+		}
 		CSystemConfiguration tempConfig(sPath,this);
 #else
 		CSystemConfiguration tempConfig(sFilename,this);
