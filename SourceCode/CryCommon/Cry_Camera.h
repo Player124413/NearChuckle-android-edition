@@ -24,6 +24,8 @@
 //DOC-IGNORE-BEGIN
 #include "Cry_Math.h"
 #include "Cry_Geo.h"
+#include "ISystem.h"
+#include "IConsole.h"
 //DOC-IGNORE-END
 
 Plane GetPlane(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2);
@@ -265,9 +267,23 @@ public:
 
 	inline void	SetFov(float fov)	{ m_fov=fov; }
 	inline float GetFov() const { return(m_fov); }	
-	//! Vertical FOV. The FOV is horizontal at 4:3; wider screens keep the 4:3 vertical angle (Hor+)
-	//! rather than cropping it, so the view and the first-person weapon frame as on a 4:3 display.
-	inline float GetVertFov() const { return m_fov * (m_ProjectionRatio < 0.75f ? 0.75f : m_ProjectionRatio); }
+	//! Vertical FOV. The FOV is horizontal at 4:3; with r_WideScreenFix wider screens keep the 4:3 vertical
+	//! angle (Hor+) rather than cropping it, so the view and the first-person weapon frame as on a 4:3 display.
+	inline float GetVertFov() const { return m_fov * (m_ProjectionRatio < 0.75f && WideScreenFix() ? 0.75f : m_ProjectionRatio); }
+	static inline bool WideScreenFix()
+	{
+		// Looked up per module; the variable is CrySystem's and lives as long as the process.
+		static ICVar* s_pVar = 0;
+		if (!s_pVar)
+		{
+			ISystem* pSystem = GetISystem();
+			IConsole* pConsole = pSystem ? pSystem->GetIConsole() : 0;
+			s_pVar = pConsole ? pConsole->GetCVar("r_WideScreenFix") : 0;
+			if (!s_pVar)
+				return true;
+		}
+		return s_pVar->GetIVal() != 0;
+	}
 
 	inline float GetProjRatio() const { return(m_ProjectionRatio); }
 	inline void	SetProjRatio(float	fProjectionRatio) { m_ProjectionRatio=fProjectionRatio; }

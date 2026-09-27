@@ -1800,7 +1800,7 @@ int CScriptObjectSystem::Get2DBox43Scale(IFunctionHandler *pH)
 {
   IRenderer* pRenderer = m_pSystem->GetIRenderer();
   float fScale = pRenderer->GetHeight() * (4.0f / 3.0f) / pRenderer->GetWidth();
-  return pH->EndFunction(fScale < 1.0f ? fScale : 1.0f);
+  return pH->EndFunction(fScale < 1.0f && CCamera::WideScreenFix() ? fScale : 1.0f);
 }
 
 int CScriptObjectSystem::ActivateLight(IFunctionHandler *pH)

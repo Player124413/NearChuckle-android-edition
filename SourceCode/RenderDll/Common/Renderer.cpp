@@ -1676,7 +1676,7 @@ void CRenderer::Set2DBox43(int nMode)
     SetViewport(s_nPrev[0], s_nPrev[1], s_nPrev[2], s_nPrev[3]);
   }
   int w43 = m_height * 4 / 3;
-  s_nMode = (w43 < m_width) ? nMode : 0;
+  s_nMode = (w43 < m_width && CCamera::WideScreenFix()) ? nMode : 0;
   if (!s_nMode)
     return;
   GetViewport(&s_nPrev[0], &s_nPrev[1], &s_nPrev[2], &s_nPrev[3]);

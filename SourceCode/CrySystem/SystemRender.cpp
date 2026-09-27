@@ -818,6 +818,11 @@ void CSystem::CreateRendererVars()
 		"Toggles debugging information display. Default is 0 (off)."
 		"Usage: r_DisplayInfo [0/1]\n"
 		"In debug mode, the information is automatically displayed.");
+
+	GetIConsole()->CreateVariable("r_WideScreenFix", "1", VF_DUMPTODISK,
+		"Wide screens keep the 4:3 vertical view (Hor+) and draw scope, binocular and radar art in a 4:3 box.\n"
+		"Usage: r_WideScreenFix [0/1]\n"
+		"0 gives the original cropped view and stretched overlays.");
 }
 
 //////////////////////////////////////////////////////////////////////
