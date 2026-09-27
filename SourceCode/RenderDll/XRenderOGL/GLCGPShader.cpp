@@ -812,8 +812,17 @@ create:
 #ifdef DISABLE_CG
       iLog->LogError("Failed to load cached fragment shader %s!\n", namedst);
       LogMissingShader(namedst, "pixel",
-        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetI3DEngine() ? iSystem->GetI3DEngine()->GetLevelFilePath("") : "",
         iSystem->GetViewCamera().GetPos());
+      if (getenv("FARCRY_CG_DUMP"))
+      {
+        const char *fog = NULL;
+        if ((m_Insts[m_CurInst].m_Mask & VPVST_FOGGLOBAL) && m_CGProfileType == CG_PROFILE_ARBFP1)
+          fog = gRenDev->m_FS.m_nFogMode == R_FOGMODE_EXP2 ? "ARB_fog_exp2" : "ARB_fog_linear";
+        char *scr = mfCreateAdditionalPS();
+        DumpMissingShaderSource(namedst, m_CGProfileType == CG_PROFILE_ARBFP1 ? "arbfp1" : "fp20", fog, scr);
+        delete [] scr;
+      }
 #endif
       return false;
     }

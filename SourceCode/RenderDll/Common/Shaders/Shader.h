@@ -595,6 +595,25 @@ _inline void LogMissingShader(char* namedst, const char* type, const char* level
   fclose(fp);
 }
 
+// Development aid (FARCRY_CG_DUMP=<dir>): the Cg source of a program missing from the cache, with the
+// cgc profile, the fog OPTION the engine would add and the cache name, for compiling it offline.
+_inline void DumpMissingShaderSource(const char* namedst, const char* profile, const char* fogOption, const char* src)
+{
+  const char* dir = getenv("FARCRY_CG_DUMP");
+  if (!dir || !src)
+    return;
+  const char* base = strrchr(namedst, '/');
+  base = base ? base + 1 : namedst;
+  char path[1024];
+  snprintf(path, sizeof(path), "%s/%s.cg", dir, base);
+  FILE* fp = fopen(path, "w");
+  if (!fp)
+    return;
+  fprintf(fp, "//CGDUMP profile=%s fog=%s target=%s\n", profile, fogOption ? fogOption : "-", namedst);
+  fputs(src, fp);
+  fclose(fp);
+}
+
 //=============================================================================
 // Pixel shaders (PS)
 

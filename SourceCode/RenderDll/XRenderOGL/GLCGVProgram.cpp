@@ -1556,8 +1556,14 @@ create:
 #ifdef DISABLE_CG
       iLog->LogError("Failed to load cached vertex shader %s!\n", namedst);
       LogMissingShader(namedst, "vertex",
-        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetI3DEngine() ? iSystem->GetI3DEngine()->GetLevelFilePath("") : "",
         iSystem->GetViewCamera().GetPos());
+      if (getenv("FARCRY_CG_DUMP"))
+      {
+        char *scr = mfCreateAdditionalVP(pPosVP);
+        DumpMissingShaderSource(namedst, m_CGProfileType == CG_PROFILE_ARBVP1 ? "arbvp1" : "vp20", NULL, scr);
+        delete [] scr;
+      }
 #endif
       return false;
     }
