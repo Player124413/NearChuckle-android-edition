@@ -106,25 +106,6 @@ void CSystem::SaveConfiguration()
 	if (!m_pGame)
 		return;
 
-#ifdef __ANDROID__
-	// Never create or save system.cfg on Android as it corrupts mobile configuration
-	// Delete any existing system.cfg files
-	remove("system.cfg");
-	remove("System.cfg");
-	remove("SYSTEM.CFG");
-	remove("SystemCfgOverride.Cfg");
-	remove("systemcfgoverride.cfg");
-
-	// Save game.cfg only (keybindings, sensitivity)
-	ICVar *pProfile=m_pConsole->GetCVar("g_playerprofile");
-	if (pProfile)
-	{	
-		const char *sProfileName=pProfile->GetString();
-		m_pGame->SaveConfiguration( "","game.cfg",sProfileName);
-	}
-	m_pGame->SaveConfiguration( "","game.cfg",NULL);
-	return;
-#else
 	string sSave=m_rDriver->GetString();
 	if(m_sSavedRDriver!="")
 		m_rDriver->Set(m_sSavedRDriver.c_str());
@@ -141,7 +122,6 @@ void CSystem::SaveConfiguration()
 	m_pGame->SaveConfiguration( "system.cfg","game.cfg",NULL);
 
 	m_rDriver->Set(sSave.c_str());
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -172,17 +152,6 @@ CSystemConfiguration::~CSystemConfiguration()
 void CSystemConfiguration::ParseSystemConfig()
 {
 	//m_pScriptSystem->ExecuteFile(sFilename.c_str(),false);
-
-#ifdef __ANDROID__
-	// Completely ignore and delete system.cfg / systemcfgoverride.cfg
-	string sLowerPath = m_strSysConfigFilePath;
-	std::transform(sLowerPath.begin(), sLowerPath.end(), sLowerPath.begin(), ::tolower);
-	if (sLowerPath.find("system.cfg") != string::npos || sLowerPath.find("systemcfgoverride.cfg") != string::npos)
-	{
-		remove(m_strSysConfigFilePath.c_str());
-		return;
-	}
-#endif
 
 	FILE *pFile=fxopen(m_strSysConfigFilePath.c_str(), "rb");
 	if (!pFile)
@@ -216,38 +185,6 @@ void CSystemConfiguration::ParseSystemConfig()
 					if( string::npos != posValueStart && string::npos != posValueEnd )
 					{
 						string strValue( strLine, posValueStart, posValueEnd - posValueStart );						
-
-#ifdef __ANDROID__
-						// Prevent desktop PC settings in system.cfg from breaking mobile environment:
-						if (strcasecmp(strKey.c_str(), "r_Driver") == 0)
-						{
-							m_pSystem->GetILog()->Log("Android: ignoring system.cfg '%s'='%s' (keeping OpenGL)", strKey.c_str(), strValue.c_str());
-							continue;
-						}
-						if (strcasecmp(strKey.c_str(), "r_Width") == 0 || strcasecmp(strKey.c_str(), "r_Height") == 0)
-						{
-							m_pSystem->GetILog()->Log("Android: ignoring system.cfg '%s'='%s' (using native window size)", strKey.c_str(), strValue.c_str());
-							continue;
-						}
-						if (strcasecmp(strKey.c_str(), "r_Fullscreen") == 0)
-						{
-							continue;
-						}
-						if (strcasecmp(strKey.c_str(), "r_NoPS20") == 0 && atoi(strValue.c_str()) != 0)
-						{
-							m_pSystem->GetILog()->Log("Android: ignoring system.cfg r_NoPS20=1 (must remain 0)");
-							continue;
-						}
-						if (strcasecmp(strKey.c_str(), "r_Quality_BumpMapping") == 0 && atoi(strValue.c_str()) < 3)
-						{
-							m_pSystem->GetILog()->Log("Android: overriding system.cfg r_Quality_BumpMapping to 3");
-							strValue = "3";
-						}
-						if (strcasecmp(strKey.c_str(), "r_GL_NV30_PS20") == 0 && atoi(strValue.c_str()) == 0)
-						{
-							continue;
-						}
-#endif
 						
 						ICVar *pCvar=m_pSystem->GetIConsole()->GetCVar(strKey.c_str(),false);		// false=not case sensitive (slow but more convenient)
 						if (pCvar)
@@ -277,21 +214,53 @@ void CSystemConfiguration::ParseSystemConfig()
 	fclose(pFile);
 }
 
+#ifdef __ANDROID__
+// The Advanced Video menu's High preset (Scripts/MenuScreens/Options/VideoAdv.lua). The engine defaults
+// match no preset, so a first run would show most options as "Custom".
+static const char* s_szHighSpec[][2] = {
+  { "ca_EnableDecals", "1" }, { "ca_ambient_light_intensity", "0.2" }, { "ca_ambient_light_range", "10" },
+  { "cl_projectile_light", "1" }, { "cl_weapon_light", "1" }, { "e_EntitySuppressionLevel", "0" },
+  { "e_active_shadow_maps_receving", "1" }, { "e_beach", "1" }, { "e_cgf_load_lods", "1" },
+  { "e_decals", "1" }, { "e_decals_life_time_scale", "2.0" }, { "e_detail_texture_quality", "1" },
+  { "e_flocks", "1" }, { "e_light_maps_quality", "2" }, { "e_max_entity_lights", "3" },
+  { "e_obj_lod_ratio", "10" }, { "e_overlay_geometry", "1" }, { "e_particles_lod", "1.0" },
+  { "e_particles_max_count", "4096" }, { "e_shadow_maps", "1" }, { "e_shadow_maps_view_dist_ratio", "15" },
+  { "e_stencil_shadows", "1" }, { "e_stencil_shadows_only_from_strongest_light", "0" },
+  { "e_use_global_fog_in_fog_volumes", "0" }, { "e_vegetation_min_size", "0" },
+  { "e_vegetation_sprites_distance_ratio", "1.0" }, { "es_EnableCloth", "1" }, { "p_lightrange", "15" },
+  { "r_Beams", "1" }, { "r_CoronaFade", "0.1625" }, { "r_Coronas", "1" }, { "r_CryvisionType", "0" },
+  { "r_DetailDistance", "8" }, { "r_DetailNumLayers", "1" }, { "r_DetailTextures", "1" },
+  { "r_DisableSfx", "0" }, { "r_EnvCMResolution", "2" }, { "r_EnvCMupdateInterval", "0.1" },
+  { "r_EnvLCMupdateInterval", "0.1" }, { "r_EnvLightCMSize", "8" }, { "r_EnvTexResolution", "3" },
+  { "r_EnvTexUpdateInterval", "0.05" }, { "r_Flares", "1" }, { "r_Glare", "1" }, { "r_GlareQuality", "2" },
+  { "r_HeatHaze", "1" }, { "r_MotionBlur", "1" }, { "r_ProcFlares", "1" }, { "r_Quality_BumpMapping", "2" },
+  { "r_Quality_Reflection", "0" }, { "r_ScopeLens_fx", "1" }, { "r_ShadowBlur", "1" },
+  { "r_TexBumpResolution", "0" }, { "r_TexResolution", "0" }, { "r_TexSkyResolution", "0" },
+  { "r_Vegetation_PerpixelLight", "1" }, { "r_VolumetricFog", "1" }, { "r_WaterReflections", "1" },
+  { "r_WaterRefractions", "1" }, { "r_WaterUpdateFactor", "0.01" }, { "r_checkSunVis", "2" },
+  { "sys_skiponlowspec", "0" }, { "GL_TextureFilter", "GL_LINEAR_MIPMAP_LINEAR" },
+  { "r_Texture_Anisotropic_Level", "1" },
+};
+
+// First run: no saved config anywhere, so start from the High preset.
+static bool WriteDefaultSystemConfig(const char* szPath)
+{
+	FILE* f = fopen(szPath, "wb");
+	if (!f)
+		return false;
+	fputs("-- [System-Configuration]\r\n-- First-run defaults: the High preset of the Advanced Video options.\r\n\r\n", f);
+	for (size_t i = 0; i < sizeof(s_szHighSpec) / sizeof(s_szHighSpec[0]); i++)
+		fprintf(f, "%s = \"%s\"\r\n", s_szHighSpec[i][0], s_szHighSpec[i][1]);
+	fclose(f);
+	return true;
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 void CSystem::LoadConfiguration(const string &sFilename)
 {
 	if (!sFilename.empty())
 	{	
-#ifdef __ANDROID__
-		string sLower = sFilename;
-		std::transform(sLower.begin(), sLower.end(), sLower.begin(), ::tolower);
-		if (sLower.find("system.cfg") != string::npos || sLower.find("systemcfgoverride.cfg") != string::npos)
-		{
-			if (m_pLog) m_pLog->Log("Android: ignoring and removing configuration file '%s'", sFilename.c_str());
-			remove(sFilename.c_str());
-			return;
-		}
-#endif
 		//m_pScriptSystem->ExecuteFile(sFilename.c_str(),false);
 		m_pLog->Log("Loading system configuration");
 #ifdef __ANDROID__
@@ -300,6 +269,15 @@ void CSystem::LoadConfiguration(const string &sFilename)
 		char szBuf[1024];
 		if (!strchr(sFilename.c_str(), '/') && access(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf)), R_OK) == 0)
 			sPath = szBuf;
+		else if (sFilename[0] != '/' && CryGameRoot())
+		{
+			sPath = string(CryGameRoot()) + "/" + sFilename; // no cwd on secondary storage
+			FILE* f = fopen(sPath.c_str(), "rb");
+			if (f)
+				fclose(f);
+			else if (sFilename == "system.cfg" && WriteDefaultSystemConfig(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf))))
+				sPath = szBuf;
+		}
 		CSystemConfiguration tempConfig(sPath,this);
 #else
 		CSystemConfiguration tempConfig(sFilename,this);
