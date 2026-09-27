@@ -702,7 +702,12 @@ bool CREFlare::mfCheckVis(CCObject *obj)
         float nY = fabsf(ProjV[2].y - ProjV[0].y);
 
         float area = nX * nY; //(float)(gRenDev->GetWidth() * gRenDev->GetHeight());
+#ifdef GLES_RENDERER
+        // ES queries only report whether anything passed, not a pixel count to divide by the area.
+        fIntens = pRE->m_nVisSamples ? 1.0f : 0.0f;
+#else
         fIntens = (float)pRE->m_nVisSamples / area;
+#endif
         if (fIntens < 0.05f)
           fIntens = 0;
         else
