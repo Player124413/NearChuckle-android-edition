@@ -2047,6 +2047,15 @@ exr:
   }
 
   // Allow offset bump-mapping and parametric shaders system for very high spec settings only
+#ifdef DISABLE_CG
+  // Parametric shaders are compiled by Cg at runtime and the shader cache has none of them.
+  if (CV_r_usehwshaders == 2)
+  {
+    var = iConsole->GetCVar("r_UseHWShaders");
+    if (var)
+      var->Set(1);
+  }
+#endif
   if (CV_r_Quality_BumpMapping < 3)
   {
     var = iConsole->GetCVar("r_UseHWShaders");
