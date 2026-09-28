@@ -255,7 +255,19 @@ int CUIVideoPanel::Draw(int iPass)
 		float ratio_scale = (window_ratio / video_ratio);
 		float wscale = 800.0f / ratio_scale;
 
-		if (ratio_scale > 1.0f)
+		// The menu's looping backdrop covers a wide screen, cropped top and bottom by its texture coordinates
+		// (DrawImage's own clipping gets the flipped video wrong); cutscenes stay pillarboxed.
+		float vCrop[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
+		bool bCover = ratio_scale > 1.0f && m_bLooping && CCamera::WideScreenFix();
+		if (bCover)
+		{
+			float fCrop = (1.0f - 1.0f / ratio_scale) * 0.5f;
+			vCrop[1] = 1.0f - fCrop;
+			vCrop[3] = fCrop;
+			pRect.fLeft = 0.0f;
+			pRect.fWidth = 800.0f;
+		}
+		else if (ratio_scale > 1.0f)
 		{
 			pRect.fLeft = (float)(800.0f - wscale) / 2.0f;
 			pRect.fWidth = (float)800.0f / ratio_scale;
@@ -271,7 +283,11 @@ int CUIVideoPanel::Draw(int iPass)
 			m_pUISystem->DrawQuad(pAbsoluteRect, m_cColor);
 		}
 
+#ifdef CRY_NO_FFMPEG
+		m_pUISystem->DrawImage(pRect, textureId, bCover ? vCrop : 0, color4f(1.0f, 1.0f, 1.0f, 1.0f));
+#else
 		m_pUISystem->DrawImage(pRect, textureId, 0, color4f(1.0f, 1.0f, 1.0f, 1.0f));
+#endif
 	}
 
 	// draw overlay
