@@ -482,6 +482,9 @@ static void __stdcall gles_glTexImage2D(GLenum target, GLint level, GLint intern
     pixels = &biased[0];
     type = GL_UNSIGNED_BYTE;
   }
+  // Storage only (the environment cube maps ask for GL_FLOAT faces the scene is then copied into): 8 bits a channel is what they hold.
+  if (type == GL_FLOAT && !pixels)
+    type = GL_UNSIGNED_BYTE;
   if (type != GL_UNSIGNED_BYTE)
   {
     static std::map<GLenum, bool> logged;
