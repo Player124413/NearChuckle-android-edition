@@ -357,8 +357,8 @@ static void AllocDepthTexture(STextureObj& o, GLenum nativeTarget, GLint level, 
 static bool NativeS3TC()
 {
   static int has = -1;
-  // FARCRY_GLES_DECODEDXT: decode on the CPU even where the driver has S3TC (the engine still sees the extension unless FARCRY_GLES_NOS3TC).
-  if (has < 0) has = (!getenv("FARCRY_GLES_DECODEDXT") && !getenv("FARCRY_GLES_NOS3TC") && (GLES_HasNativeExt("GL_EXT_texture_compression_s3tc") || GLES_HasNativeExt("GL_ANGLE_texture_compression_dxt"))) ? 1 : 0;
+  // FARCRY_GLES_DECODEDXT: decode on the CPU even where the driver has S3TC (the engine still sees the extension).
+  if (has < 0) has = (!getenv("FARCRY_GLES_DECODEDXT") && GLES_DriverS3TC()) ? 1 : 0;
   return has == 1;
 }
 

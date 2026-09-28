@@ -191,6 +191,7 @@ ES_PROCS
 
 bool GLES_LoadNative();
 bool GLES_HasNativeExt(const char* name);
+bool GLES_DriverS3TC();
 
 //////////////////////////////////////////////////////////////////////////
 // State

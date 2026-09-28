@@ -33,6 +33,19 @@ bool GLES_HasNativeExt(const char* name)
   return sNativeExt.find(name) != std::string::npos;
 }
 
+// The driver decodes DXT itself. Not on Android by default: Adreno 7xx drivers decode the game's
+// gloss and normal maps wrongly (characters turn white); FARCRY_GLES_NATIVES3TC opts back in.
+bool GLES_DriverS3TC()
+{
+  if (getenv("FARCRY_GLES_NOS3TC"))
+    return false;
+#ifdef __ANDROID__
+  if (!getenv("FARCRY_GLES_NATIVES3TC"))
+    return false;
+#endif
+  return GLES_HasNativeExt("GL_EXT_texture_compression_s3tc") || GLES_HasNativeExt("GL_ANGLE_texture_compression_dxt");
+}
+
 void GLES_Log(const char* fmt, ...)
 {
   static char buf[16384]; // shader sources are logged whole under FARCRY_GLES_DEBUG
