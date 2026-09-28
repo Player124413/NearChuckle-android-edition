@@ -168,7 +168,7 @@ static std::string BuildFFPVertex(const SFFPKey& k)
       sprintf(buf, " {\n  vec3 L; float att = 1.0;\n  if (u_lightPos[%d].w == 0.0) L = normalize(u_lightPos[%d].xyz);\n"
                    "  else { vec3 d = u_lightPos[%d].xyz - eyePos.xyz; float dist = length(d); L = d / dist; att = 1.0 / (u_lightAtt[%d].x + u_lightAtt[%d].y * dist + u_lightAtt[%d].z * dist * dist); }\n"
                    "  float ndl = max(dot(eyeN, L), 0.0);\n  vec3 h = normalize(L + vec3(0.0, 0.0, 1.0));\n"
-                   "  float sp = (ndl > 0.0) ? pow(max(dot(eyeN, h), 0.0), u_shininess) : 0.0;\n"
+                   "  float sp = (ndl > 0.0) ? pow(max(dot(eyeN, h), 1.0e-30), u_shininess) : 0.0;\n"
                    "  lit += att * (u_lightAmb[%d].rgb * matAmb.rgb + ndl * u_lightDiff[%d].rgb * matDiff.rgb + sp * u_lightSpec[%d].rgb * u_matSpec.rgb);\n }\n", i, i, i, i, i, i, i, i, i);
       s += buf;
     }

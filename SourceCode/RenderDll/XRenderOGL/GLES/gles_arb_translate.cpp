@@ -13,6 +13,8 @@
 
 namespace {
 
+bool NoNanGuard() { static bool b = getenv("FARCRY_GLES_NONANGUARD") != NULL; return b; }
+
 struct SParam
 {
   std::string name;
@@ -427,6 +429,13 @@ struct STranslator
     else if (op == "DST") e = "vec4(1.0, (" + s[0] + ").y * (" + s[1] + ").y, (" + s[0] + ").z, (" + s[1] + ").w)";
     else if (op == "SGE") e = "vec4(greaterThanEqual(" + s[0] + ", " + s[1] + "))";
     else if (op == "SLT") e = "vec4(lessThan(" + s[0] + ", " + s[1] + "))";
+    // RCP, RSQ, LG2 and POW stay finite at 0: the infinity ARB gives there turns into NaN in later
+    // products (normalising a zero vector), and drivers disagree on what a NaN pixel shows (white on some).
+    // FARCRY_GLES_NONANGUARD=1 translates them as before, for comparison.
+    else if (op == "RCP" && !NoNanGuard()) e = "vec4(1.0 / ((abs((" + s[0] + ").x) < 1.0e-30) ? 1.0e-30 : (" + s[0] + ").x))";
+    else if (op == "RSQ" && !NoNanGuard()) e = "vec4(inversesqrt(max(abs((" + s[0] + ").x), 1.0e-30)))";
+    else if (op == "LG2" && !NoNanGuard()) e = "vec4(log2(max(abs((" + s[0] + ").x), 1.0e-30)))";
+    else if (op == "POW" && !NoNanGuard()) e = "vec4(pow(max((" + s[0] + ").x, 1.0e-30), (" + s[1] + ").x))";
     else if (op == "RCP") e = "vec4(1.0 / (" + s[0] + ").x)";
     else if (op == "RSQ") e = "vec4(inversesqrt(abs((" + s[0] + ").x)))";
     else if (op == "EX2") e = "vec4(exp2((" + s[0] + ").x))";
@@ -434,7 +443,7 @@ struct STranslator
     else if (op == "EXP") e = "vec4(exp2(floor((" + s[0] + ").x)), fract((" + s[0] + ").x), exp2((" + s[0] + ").x), 1.0)";
     else if (op == "LOG") e = "vec4(floor(log2(abs((" + s[0] + ").x))), abs((" + s[0] + ").x) / exp2(floor(log2(abs((" + s[0] + ").x)))), log2(abs((" + s[0] + ").x)), 1.0)";
     else if (op == "POW") e = "vec4(pow(max((" + s[0] + ").x, 0.0), (" + s[1] + ").x))";
-    else if (op == "LIT") e = "vec4(1.0, max((" + s[0] + ").x, 0.0), ((" + s[0] + ").x > 0.0) ? pow(max((" + s[0] + ").y, 0.0), clamp((" + s[0] + ").w, -128.0, 128.0)) : 0.0, 1.0)";
+    else if (op == "LIT") e = "vec4(1.0, max((" + s[0] + ").x, 0.0), ((" + s[0] + ").x > 0.0) ? pow(max((" + s[0] + ").y, 1.0e-30), clamp((" + s[0] + ").w, -128.0, 128.0)) : 0.0, 1.0)";
     else if (op == "CMP") e = "mix(" + s[2] + ", " + s[1] + ", vec4(lessThan(" + s[0] + ", vec4(0.0))))";
     else if (op == "LRP") e = "mix(" + s[2] + ", " + s[1] + ", " + s[0] + ")";
     else if (op == "COS") e = "vec4(cos((" + s[0] + ").x))";
@@ -542,6 +551,11 @@ struct STranslator
     {
       s += "  vec4 oColor = vec4(0.0); vec4 oDepth = vec4(0.0);\n";
       s += out;
+      // FARCRY_GLES_NANDEBUG=1: a NaN or infinite result shows magenta (drivers disagree on what clamp makes of it).
+      static bool nanDebug = getenv("FARCRY_GLES_NANDEBUG") != NULL;
+      if (nanDebug) s += "  if (any(equal(floatBitsToUint(oColor) & 0x7f800000u, uvec4(0x7f800000u)))) oColor = vec4(1.0, 0.0, 1.0, 1.0);\n";
+      // Any NaN left becomes 0 before the clamp, whose result for NaN is up to the driver.
+      if (!NoNanGuard()) s += "  oColor = mix(oColor, vec4(0.0), greaterThan(floatBitsToUint(oColor) & 0x7fffffffu, uvec4(0x7f800000u)));\n";
       s += "  oColor = clamp(oColor, 0.0, 1.0);\n"; // result.color is clamped before fog, as in ARB
       if (p->fogMode == 1) s += "  float fogf = clamp((u_fogParams.y - v_fogc) * u_fogParams.z, 0.0, 1.0);\n";
       else if (p->fogMode == 2) s += "  float fogf = clamp(exp(-u_fogParams.w * v_fogc), 0.0, 1.0);\n";
