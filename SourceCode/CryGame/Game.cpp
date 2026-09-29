@@ -809,6 +809,16 @@ static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
 		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
 }
 
+// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
+static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
+{
+	IEntity* pEntity = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
+	IEntityContainer* pCnt = pEntity ? pEntity->GetContainer() : NULL;
+	CPlayer* pPlayer = NULL;
+	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer) && pPlayer)
+		pPlayer->TouchStance(bHold);
+}
+
 // Turn the drained touch state into client actions by name (docs/porting/phase2.md).
 static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 {
@@ -851,6 +861,9 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			// Not in the action map; the F5/F6 triggers the client keeps for them.
 			case FC_IMP_QUICKSAVE:     pClient->TriggerQuickSave(1.0f, etPressing); break;
 			case FC_IMP_QUICKLOAD:     pClient->TriggerQuickLoad(1.0f, etPressing); break;
+			case FC_IMP_STANCE_TAP:    TouchStance(pClient, pSystem, false); break;
+			case FC_IMP_STANCE_HOLD:   TouchStance(pClient, pSystem, true); break;
+			case FC_IMP_CRYVISION:     pClient->OnAction(ACTION_ITEM_1, 1.0f, etPressing); break;
 			default: break;
 		}
 	}
