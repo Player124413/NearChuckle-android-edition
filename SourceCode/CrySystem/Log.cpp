@@ -454,6 +454,7 @@ void CLog::LogStringToFile( const char *szString,bool bAdd )
 		fseek(m_pFile, bAdd ? -2 : 0, SEEK_END);
 		fputs(szTemp, m_pFile);
 		fflush(m_pFile);
+		fputs(szTemp, stdout); // on to logcat and the launcher's log file
 		return;
 	}
 #endif

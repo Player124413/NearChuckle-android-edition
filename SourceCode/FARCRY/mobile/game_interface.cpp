@@ -17,6 +17,7 @@
 
 #include "game_interface.h"
 #include "farcry_bridge.h"
+#include "LogWritter.h"
 
 #define LOG_TAG "FarCry"
 #define FC_LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
@@ -31,7 +32,7 @@ extern "C" bool SDL_SendKeyboardKey(Uint64 timestamp, SDL_KeyboardID keyboardID,
 // The renderer module creates the window, so TouchInterface::newFrame fills it in.
 extern "C" SDL_Window *window = NULL;
 
-// The engine logs through iLog into log.txt; SDL, OpenAL and printf land here.
+// stdout and stderr (the engine log, SDL, OpenAL, printf) go to logcat and the launcher's log file.
 #define STDIO_PUMP_LINE_MAX 1008
 
 static void *stdio_pump(void *arg)
@@ -52,6 +53,7 @@ static void *stdio_pump(void *arg)
                 {
                     line[len] = 0;
                     FC_LOGI("%s", line);
+                    LogWritter_Write(line);
                     len = 0;
                 }
 
