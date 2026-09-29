@@ -302,9 +302,10 @@ struct SGLESState
   bool vertexProgram, fragmentProgram;
   GLuint boundVP, boundFP;
 
-  // EXT_stencil_two_side: while enabled, stencil calls apply to the active face only
+  // EXT_stencil_two_side: calls set the active face's state; the back face uses it only while enabled
   bool stencilTwoSide;
   GLenum stencilFace;
+  struct SStencilFace { GLenum func, fail, zfail, zpass; GLint ref; GLuint mask, writeMask; } stencil[2];
 
   // client arrays
   SESArray vertexArray, normalArray, colorArray, color2Array, texcoordArray[GLES_MAX_UNITS];

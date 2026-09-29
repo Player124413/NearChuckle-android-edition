@@ -290,6 +290,8 @@ static bool IsNativeCap(GLenum cap)
   return false;
 }
 
+static void StencilUpdate();
+
 static void SetCap(GLenum cap, bool on)
 {
   STexUnitState& u = g_es.unit[g_es.activeUnit];
@@ -310,23 +312,47 @@ static void SetCap(GLenum cap, bool on)
     case GL_NORMALIZE:             g_es.normalize = on; return;
     case ES_VERTEX_PROGRAM_ARB:    g_es.vertexProgram = on; return;
     case ES_FRAGMENT_PROGRAM_ARB:  g_es.fragmentProgram = on; return;
-    case 0x8910 /* GL_STENCIL_TEST_TWO_SIDE_EXT */: g_es.stencilTwoSide = on; return;
+    case 0x8910 /* GL_STENCIL_TEST_TWO_SIDE_EXT */: if (g_es.stencilTwoSide != on) { g_es.stencilTwoSide = on; StencilUpdate(); } return;
   }
   if (cap >= GL_CLIP_PLANE0 && cap < GL_CLIP_PLANE0 + 6) { g_es.clipPlane[cap - GL_CLIP_PLANE0] = on; return; }
   if (IsNativeCap(cap)) { if (on) es_glEnable(cap); else es_glDisable(cap); return; }
-  // Everything else (NV combiners, texture shaders, smoothing, multisample, two-sided stencil for now) has no effect.
+  // Everything else (NV combiners, texture shaders, smoothing, multisample) has no effect.
 }
 
 static void __stdcall gles_glEnable(GLenum cap) { SetCap(cap, true); }
 static void __stdcall gles_glDisable(GLenum cap) { SetCap(cap, false); }
 
-// Two-sided stencil (shadow volumes): EXT face selection and the ATI separate calls map onto
-// the ES *Separate entry points.
-static GLenum StencilFace() { return g_es.stencilTwoSide ? g_es.stencilFace : GL_FRONT_AND_BACK; }
+// Two-sided stencil (shadow volumes): the layer keeps both faces' state and sends the back face the
+// front state while two-sided is off, since the renderer skips re-sending back state it thinks unchanged.
+static void StencilApply(GLenum face, const SGLESState::SStencilFace& s)
+{
+  es_glStencilFuncSeparate(face, s.func, s.ref, s.mask);
+  es_glStencilOpSeparate(face, s.fail, s.zfail, s.zpass);
+  es_glStencilMaskSeparate(face, s.writeMask);
+}
+
+static void StencilUpdate()
+{
+  StencilApply(GL_FRONT, g_es.stencil[0]);
+  StencilApply(GL_BACK, g_es.stencil[g_es.stencilTwoSide ? 1 : 0]);
+}
+
+static SGLESState::SStencilFace& StencilActive() { return g_es.stencil[g_es.stencilFace == GL_BACK ? 1 : 0]; }
+
 static void __stdcall gles_glActiveStencilFaceEXT(GLenum face) { g_es.stencilFace = face; }
-static void __stdcall gles_glStencilFunc(GLenum func, GLint ref, GLuint mask) { es_glStencilFuncSeparate(StencilFace(), func, ref, mask); }
-static void __stdcall gles_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) { es_glStencilOpSeparate(StencilFace(), fail, zfail, zpass); }
-static void __stdcall gles_glStencilMask(GLuint mask) { es_glStencilMaskSeparate(StencilFace(), mask); }
+static void __stdcall gles_glStencilFunc(GLenum func, GLint ref, GLuint mask)
+{
+  SGLESState::SStencilFace& s = StencilActive();
+  s.func = func; s.ref = ref; s.mask = mask;
+  StencilUpdate();
+}
+static void __stdcall gles_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)
+{
+  SGLESState::SStencilFace& s = StencilActive();
+  s.fail = fail; s.zfail = zfail; s.zpass = zpass;
+  StencilUpdate();
+}
+static void __stdcall gles_glStencilMask(GLuint mask) { StencilActive().writeMask = mask; StencilUpdate(); }
 static void __stdcall gles_glStencilOpSeparateATI(GLenum face, GLenum fail, GLenum zfail, GLenum zpass) { es_glStencilOpSeparate(face, fail, zfail, zpass); }
 static void __stdcall gles_glStencilFuncSeparateATI(GLenum frontFunc, GLenum backFunc, GLint ref, GLuint mask)
 {
@@ -545,6 +571,11 @@ void GLES_InitState()
 {
   memset(&g_es, 0, sizeof(g_es));
   g_es.stencilFace = GL_FRONT;
+  for (int f = 0; f < 2; f++)
+  {
+    SGLESState::SStencilFace& s = g_es.stencil[f];
+    s.func = GL_ALWAYS; s.fail = s.zfail = s.zpass = GL_KEEP; s.mask = s.writeMask = ~0u;
+  }
   g_esTextures.clear();
   GLES_ForgetTextureCache();
   g_esBuffers.clear();
