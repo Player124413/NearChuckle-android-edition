@@ -6018,6 +6018,36 @@ bool	CPlayer::GoProne( )
 
 	return true;
 }
+//////////////////////////////////////////////////////////////////////////
+// Touch crouch button. The stance is set directly: the keyboard's toggle crouch keeps m_bStayCrouch
+// and restores the previous stance on release, so standing after prone -> crouch would go prone again.
+void CPlayer::TouchStance( bool bHold )
+{
+	if (m_pVehicle || m_bSwimming || m_stats.onLadder)
+		return;
+	if (bHold)
+	{
+		if (m_CurStance == eProne)
+		{
+			m_bStayCrouch = false;
+			GoStand(false);
+		}
+		else
+			GoProne();
+		return;
+	}
+	if (m_CurStance == eProne || !(m_stats.crouch || m_bStayCrouch))
+	{
+		m_bStayCrouch = true;
+		GoCrouch();
+	}
+	else
+	{
+		m_bStayCrouch = false;
+		GoStand(false);
+	}
+}
+
 
 //
 //-----------------------------------------------------------------------------------------------

@@ -212,6 +212,11 @@ static volatile float yawJoy, pitchJoy;        // held look rate, -1..1
 
 static int farcry_screen_mode = TS_MENU;
 
+// Crouch button: a tap toggles crouch, holding it this long goes prone (fired by the drain while still held).
+#define STANCE_HOLD_MS 350
+static volatile bool stanceDown, stanceHoldFired;
+static volatile Uint64 stanceDownMs;
+
 static void queueImpulse(int impulse)
 {
     int next = (impulseHead + 1) % IMPULSE_QUEUE_SIZE;
@@ -245,6 +250,12 @@ extern "C" void FarCry_DrainTouchInput(FarCryTouchInput *out, float frameTime)
     {
         out->impulses[out->impulseCount++] = impulseQueue[impulseTail];
         impulseTail = (impulseTail + 1) % IMPULSE_QUEUE_SIZE;
+    }
+    // Added here rather than queued: the ring has the touch thread as its only writer.
+    if (stanceDown && !stanceHoldFired && SDL_GetTicks() - stanceDownMs >= STANCE_HOLD_MS && out->impulseCount < FC_MAX_IMPULSES)
+    {
+        stanceHoldFired = true;
+        out->impulses[out->impulseCount++] = FC_IMP_STANCE_HOLD;
     }
 
     // Look: take what the touch thread accumulated, leaving anything it adds meanwhile.
@@ -366,7 +377,21 @@ void PortableAction(int state, int action)
 
         // Toggles and one-shots: the game's aamOnPress actions.
         case PORT_ACT_CROUCH:
+            if (state)
+            {
+                stanceHoldFired = false;
+                stanceDownMs = SDL_GetTicks();
+                stanceDown = true;
+            }
+            else if (stanceDown)
+            {
+                stanceDown = false;
+                if (!stanceHoldFired)
+                    queueImpulse(FC_IMP_STANCE_TAP);
+            }
+            return;
         case PORT_ACT_TOGGLE_CROUCH: if (state) queueImpulse(FC_IMP_CROUCH_TOGGLE); return;
+        case PORT_ACT_DF_NIGHT_VISION: if (state) queueImpulse(FC_IMP_CRYVISION); return;
         case PORT_ACT_USE:           if (state) queueImpulse(FC_IMP_USE); return;
         case PORT_ACT_RELOAD:        if (state) queueImpulse(FC_IMP_RELOAD); return;
         case PORT_ACT_FLASH_LIGHT:   if (state) queueImpulse(FC_IMP_FLASHLIGHT); return;

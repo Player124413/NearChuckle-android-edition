@@ -791,6 +791,34 @@ bool CXGame::IsInPause(IProcess *pProcess)
 // Touch input for this frame, drained every frame so nothing stale fires later.
 static FarCryTouchInput s_TouchInput;
 
+// The scope button has no release, and hold-to-aim weapons (no ZoomDeadSwitch) only leave the scope on
+// one; player.lua's ZoomToggle handler takes 2 as "leave" for every weapon.
+static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
+{
+	IScriptSystem* pSS = pSystem->GetIScriptSystem();
+	IEntity* pPlayer = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
+	if (!pSS || !pPlayer)
+		return;
+	static const char szQuery[] = "_fcScopeUp = (ClientStuff and ClientStuff.vlayers and ClientStuff.vlayers:IsActive(\"WeaponScope\")) and 1 or 0";
+	int nUp = 0;
+	pSS->ExecuteBuffer(szQuery, sizeof(szQuery) - 1);
+	pSS->GetGlobalValue("_fcScopeUp", nUp);
+	if (nUp)
+		pPlayer->SendScriptEvent(ScriptEvent_ZoomToggle, 2);
+	else
+		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
+}
+
+// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
+static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
+{
+	IEntity* pEntity = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
+	IEntityContainer* pCnt = pEntity ? pEntity->GetContainer() : NULL;
+	CPlayer* pPlayer = NULL;
+	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer) && pPlayer)
+		pPlayer->TouchStance(bHold);
+}
+
 // Turn the drained touch state into client actions by name (docs/porting/phase2.md).
 static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 {
@@ -824,7 +852,7 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			case FC_IMP_PREV_WEAPON:   pClient->OnAction(ACTION_PREV_WEAPON, 1.0f, etPressing); break;
 			case FC_IMP_CROUCH_TOGGLE: pClient->OnAction(ACTION_MOVEMODE_TOGGLE, 1.0f, etPressing); break;
 			case FC_IMP_PRONE:         pClient->OnAction(ACTION_MOVEMODE2, 1.0f, etPressing); break;
-			case FC_IMP_ZOOM_TOGGLE:   pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing); break;
+			case FC_IMP_ZOOM_TOGGLE:   TouchZoomToggle(pClient, pSystem); break;
 			case FC_IMP_BINOCULARS:    pClient->OnAction(ACTION_ITEM_0, 1.0f, etPressing); break;
 			case FC_IMP_FIREMODE:      pClient->OnAction(ACTION_FIREMODE, 1.0f, etPressing); break;
 			case FC_IMP_CYCLE_GRENADE: pClient->OnAction(ACTION_CYCLE_GRENADE, 1.0f, etPressing); break;
@@ -833,6 +861,9 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			// Not in the action map; the F5/F6 triggers the client keeps for them.
 			case FC_IMP_QUICKSAVE:     pClient->TriggerQuickSave(1.0f, etPressing); break;
 			case FC_IMP_QUICKLOAD:     pClient->TriggerQuickLoad(1.0f, etPressing); break;
+			case FC_IMP_STANCE_TAP:    TouchStance(pClient, pSystem, false); break;
+			case FC_IMP_STANCE_HOLD:   TouchStance(pClient, pSystem, true); break;
+			case FC_IMP_CRYVISION:     pClient->OnAction(ACTION_ITEM_1, 1.0f, etPressing); break;
 			default: break;
 		}
 	}
@@ -1201,9 +1232,9 @@ bool CXGame::Update()
 #ifdef __ANDROID__
 			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
 			{
-				// The player scales speed by stick deflection only in joypad mode (keys still set 1).
-				if (!cl_use_joypad->GetIVal())
-					cl_use_joypad->Set(1);
+				// Joypad mode runs mouse look through a stick dead zone that eats slow swipes; XPlayer's AnalogMove covers the sticks.
+				if (cl_use_joypad->GetIVal())
+					cl_use_joypad->Set(0);
 				ApplyTouchInput(m_pClient, m_pSystem);
 			}
 #endif

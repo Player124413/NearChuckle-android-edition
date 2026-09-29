@@ -39,6 +39,9 @@ enum FarCryImpulse
     FC_IMP_CHANGE_VIEW,
     FC_IMP_QUICKSAVE,
     FC_IMP_QUICKLOAD,
+    FC_IMP_STANCE_TAP,  // crouch button tapped: stand <-> crouch, prone -> crouch
+    FC_IMP_STANCE_HOLD, // crouch button held: prone, or stand up from prone
+    FC_IMP_CRYVISION,
     FC_IMP_WEAPON_0 = 32 // + slot, matches ACTION_WEAPON_0 + slot
 };
 
