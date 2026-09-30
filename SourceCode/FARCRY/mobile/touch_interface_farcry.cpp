@@ -74,6 +74,14 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(runButton); // Common run button created in touch_interface_base, drives sprint
     runButton->setHidden(false);
     tc->addControl(new touchcontrols::Button("grenade", touchcontrols::RectF(22, 5, 24, 7), "shoot_alt", PORT_ACT_ALT_FIRE, false, false, "Grenade (hold)"));
+    tc->addControl(new touchcontrols::Button("grenade_cycle", touchcontrols::RectF(24, 5, 26, 7), "grenade_cycle", PORT_ACT_INVNEXT, false, false, "Change grenade"));
+    tc->addControl(new touchcontrols::Button("objectives", touchcontrols::RectF(14, 0, 16, 2), "notebook", PORT_ACT_MP_SCORES, false, false, "Objectives (hold)"));
+
+    // Delta Touch's fly slider with only up and down: scope zoom steps.
+    touchcontrols::QuadSlide *zoomSlide = new touchcontrols::QuadSlide("zoom_slide", touchcontrols::RectF(19, 5, 21, 7), "zoom", "slide_arrow",
+                                                                      PORT_ACT_MAP_ZOOM_IN, 0, PORT_ACT_MAP_ZOOM_OUT, 0, false, "Scope zoom in/out slider");
+    zoomSlide->signal.connect(sigc::mem_fun(this, &TouchInterface::gameButton));
+    tc->addControl(zoomSlide);
     tc->addControl(new touchcontrols::Button("lean_left", touchcontrols::RectF(12, 8, 14, 10), "lean", PORT_ACT_LEAN_LEFT, false, true, "Lean left"));
     tc->addControl(new touchcontrols::Button("lean_right", touchcontrols::RectF(14, 8, 16, 10), "lean", PORT_ACT_LEAN_RIGHT, false, true, "Lean right"));
 

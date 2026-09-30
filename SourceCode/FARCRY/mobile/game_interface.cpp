@@ -217,6 +217,11 @@ static int farcry_screen_mode = TS_MENU;
 static volatile bool stanceDown, stanceHoldFired;
 static volatile Uint64 stanceDownMs;
 
+// Zoom slider: a step as it is slid, then another every ZOOM_REPEAT_MS while it stays there.
+#define ZOOM_REPEAT_MS 300
+static volatile int zoomDir; // +1 in, -1 out
+static volatile Uint64 zoomNextMs;
+
 static void queueImpulse(int impulse)
 {
     int next = (impulseHead + 1) % IMPULSE_QUEUE_SIZE;
@@ -256,6 +261,12 @@ extern "C" void FarCry_DrainTouchInput(FarCryTouchInput *out, float frameTime)
     {
         stanceHoldFired = true;
         out->impulses[out->impulseCount++] = FC_IMP_STANCE_HOLD;
+    }
+    int zoom = zoomDir;
+    if (zoom && SDL_GetTicks() >= zoomNextMs && out->impulseCount < FC_MAX_IMPULSES)
+    {
+        zoomNextMs = SDL_GetTicks() + ZOOM_REPEAT_MS;
+        out->impulses[out->impulseCount++] = zoom > 0 ? FC_IMP_ZOOM_IN : FC_IMP_ZOOM_OUT;
     }
 
     // Look: take what the touch thread accumulated, leaving anything it adds meanwhile.
@@ -374,6 +385,22 @@ void PortableAction(int state, int action)
         case PORT_ACT_SPRINT:     setHeld(FC_HELD_SPRINT, state); return;
         case PORT_ACT_LEAN_LEFT:  setHeld(FC_HELD_LEAN_LEFT, state); return;
         case PORT_ACT_LEAN_RIGHT: setHeld(FC_HELD_LEAN_RIGHT, state); return;
+        case PORT_ACT_MP_SCORES:  setHeld(FC_HELD_OBJECTIVES, state); return;
+
+        // The slider releases its old direction before pressing a new one.
+        case PORT_ACT_MAP_ZOOM_IN:
+        case PORT_ACT_MAP_ZOOM_OUT:
+        {
+            int dir = action == PORT_ACT_MAP_ZOOM_IN ? 1 : -1;
+            if (state)
+            {
+                zoomNextMs = 0;
+                zoomDir = dir;
+            }
+            else if (zoomDir == dir)
+                zoomDir = 0;
+            return;
+        }
 
         // Toggles and one-shots: the game's aamOnPress actions.
         case PORT_ACT_CROUCH:

@@ -837,7 +837,7 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 
 	static const XACTIONID held[FC_HELD_COUNT] = {
 		ACTION_FIRE0, ACTION_JUMP, ACTION_MOVEMODE, ACTION_RUNSPRINT, ACTION_WALK,
-		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE };
+		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE, ACTION_SCORE_BOARD };
 	// Sprint changes seat each frame it is held in a vehicle, so there send only its press.
 	static unsigned prevHeld;
 	unsigned heldNow = in.held;
@@ -881,6 +881,8 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 			case FC_IMP_STANCE_TAP:    TouchStance(pClient, pSystem, false); break;
 			case FC_IMP_STANCE_HOLD:   TouchStance(pClient, pSystem, true); break;
 			case FC_IMP_CRYVISION:     pClient->OnAction(ACTION_ITEM_1, 1.0f, etPressing); break;
+			case FC_IMP_ZOOM_IN:       pClient->OnAction(ACTION_ZOOM_IN, 1.0f, etPressing); break;
+			case FC_IMP_ZOOM_OUT:      pClient->OnAction(ACTION_ZOOM_OUT, 1.0f, etPressing); break;
 			default: break;
 		}
 	}
