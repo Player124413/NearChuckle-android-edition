@@ -215,7 +215,7 @@ int CXPuppetProxy::Update(SOBJECTSTATE *state)
                 if (pDesiredJumpType->GetAt(cnt,pDesiredJump))
 				{
 					const char *pAnimName;
-					int nTakeoffFrame, nLandFrame;
+					int nTakeoffFrame=0, nLandFrame=0;
 					pDesiredJump->GetAt(1,pAnimName);
 					pDesiredJump->GetAt(2,nTakeoffFrame);
 					pDesiredJump->GetAt(3,nLandFrame);
@@ -884,7 +884,7 @@ void CXPuppetProxy::OnAnimationEvent(const char *sAnimation,AnimSinkEventData Us
 			_SmartScriptObject pDesiredJump(m_pScriptSystem,true);
 			if (pDesiredJumpType->GetAt(m_nLastSelectedJumpAnim,pDesiredJump))
 			{
-				int nTakeoffFrame, nLandFrame;
+				int nTakeoffFrame=0, nLandFrame=0;
 				pDesiredJump->GetAt(2,nTakeoffFrame);
 				pDesiredJump->GetAt(3,nLandFrame);
 					
@@ -1170,7 +1170,7 @@ void CXPuppetProxy::Save(CStream &stm)
 	_SmartScriptObject pVehicle(m_pScriptSystem,true);
 	if( m_pEntity->GetScriptObject()->GetValue("theVehicle", pVehicle))
 	{
-		int id;
+		int id=0;
 		pVehicle->GetValue("id", id);
 		stm.Write(id);
 		m_pGame->GetSystem()->GetILog()->Log(" Writing vehicle id %d",id);

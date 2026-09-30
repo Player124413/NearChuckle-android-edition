@@ -568,7 +568,7 @@ int CScriptObjectSystem::SetConsoleImage(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *pszName;
-	bool bRemoveCurrent;
+	bool bRemoveCurrent=false;
 	pH->GetParam(1, pszName);
 	pH->GetParam(2, bRemoveCurrent);
 
@@ -871,7 +871,7 @@ int CScriptObjectSystem::DrawLabelImage(IFunctionHandler *pH)
 	CHECK_PARAMETERS(3);
 
 	CScriptObjectVector oVec(m_pScriptSystem,true);
-	float fSize;
+	float fSize=0;
 	USER_DATA nTextureId=0;
 	int nCookie=0;
 
@@ -898,7 +898,7 @@ int CScriptObjectSystem::GetEntitiesInRadius(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	CScriptObjectVector oVec(m_pScriptSystem,true);
-	float fRadius;
+	float fRadius=0;
 	Vec3 v3Origin;
 	std::vector<IEntity*> ents;
 	std::vector<IEntity*>::iterator itor;
@@ -933,7 +933,7 @@ int CScriptObjectSystem::GetEntitiesInRadius(IFunctionHandler *pH)
 int CScriptObjectSystem::GetTeamMembers(IFunctionHandler *pH)
 {
 /*	CHECK_PARAMETERS(1);
-	int nTeamId;
+	int nTeamId=0;
 	pH->GetParam(1, nTeamId);
 	_SmartScriptObject pObj(m_pScriptSystem);
 //	CTeamMgr *pTeamMgr=m_pGame->GetTeamManager();
@@ -985,7 +985,7 @@ int CScriptObjectSystem::GetEntityByName(IFunctionHandler *pH)
 /*int CScriptObjectSystem::RemoveTexture(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 	pH->GetParam(1,nID);
 	m_pRenderer->RemoveTexture(nID);
 	return pH->EndFunction();
@@ -1001,7 +1001,7 @@ int CScriptObjectSystem::LoadAnimatedTexture(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *sFormat;
-	int nCount,nTid;
+	int nCount=0,nTid;
 	pH->GetParam(1,sFormat);
 	pH->GetParam(2,nCount);
 	nTid=m_pRenderer->LoadAnimatedTexture(sFormat,nCount);
@@ -1135,7 +1135,7 @@ int CScriptObjectSystem::DeformTerrain(IFunctionHandler *pH)
 
 	CScriptObjectVector oVec(m_pScriptSystem,true);
     Vec3 v3Pos;//,v3SysDir;
-    float fSize;
+    float fSize=0;
     USER_DATA nTid;
 	int nCookie=0;
 	pH->GetParam(1,*oVec);
@@ -1243,7 +1243,7 @@ int CScriptObjectSystem::DrawLine(IFunctionHandler *pH)
 	CHECK_PARAMETERS(6);
 	CScriptObjectVector pPt1(m_pScriptSystem,true);
 	CScriptObjectVector pPt2(m_pScriptSystem,true);
-	float r,g,b,a;
+	float r=0,g=0,b=0,a=0;
 	pH->GetParam(1,pPt1);
 	pH->GetParam(2,pPt2);
 	pH->GetParam(3,r);
@@ -1260,7 +1260,7 @@ int CScriptObjectSystem::Draw2DLine(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(8);
 	Vec3 p1(0,0,0),p2(0,0,0);
-	float r,g,b,a;
+	float r=0,g=0,b=0,a=0;
 	pH->GetParam(1,p1.x);
 	pH->GetParam(2,p1.y);
 	pH->GetParam(3,p2.x);
@@ -1310,11 +1310,11 @@ int CScriptObjectSystem::DrawImage(IFunctionHandler *pH)
 	CHECK_PARAMETERS(6);
 
 	USER_DATA nTid;
-	int nPx;
-	int nPy;
-	int w;
-	int h;
-	int nMode;
+	int nPx=0;
+	int nPy=0;
+	int w=0;
+	int h=0;
+	int nMode=0;
 	//pH->GetParam(1,nTid);
 	int nCookie=0;
 	pH->GetParamUDVal(1,nTid,nCookie);
@@ -1367,12 +1367,12 @@ int CScriptObjectSystem::DrawImageColor(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(10);
 	USER_DATA nTid;
-	float nPx;
-	float nPy;
-	float w;
-	float h;
-	int nMode;
-	float r,g,b,a;
+	float nPx=0;
+	float nPy=0;
+	float w=0;
+	float h=0;
+	int nMode=0;
+	float r=0,g=0,b=0,a=0;
 	//pH->GetParam(1,nTid);
 	int nCookie=0;
 	pH->GetParamUDVal(1,nTid,nCookie);
@@ -1431,12 +1431,12 @@ int CScriptObjectSystem::DrawImageCoords(IFunctionHandler *pH)
 	CHECK_PARAMETERS(10);
 
 	USER_DATA nTid;
-	int nPx;
-	int nPy;
-	int w;
-	int h;
-	int nMode;
-	float u1, v1, u2, v2;
+	int nPx=0;
+	int nPy=0;
+	int w=0;
+	int h=0;
+	int nMode=0;
+	float u1=0, v1=0, u2=0, v2=0;
 	//pH->GetParam(1,nTid);
 	int nCookie=0;
 	pH->GetParamUDVal(1,nTid,nCookie);
@@ -1497,13 +1497,13 @@ int CScriptObjectSystem::DrawImageColorCoords(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(14);
 	USER_DATA nTid;
-	float nPx;
-	float nPy;
-	float w;
-	float h;
-	int nMode;
-	float r,g,b,a;
-	float u1, v1, u2, v2;
+	float nPx=0;
+	float nPy=0;
+	float w=0;
+	float h=0;
+	int nMode=0;
+	float r=0,g=0,b=0,a=0;
+	float u1=0, v1=0, u2=0, v2=0;
 	int nCookie=0;
 	pH->GetParamUDVal(1,nTid,nCookie);
 	if(nTid && (nCookie==USER_DATA_TEXTURE))
@@ -1542,7 +1542,7 @@ int CScriptObjectSystem::DrawTriStrip(IFunctionHandler *pH)
 	USER_DATA nTid;
 	int nCookie=0;
 	int nMode=0;
-	float a,r,g,b;
+	float a=0,r=0,g=0,b=0;
 	pH->GetParamUDVal(1,nTid,nCookie);
 	struct _vtx_{
 		float x,y,z;
@@ -1610,7 +1610,7 @@ int CScriptObjectSystem::DrawRectShader(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(9);
 	const char *pszShaderName;
-	float x, y, w, h, r, g, b, a;
+	float x=0, y=0, w=0, h=0, r=0, g=0, b=0, a=0;
 	pH->GetParam(1, pszShaderName);
 	pH->GetParam(2, x);
 	pH->GetParam(3, y);
@@ -1652,7 +1652,7 @@ int CScriptObjectSystem::SetScreenFx(IFunctionHandler *pH)
 {
   CHECK_PARAMETERS(2);
   const char *pszEffectName;
-  int iActive;
+  int iActive=0;
 
   pH->GetParam(1, pszEffectName);
   pH->GetParam(2, iActive);
@@ -1668,7 +1668,7 @@ int CScriptObjectSystem::SetScreenFxParamInt(IFunctionHandler *pH)
   CHECK_PARAMETERS(3);
   const char *pszEffectName,
              *pszEffectParam;
-  int         iValue;
+  int         iValue=0;
 
   // <<NOTE>> check 3dScreenEffects for a list of effects names and respective parameters
 
@@ -1687,7 +1687,7 @@ int CScriptObjectSystem::SetScreenFxParamFloat(IFunctionHandler *pH)
   CHECK_PARAMETERS(3);
   const char *pszEffectName,
              *pszEffectParam;
-  float       fValue;
+  float       fValue=0;
 
   // <<NOTE>> check 3dScreenEffects for a list of effects names and respective parameters
 
@@ -1769,7 +1769,7 @@ int CScriptObjectSystem::GetScreenFxParamFloat(IFunctionHandler *pH)
 int CScriptObjectSystem::SetScissor(IFunctionHandler *pH)
 {
   CHECK_PARAMETERS(4);
-  int x, y, w, h;
+  int x=0, y=0, w=0, h=0;
 
   pH->GetParam(1, x);
   pH->GetParam(2, y);
@@ -1807,7 +1807,7 @@ int CScriptObjectSystem::ActivateLight(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *pszLightName;
-	bool bActive;
+	bool bActive=false;
 	pH->GetParam(1, pszLightName);
 	pH->GetParam(2, bActive);
 	m_p3DEngine->ActivateLight(pszLightName, bActive);
@@ -1817,7 +1817,7 @@ int CScriptObjectSystem::ActivateLight(IFunctionHandler *pH)
 int CScriptObjectSystem::ActivateMainLight(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	bool bActive;
+	bool bActive=false;
 	CScriptObjectVector oVec(m_pScriptSystem);
 	if(pH->GetParam(1,*oVec))
 	{
@@ -1831,8 +1831,8 @@ int CScriptObjectSystem::SetSkyBox(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
 	const char *pszShaderName;
-	float fBlendTime;
-	bool bUseWorldBrAndColor;
+	float fBlendTime=0;
+	bool bUseWorldBrAndColor=false;
 	pH->GetParam(1, pszShaderName);
 	pH->GetParam(2, fBlendTime);
 	pH->GetParam(3, bUseWorldBrAndColor);
@@ -1877,7 +1877,7 @@ int CScriptObjectSystem::EnableMainView(IFunctionHandler *pH)
 int CScriptObjectSystem::DebugStats(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool cp;
+	bool cp=false;
 	pH->GetParam(1,cp);
 	m_pSystem->DebugStats(cp, false);
 	return pH->EndFunction();
@@ -1889,7 +1889,7 @@ int CScriptObjectSystem::DebugStats(IFunctionHandler *pH)
 int CScriptObjectSystem::ViewDistanceSet(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float		viewDist;
+	float		viewDist=0;
 	pH->GetParam(1,viewDist);
 	if(viewDist<20)
 		viewDist = 20;
@@ -1912,7 +1912,7 @@ int CScriptObjectSystem::ViewDistanceGet(IFunctionHandler *pH)
 int CScriptObjectSystem::SetFogEnd(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float		fogEnd;
+	float		fogEnd=0;
 	pH->GetParam(1,fogEnd);
 	m_p3DEngine->SetFogEnd( fogEnd );
 
@@ -1940,7 +1940,7 @@ int CScriptObjectSystem::SetFogEnd(IFunctionHandler *pH)
 int CScriptObjectSystem::SetFogStart(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float		fogStart;
+	float		fogStart=0;
 	pH->GetParam(1,fogStart);
 	m_p3DEngine->SetFogStart( fogStart );
 	return pH->EndFunction();
@@ -2002,8 +2002,8 @@ int CScriptObjectSystem::ApplyForceToEnvironment(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(3);
 	CScriptObjectVector oPos(m_pScriptSystem,true);
-	float	force;
-	float	radius;
+	float	force=0;
+	float	radius=0;
 
 	pH->GetParam(1,*oPos);
 	pH->GetParam(2, radius);
@@ -2082,7 +2082,7 @@ int CScriptObjectSystem::SetOutdoorAmbientColor(IFunctionHandler *pH)
 int CScriptObjectSystem::SetBFCount(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int	bfNumber;
+	int	bfNumber=0;
 	pH->GetParam(1,bfNumber);
 	m_p3DEngine->SetBFCount( bfNumber );
 //bfNumber = m_p3DEngine->GetBFCount( );
@@ -2105,7 +2105,7 @@ int CScriptObjectSystem::GetBFCount(IFunctionHandler *pH)
 int CScriptObjectSystem::SetGrasshopperCount(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int	bfNumber;
+	int	bfNumber=0;
 	pH->GetParam(1,bfNumber);
 	m_p3DEngine->SetGrasshopperCount( bfNumber );
 //	m_p3DEngine->SetBFCount( bfNumber );
@@ -2130,7 +2130,7 @@ int CScriptObjectSystem::SetGrasshopperCGF(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 	IEntity *pEntity;
-	int nID;
+	int nID=0;
 	pH->GetParam(1,nID);
 	pEntity=m_pEntitySystem->GetEntity(nID);
 	if(pEntity){
@@ -2199,10 +2199,10 @@ int CScriptObjectSystem::ActivatePortal(IFunctionHandler *pH)
 
 	CScriptObjectVector oPos(m_pScriptSystem,true);
   Vec3 vPos;
-	int nID;
+	int nID=0;
 	pH->GetParam(1,*oPos);
 	vPos=oPos.Get();
-	bool bActivate;
+	bool bActivate=false;
 	pH->GetParam(2,bActivate);
 	pH->GetParam(3,nID);
 
@@ -2230,7 +2230,7 @@ int CScriptObjectSystem::SetWorldColorRatio(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 
-	float vRatio;
+	float vRatio=0;
 	pH->GetParam(1, vRatio);
 
 //	m_AmbientColorRatio = vRatio;
@@ -2564,7 +2564,7 @@ int CScriptObjectSystem::RayWorldIntersection(IFunctionHandler *pH)
 	CScriptObjectVector vPos(m_pScriptSystem, true);
 	CScriptObjectVector vDir(m_pScriptSystem, true);
 
-	int nMaxHits,iEntTypes=ent_all;
+	int nMaxHits=0,iEntTypes=ent_all;
 
 	pH->GetParam(1, *vPos);
 	pH->GetParam(2, *vDir);
@@ -2634,7 +2634,7 @@ int CScriptObjectSystem::RayTraceCheck(IFunctionHandler *pH)
 	CHECK_PARAMETERS(4);
 	CScriptObjectVector vPos(m_pScriptSystem, true);
 	Vec3 src, dst;
-	int	skipId1, skipId2;
+	int	skipId1=0, skipId2=0;
 
 	pH->GetParam(1, *vPos);
 	src = vPos.Get();

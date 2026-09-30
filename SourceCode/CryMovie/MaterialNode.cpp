@@ -131,7 +131,7 @@ void CAnimMaterialNode::Animate( SAnimContext &ec )
 	if (!pShaderResources)
 		return;
 
-	float fValue;
+	float fValue=0;
 	Vec3 vValue;
 	for (int paramIndex = 0; paramIndex < paramCount; paramIndex++)
 	{

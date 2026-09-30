@@ -192,9 +192,9 @@ int CScriptObjectWeaponClass::SetName(IFunctionHandler *pH)
 
 int CScriptObjectWeaponClass::SetShaderFloat(IFunctionHandler *pH)
 {
-	float fFloat,fFadeValue;
+	float fFloat=0,fFadeValue=0;
 	const char *sName;
-	int		dwMask;
+	int		dwMask=0;
 
 	CHECK_PARAMETERS(4);
 
@@ -233,7 +233,7 @@ int CScriptObjectWeaponClass::SetAnimationKeyEvent(IFunctionHandler *pH)
 	};
 
 	const char *szAnimation;
-	int nFrameID;
+	int nFrameID=0;
 	USER_DATA udUserData = USER_DATA(-1);
 	pH->GetParam(1,szAnimation);
 	pH->GetParam(2,nFrameID);
@@ -255,7 +255,7 @@ int CScriptObjectWeaponClass::StartAnimation(IFunctionHandler *pH)
 		return pH->EndFunctionNull();
 
 	const char *animname;
-	int pos, layer=0;
+	int pos=0, layer=0;
 	bool bLooping = false;
 	bool bLoopSpecified = false;
 	float fBlendTime = 0.15f;
@@ -502,9 +502,9 @@ int CScriptObjectWeaponClass::GetInstantHit(IFunctionHandler *pH)
 	CScriptObjectVector oVec3(m_pScriptSystem,false);
 
 	IEntity *shooter;
-	int nID;
+	int nID=0;
 	Vec3d pos, angles, dir;
-	float fDistance;
+	float fDistance=0;
 	int res;
 
 	pH->GetParam(1,*pObj);
@@ -672,7 +672,7 @@ if (y_test*y<0 (false root) && a-d>0), try t = sqrt(2*(a-d)/g^2) (else no soluti
 int CScriptObjectWeaponClass::GetProjectileFiringAngle(IFunctionHandler *pH)
 {
 
-	float x,y,v,g;
+	float x=0,y=0,v=0,g=0;
 	CHECK_PARAMETERS(4);
 
 	pH->GetParam(1, v);
@@ -725,7 +725,7 @@ int CScriptObjectWeaponClass::Hit(IFunctionHandler *pH)
 			{
 				if(pHit->GetCurrent(pObj))
 				{
-					int idShooter,idTarget,objtype,partid,surfaceid;
+					int idShooter=0,idTarget=0,objtype=0,partid=0,surfaceid=0;
 					pObj->BeginSetGetChain();
 
 					SWeaponHit hit;
@@ -770,7 +770,7 @@ int CScriptObjectWeaponClass::SetHoldingType(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 	//	int iCrosshairIdx;
-	int type;
+	int type=0;
 	pH->GetParam(1, type);
 	m_pWeaponClass->m_HoldingType = type;
 	return pH->EndFunction();

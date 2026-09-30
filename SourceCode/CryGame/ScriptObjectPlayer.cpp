@@ -275,7 +275,7 @@ int CScriptObjectPlayer::SelectFirstWeapon(IFunctionHandler *pH)
 
 int CScriptObjectPlayer::DrawThirdPersonWeapon(IFunctionHandler *pH)
 {
-	bool bDraw;
+	bool bDraw=false;
 	pH->GetParam(1,bDraw);
 	m_pPlayer->DrawThirdPersonWeapon(bDraw);
 	return pH->EndFunction();
@@ -283,8 +283,8 @@ int CScriptObjectPlayer::DrawThirdPersonWeapon(IFunctionHandler *pH)
 
 int CScriptObjectPlayer::MakeWeaponAvailable(IFunctionHandler *pH)
 {
-	int nID;
-	int iMakeAvail;
+	int nID=0;
+	int iMakeAvail=0;
 	pH->GetParam(1, nID);
 
 	if (pH->GetParamCount() == 2)
@@ -362,11 +362,11 @@ int CScriptObjectPlayer::WaitForFireRelease(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetCurrWeapon(IFunctionHandler *pH)
 {
 //	CHECK_PARAMETERS(1);
-	int nWeaponIndex;
+	int nWeaponIndex=0;
 	
 	if(pH->GetParamCount()==2)
 	{
-		int	id;
+		int	id=0;
 		pH->GetParam(1,nWeaponIndex);
 		m_pPlayer->SelectWeapon(nWeaponIndex);
 
@@ -409,7 +409,7 @@ int CScriptObjectPlayer::GetCurrWeapon(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetSwayAmp(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fValue;
+	float fValue=0;
 	pH->GetParam(1,fValue);
 	m_pPlayer->SetSwayAmp(fValue);
 	return pH->EndFunction();
@@ -418,7 +418,7 @@ int CScriptObjectPlayer::SetSwayAmp(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetSwayFreq(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fValue;
+	float fValue=0;
 	pH->GetParam(1,fValue);
 	m_pPlayer->SetSwayFreq(fValue);
 	return pH->EndFunction();
@@ -524,7 +524,7 @@ int CScriptObjectPlayer::GetViewIntersection(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetGravity(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fGravity;
+	float fGravity=0;
 	pH->GetParam(1, fGravity);
 	m_pPlayer->SetGravityOverride(fGravity);
 	return pH->EndFunction();
@@ -533,7 +533,7 @@ int CScriptObjectPlayer::SetGravity(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAngleLimit(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	if(fLimit>0)
 	{
@@ -557,7 +557,7 @@ int CScriptObjectPlayer::SetAngleLimit(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAngleLimitH(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	if(fLimit>0)
 	{
@@ -575,7 +575,7 @@ int CScriptObjectPlayer::SetAngleLimitH(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAngleLimitV(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	if(fLimit>0)
 	{
@@ -625,7 +625,7 @@ int CScriptObjectPlayer::SetAngleLimitBase(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetMinAngleLimitV(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	m_pPlayer->SetMinAngleLimitV(fLimit);
 	return pH->EndFunction();
@@ -634,7 +634,7 @@ int CScriptObjectPlayer::SetMinAngleLimitV(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetMaxAngleLimitV(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	m_pPlayer->SetMaxAngleLimitV(fLimit);
 	return pH->EndFunction();
@@ -643,7 +643,7 @@ int CScriptObjectPlayer::SetMaxAngleLimitV(IFunctionHandler *pH)
 int CScriptObjectPlayer::EnableAngleLimitV(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bLimit;
+	bool bLimit=false;
 	pH->GetParam(1,bLimit);
 	m_pPlayer->EnableAngleLimitV(bLimit);
 	return pH->EndFunction();
@@ -652,7 +652,7 @@ int CScriptObjectPlayer::EnableAngleLimitV(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetMinAngleLimitH(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	m_pPlayer->SetMinAngleLimitH(fLimit);
 	return pH->EndFunction();
@@ -661,7 +661,7 @@ int CScriptObjectPlayer::SetMinAngleLimitH(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetMaxAngleLimitH(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fLimit;
+	float fLimit=0;
 	pH->GetParam(1,fLimit);
 	m_pPlayer->SetMaxAngleLimitH(fLimit);
 	return pH->EndFunction();
@@ -670,7 +670,7 @@ int CScriptObjectPlayer::SetMaxAngleLimitH(IFunctionHandler *pH)
 int CScriptObjectPlayer::EnableAngleLimitH(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bLimit;
+	bool bLimit=false;
 	pH->GetParam(1,bLimit);
 	m_pPlayer->EnableAngleLimitH(bLimit);
 	return pH->EndFunction();
@@ -742,7 +742,7 @@ int CScriptObjectPlayer::ShakeCamera(IFunctionHandler *pH)
 	pTable->GetValue("x", Axis.x);
 	pTable->GetValue("y", Axis.y);
 	pTable->GetValue("z", Axis.z);
-	float fDeg, fFreq, fTime;
+	float fDeg=0, fFreq=0, fTime=0;
 	pH->GetParam(2, fDeg);
 	pH->GetParam(3, fFreq);
 	pH->GetParam(4, fTime);
@@ -808,9 +808,9 @@ int CScriptObjectPlayer::RedirectInputTo(IFunctionHandler *pH)
 
 	ASSERT(pH->GetParamCount() == 1 || pH->GetParamCount() == 2);
 
-	int id;
+	int id=0;
 	pH->GetParam(1,id);
-	int	angleDelta;
+	int	angleDelta=0;
 	if(pH->GetParamCount() == 2)
 		pH->GetParam(2,angleDelta);
 	else
@@ -845,7 +845,7 @@ int CScriptObjectPlayer::StartDie(IFunctionHandler *pH)
 	pTable->GetValue("y", point.y);
 	pTable->GetValue("z", point.z);
 
-	int	partid,deathType;
+	int	partid=0,deathType=0;
 
 	pH->GetParam(3, partid);
 	pH->GetParam(4, deathType);
@@ -958,7 +958,7 @@ int CScriptObjectPlayer::SetDimProne(IFunctionHandler *pH)
 int CScriptObjectPlayer::GetBoneHitZone(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int bIdx;
+	int bIdx=0;
 	pH->GetParam(1,bIdx);
 
 	return pH->EndFunction( m_pPlayer->GetBoneHitZone( bIdx ) );
@@ -1234,7 +1234,7 @@ int	CScriptObjectPlayer::GetTPVHelper(IFunctionHandler *pH)
 {
 	const char *pszName = NULL;
 	ICryCharInstance *pInstance = NULL; 
-	int iPos;
+	int iPos=0;
 	Vec3 vHelperPos;
 
 	CHECK_PARAMETERS(2);
@@ -1490,7 +1490,7 @@ int CScriptObjectPlayer::GetCurVehicle(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeed(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(4);
-	float	sRun, sWalk, sCrouch, sProne;
+	float	sRun=0, sWalk=0, sCrouch=0, sProne=0;
 	pH->GetParam(1,sRun);
 	pH->GetParam(2,sWalk);
 	pH->GetParam(3,sCrouch);
@@ -1505,7 +1505,7 @@ int CScriptObjectPlayer::SetAnimationRefSpeed(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeedRun(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	float	sFwd, sSide, sBack;
+	float	sFwd=0, sSide=0, sBack=0;
 	pH->GetParam(1,sFwd);
 	pH->GetParam(2,sSide);
 	pH->GetParam(3,sBack);
@@ -1518,7 +1518,7 @@ int CScriptObjectPlayer::SetAnimationRefSpeedRun(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeedWalk(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	float	sFwd, sSide, sBack;
+	float	sFwd=0, sSide=0, sBack=0;
 	pH->GetParam(1,sFwd);
 	pH->GetParam(2,sSide);
 	pH->GetParam(3,sBack);
@@ -1531,7 +1531,7 @@ int CScriptObjectPlayer::SetAnimationRefSpeedWalk(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeedWalkRelaxed(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	float	sFwd, sSide, sBack;
+	float	sFwd=0, sSide=0, sBack=0;
 	pH->GetParam(1,sFwd);
 	pH->GetParam(2,sSide);
 	pH->GetParam(3,sBack);
@@ -1545,7 +1545,7 @@ int CScriptObjectPlayer::SetAnimationRefSpeedWalkRelaxed(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeedXWalk(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	float	sFwd, sSide, sBack;
+	float	sFwd=0, sSide=0, sBack=0;
 	pH->GetParam(1,sFwd);
 	pH->GetParam(2,sSide);
 	pH->GetParam(3,sBack);
@@ -1572,7 +1572,7 @@ int CScriptObjectPlayer::SetAnimationRefSpeedXRun(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetAnimationRefSpeedCrouch(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	float	sFwd, sSide, sBack;
+	float	sFwd=0, sSide=0, sBack=0;
 	pH->GetParam(1,sFwd);
 	pH->GetParam(2,sSide);
 	pH->GetParam(3,sBack);
@@ -1596,7 +1596,7 @@ int CScriptObjectPlayer::CounterAdd(IFunctionHandler *pH)
 {
 CHECK_PARAMETERS(2);
 	const char *name;
-	float	timeScale;
+	float	timeScale=0;
 
 	pH->GetParam(1, name);
 	pH->GetParam(2, timeScale);
@@ -1608,7 +1608,7 @@ int CScriptObjectPlayer::CounterIncrement(IFunctionHandler *pH)
 {
 CHECK_PARAMETERS(2);
 	const char *name;
-	float	delta;
+	float	delta=0;
 
 	pH->GetParam(1, name);
 	pH->GetParam(2, delta);
@@ -1629,7 +1629,7 @@ int CScriptObjectPlayer::CounterSetValue(IFunctionHandler *pH)
 {
 CHECK_PARAMETERS(2);
 	const char *name;
-	float	value;
+	float	value=0;
 
 	pH->GetParam(1, name);
 	pH->GetParam(2, value);
@@ -1642,7 +1642,7 @@ int CScriptObjectPlayer::CounterSetEvent(IFunctionHandler *pH)
 CHECK_PARAMETERS(3);
 	const char *name;
 	const char *eventName;
-	float	value;
+	float	value=0;
 
 	pH->GetParam(1, name);
 	pH->GetParam(2, value);
@@ -1654,9 +1654,9 @@ CHECK_PARAMETERS(3);
 int CScriptObjectPlayer::SetHeatVisionValues(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(4);
-	float fFloat,fFadeValue;
+	float fFloat=0,fFadeValue=0;
   const char *sName;
-	int		dwMask;
+	int		dwMask=0;
 
   pH->GetParam(1, sName);
 	pH->GetParam(2, fFloat);
@@ -1683,7 +1683,7 @@ int CScriptObjectPlayer::HoldGun(IFunctionHandler *pH)
 int CScriptObjectPlayer::SetBlendTime(IFunctionHandler *pH)		// sets blend time for particular animation
 {
 	CHECK_PARAMETERS(2);
-	float fBlendTime;
+	float fBlendTime=0;
   const char *sName;
 
   pH->GetParam(1, sName);
@@ -1699,7 +1699,7 @@ int CScriptObjectPlayer::SetBlendTime(IFunctionHandler *pH)		// sets blend time 
 int CScriptObjectPlayer::SwitchFlashLight(IFunctionHandler *pH)		
 {
 	CHECK_PARAMETERS(1);
-	int switchState;
+	int switchState=0;
 
 	pH->GetParam(1, switchState);
 
@@ -1712,7 +1712,7 @@ int CScriptObjectPlayer::SwitchFlashLight(IFunctionHandler *pH)
 int CScriptObjectPlayer::GiveFlashLight(IFunctionHandler *pH)		
 {
 	CHECK_PARAMETERS(1);
-	int value;
+	int value=0;
 
 	pH->GetParam(1, value);
 
@@ -1724,7 +1724,7 @@ int CScriptObjectPlayer::GiveFlashLight(IFunctionHandler *pH)
 int CScriptObjectPlayer::GiveBinoculars(IFunctionHandler *pH)		
 {
 	CHECK_PARAMETERS(1);
-	int value;
+	int value=0;
 
 	pH->GetParam(1, value);
 
@@ -2099,7 +2099,7 @@ int CScriptObjectPlayer::LoadPlayerElements(IFunctionHandler *pH)
 /*
 int CScriptObjectPlayer::GetProjectedBloodPos(IFunctionHandler *pH)
 {
-	float	fDist;
+	float	fDist=0;
 	Vec3	dir, pos;
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,*oVec);
@@ -2161,7 +2161,7 @@ IEntityRender * CScriptObjectPlayer::GetIEntityRender(const pe_params_foreign_da
 int CScriptObjectPlayer::GetProjectedBloodPos(IFunctionHandler *pH)
 {
 	const char *decalTableName;
-	float	fDist;
+	float	fDist=0;
 	Vec3	dir, pos;
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,*oVec);

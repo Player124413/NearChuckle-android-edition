@@ -79,7 +79,7 @@ int CScriptObjectAnimation::DumpAnims(IFunctionHandler *pH)
 		break;
 	case 1:
 		{
-			int nSort;
+			int nSort=0;
 			pH->GetParam(1,nSort);
 		}
 		break;

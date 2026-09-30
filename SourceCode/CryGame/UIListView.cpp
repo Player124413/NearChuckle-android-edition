@@ -1706,7 +1706,7 @@ int CUIListView::FindItemAt(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), FindItemAt, 1, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), FindItemAt, 2, svtNumber);
 
-	float fX, fY;
+	float fX=0, fY=0;
 
 	pH->GetParam(1, fX);
 	pH->GetParam(2, fY);
@@ -1721,7 +1721,7 @@ int CUIListView::FindColumnAt(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), FindColumnAt, 1, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), FindColumnAt, 2, svtNumber);
 
-	float fX, fY;
+	float fX=0, fY=0;
 
 	pH->GetParam(1, fX);
 	pH->GetParam(2, fY);
@@ -1745,7 +1745,7 @@ int CUIListView::SelectIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), SelectIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SelectIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1760,7 +1760,7 @@ int CUIListView::DeselectIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), DeselectIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), DeselectIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1775,7 +1775,7 @@ int CUIListView::IsSelectedIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), IsSelectedIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), IsSelectedIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1865,7 +1865,7 @@ int CUIListView::GetItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), GetItem, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), GetItem, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1893,7 +1893,7 @@ int CUIListView::GetSubItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), GetSubItem, 1, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), GetSubItem, 1, svtNumber);
 
-	int iItemIndex, iSubItemIndex;
+	int iItemIndex=0, iSubItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 	pH->GetParam(2, iSubItemIndex);
@@ -1918,7 +1918,7 @@ int CUIListView::GetSubItemCount(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), GetSubItemCount, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), GetSubItemCount, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 
 	pH->GetParam(1, iItemIndex);
@@ -1970,7 +1970,7 @@ int CUIListView::AddSubItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE2(m_pScriptSystem, GetName().c_str(), AddSubItem, 2, svtNumber, svtString);
 	
 	wstring	szText;
-	int				iItemIndex;
+	int				iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 	m_pUISystem->ConvertToWString(szText, pH, 2);
@@ -1990,7 +1990,7 @@ int CUIListView::InsertItem(IFunctionHandler *pH)
 
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), AddItem, 1, svtNumber);
 
-	int iPosition;
+	int iPosition=0;
 
 	pH->GetParam(1, iPosition);
 
@@ -2018,7 +2018,7 @@ int CUIListView::RemoveItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), RemoveItem, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), RemoveItem, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -2034,8 +2034,8 @@ int CUIListView::RemoveSubItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), RemoveSubItem, 1, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), RemoveSubItem, 2, svtNumber);
 	
-	int				iItemIndex;
-	int				iSubItemIndex;
+	int				iItemIndex=0;
+	int				iSubItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 	pH->GetParam(1, iSubItemIndex);
@@ -2061,7 +2061,7 @@ int CUIListView::AddColumn(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), AddColumn, 2, svtNumber);
 
 	wstring				szText;
-	float					fWidth;
+	float					fWidth=0;
 	int						iAlign = UIALIGN_LEFT;
 	color4f				cHeaderColor = m_cColor;
 	color4f				cBodyColor = m_cColor;
@@ -2158,7 +2158,7 @@ int CUIListView::RemoveColumn(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), RemoveColumn, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), RemoveColumn, 1, svtNumber);
 
-	int iColumnIndex;
+	int iColumnIndex=0;
 
 	pH->GetParam(1, iColumnIndex);
 

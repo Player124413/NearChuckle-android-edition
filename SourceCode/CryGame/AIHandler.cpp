@@ -777,8 +777,8 @@ void	CAIHandler::DoReadibilityPack( const char* text )
 			if(pMostLikelyTable = GetMostLikelyTable( pAnimationDirective ))
 			{
 			const char* aniName;
-			int		layer;
-			float	blendTime;
+			int		layer=0;
+			float	blendTime=0;
 
 				pMostLikelyTable->GetValue( "animationName", aniName );
 				pMostLikelyTable->GetValue( "layer", layer );
@@ -840,9 +840,9 @@ void	CAIHandler::DoReadibilityPack( const char* text )
 			if(pMostLikelyTable = GetMostLikelyTable( pSoundDirective ))
 			{
 			const char*	sndName;
-			int volume;
-			float min;
-			float max;
+			int volume=0;
+			float min=0;
+			float max=0;
 
 			const char *snd2DName;
 			int snd2Dvolume;

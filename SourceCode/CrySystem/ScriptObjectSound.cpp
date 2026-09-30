@@ -257,7 +257,7 @@ int CScriptObjectSound::Load3DSound(IFunctionHandler *pH)
 			//				pSound->SetMaxSoundDistance(fClipDistance/2); // :) 				
 			if (pH->GetParamCount()>6) 
 			{
-				unsigned int nGroups;
+				unsigned int nGroups=0;
 				pH->GetParam(7, nGroups);
 				pSound->SetScaleGroup(nGroups);
 			}
@@ -359,7 +359,7 @@ int CScriptObjectSound::Load3DSoundLocalized(IFunctionHandler *pH)
 			//				pSound->SetMaxSoundDistance(fClipDistance/2); // :) 				
 			if (pH->GetParamCount()>6) 
 			{
-				unsigned int nGroups;
+				unsigned int nGroups=0;
 				pH->GetParam(7, nGroups);
 				pSound->SetScaleGroup(nGroups);
 			}
@@ -427,7 +427,7 @@ int CScriptObjectSound::SetEaxEnvironment(IFunctionHandler *pH)
 
 	CS_REVERB_PROPERTIES pProps;
 
-	int nTemp; //cannot use unsigned int as parameter to getvaluechain function
+	int nTemp=0; //cannot use unsigned int as parameter to getvaluechain function
 
 	INT_PTR nFlags=0;
 	if (pH->GetParamCount()>=2)
@@ -855,8 +855,8 @@ int CScriptObjectSound::SetSoundSpeed(IFunctionHandler *pH)
 int CScriptObjectSound::SetMinMaxDistance(IFunctionHandler *pH)
 {
 	int nCookie=0;
-	float fMinDist;
-	float fMaxDist;
+	float fMinDist=0;
+	float fMaxDist=0;
 	ISound *pISound = NULL;
 
 	CHECK_PARAMETERS(3);
@@ -882,7 +882,7 @@ int CScriptObjectSound::SetLoopPoints(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
 
-	int nID = 0, iLoopPt1, iLoopPt2;
+	int nID = 0, iLoopPt1=0, iLoopPt2=0;
 	ISound *pISound = NULL;
 	int nCookie=0;
 	pH->GetParamUDVal(1,(INT_PTR &)pISound,nCookie);	//AMD Port
@@ -900,7 +900,7 @@ int CScriptObjectSound::SetLoopPoints(IFunctionHandler *pH)
 /*
 int CScriptObjectSound::AddSoundFlags(IFunctionHandler *pH)
 {
-	int iFlags;
+	int iFlags=0;
 	int nCookie=0;
 	ISound *pISound = NULL;
 	CHECK_PARAMETERS(2);
@@ -929,7 +929,7 @@ int CScriptObjectSound::SetMasterVolumeScale(IFunctionHandler *pH)
 int CScriptObjectSound::AddToScaleGroup(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int nGroup;
+	int nGroup=0;
 	ISound *pSound=NULL;
 	int nCookie=0;
 	pH->GetParamUDVal(1, (INT_PTR&)pSound, nCookie);	//AMD Port
@@ -943,7 +943,7 @@ int CScriptObjectSound::AddToScaleGroup(IFunctionHandler *pH)
 int CScriptObjectSound::RemoveFromScaleGroup(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int nGroup;
+	int nGroup=0;
 	ISound *pSound=NULL;
 	int nCookie=0;
 	pH->GetParamUDVal(1, (INT_PTR&)pSound, nCookie);	//AMD Port
@@ -960,8 +960,8 @@ int CScriptObjectSound::SetGroupScale(IFunctionHandler *pH)
 		return pH->EndFunction();
 
 	CHECK_PARAMETERS(2);
-	int nGroup;
-	float fScale;
+	int nGroup=0;
+	float fScale=0;
 	pH->GetParam(1, nGroup);
 	pH->GetParam(2, fScale);
 
@@ -992,7 +992,7 @@ int CScriptObjectSound::FXEnable(IFunctionHandler *pH)
 
 	int nCookie=0;
 	ISound *pSound=NULL;
-	int nEffectNumber;
+	int nEffectNumber=0;
 
 	pH->GetParamUDVal(1, (INT_PTR&)pSound, nCookie);	//AMD Port
 	pH->GetParam(2,nEffectNumber);
@@ -1008,9 +1008,9 @@ int CScriptObjectSound::SetFXSetParamEQ(IFunctionHandler *pH)
 
 	int nCookie=0;
 	ISound *pSound=NULL;
-	float fCenter;
-	float fBandwidth;
-	float fGain;
+	float fCenter=0;
+	float fBandwidth=0;
+	float fGain=0;
 
 	pH->GetParamUDVal(1, (INT_PTR&)pSound, nCookie);	//AMD Port
 	pH->GetParam(2,fCenter);
@@ -1281,7 +1281,7 @@ int CScriptObjectSound::SetSoundRatio(IFunctionHandler *pH)
 	CHECK_PARAMETERS(2);
 	int nCookie=0;
 	ISound *pSound=NULL;
-	float fRatio;
+	float fRatio=0;
 	pH->GetParamUDVal(1, (INT_PTR&)pSound, nCookie);	//AMD Port
 	pH->GetParam(2, fRatio);
 	if (pSound && (nCookie==USER_DATA_SOUND))

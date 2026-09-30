@@ -132,7 +132,7 @@ int CScriptObjectVehicle::SetVehicleEngineHealth(IFunctionHandler *pH)
 {
 	ASSERT(pH->GetParamCount()>=1);
 	
-	float fEngineHealth;
+	float fEngineHealth=0;
 	pH->GetParam(1,fEngineHealth);	
 	m_pVehicle->SetEngineHealth(fEngineHealth);
 	
@@ -158,7 +158,7 @@ int CScriptObjectVehicle::SetUser(IFunctionHandler *pH)
 	ILog *pLog=m_pVehicle->GetGame()->GetSystem()->GetILog();
 
 	//get the playerID
-	int nPlayerid;
+	int nPlayerid=0;
 	pH->GetParam(1,nPlayerid);	
 
 	//get the helper
@@ -254,7 +254,7 @@ int CScriptObjectVehicle::ReleaseUser(IFunctionHandler *pH)
 //	CHECK_PARAMETERS(3);
 	ASSERT(pH->GetParamCount()>=3);
 
-	int playerid;
+	int playerid=0;
 	pH->GetParam(1,playerid);
 
 	const char *szHelperName;
@@ -372,7 +372,7 @@ int CScriptObjectVehicle::GetWheelStatus(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 	//_SmartScriptObject pObj(m_pScriptSystem);
-	int nWheel;
+	int nWheel=0;
 	pe_status_wheel Status;
 	pH->GetParam(1,nWheel);
 	m_pVehicle->GetWheelStatus(nWheel, &Status);
@@ -774,7 +774,7 @@ int CScriptObjectVehicle::SetWeaponName(IFunctionHandler *pH)
 int CScriptObjectVehicle::AnimateUsers(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int	aniId;
+	int	aniId=0;
 	pH->GetParam(1, aniId);	
 	CVehicle::UsersList::iterator usrIt=m_pVehicle->m_UsersList.begin();
 	for(; usrIt!=m_pVehicle->m_UsersList.end(); ++usrIt)

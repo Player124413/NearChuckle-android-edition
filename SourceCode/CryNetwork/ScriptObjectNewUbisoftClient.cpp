@@ -168,7 +168,7 @@ int CScriptObjectNewUbisoftClient::Client_RequestGameServers(IFunctionHandler *p
 int CScriptObjectNewUbisoftClient::Client_JoinGameServer(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int iLobbyID,iRoomID;
+	int iLobbyID=0,iRoomID=0;
 
 	pH->GetParam(1,iLobbyID);
 	pH->GetParam(2,iRoomID);

@@ -32,7 +32,7 @@ int CScriptObjectSynched2DTable::SetEntryXY(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
 	int iX,iY;
-	float fValue;
+	float fValue=0;
 
 	if(!pH->GetParam(1,iX))
 		return pH->EndFunction();
@@ -63,7 +63,7 @@ int CScriptObjectSynched2DTable::SetEntriesY(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	int iY;
-	float fValue;
+	float fValue=0;
 
 	if(!pH->GetParam(1,iY))
 		return pH->EndFunction();

@@ -532,7 +532,7 @@ int CScriptObjectEntity::LoadCharacter(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *sFileName;
-	int nPos;
+	int nPos=0;
 	pH->GetParam(1,sFileName);
 	pH->GetParam(2,nPos);
 
@@ -565,8 +565,8 @@ int CScriptObjectEntity::LoadCharacter(IFunctionHandler *pH)
 int CScriptObjectEntity::PhysicalizeCharacter(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(4);
-	float mass,stiffness_scale;
-	int nPos,surface_idx;
+	float mass=0,stiffness_scale=0;
+	int nPos=0,surface_idx=0;
 	
 	pH->GetParam(1,mass);
 	pH->GetParam(2,surface_idx);
@@ -597,7 +597,7 @@ int CScriptObjectEntity::KillCharacter(IFunctionHandler *pH)
 //	if(m_pGame->p_DeadBody->GetFVal()==0)
 //		return pH->EndFunction();
 
-	int nPos;
+	int nPos=0;
 	pH->GetParam(1,nPos);
 	if (m_pEntity)
 		m_pEntity->GetCharInterface()->KillCharacter(nPos);
@@ -614,8 +614,8 @@ int CScriptObjectEntity::LoadObject(IFunctionHandler *pH)
 	assert((unsigned int)(pH->GetParamCount()-3)<2u);
 	const char *sFileName;
 	const char *sGeomName;
-	int nPos;
-	float fScale;
+	int nPos=0;
+	float fScale=0;
 	pH->GetParam(1,sFileName);
 	pH->GetParam(2,nPos);
 	pH->GetParam(3,fScale);
@@ -651,7 +651,7 @@ int CScriptObjectEntity::LoadObjectPiece(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *sFileName;
-	int idx;
+	int idx=0;
 	pH->GetParam(1,sFileName);
 	pH->GetParam(2,idx);
 	if (m_pEntity)
@@ -685,7 +685,7 @@ int CScriptObjectEntity::LoadObjectPiece(IFunctionHandler *pH)
 int CScriptObjectEntity::GetObjectPos(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nSlot;
+	int nSlot=0;
 	Vec3 vPos;
 	pH->GetParam(1,nSlot);
 	if(m_pEntity->GetObjectPos(nSlot,vPos))
@@ -708,7 +708,7 @@ int CScriptObjectEntity::SetObjectPos(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	CScriptObjectVector pPos(m_pScriptSystem,true);
-	int nSlot;
+	int nSlot=0;
 	Vec3 vPos;
 	pH->GetParam(1,nSlot);
 	pH->GetParam(2,pPos);
@@ -724,7 +724,7 @@ int CScriptObjectEntity::SetObjectPos(IFunctionHandler *pH)
 int CScriptObjectEntity::GetObjectAngles(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nSlot;
+	int nSlot=0;
 	Vec3 vAng;
 	pH->GetParam(1,nSlot);
 	if(m_pEntity->GetObjectAngles(nSlot,vAng))
@@ -747,7 +747,7 @@ int CScriptObjectEntity::SetObjectAngles(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	CScriptObjectVector pAng(m_pScriptSystem,true);
-	int nSlot;
+	int nSlot=0;
 	Vec3 vAng;
 	pH->GetParam(1,nSlot);
 	pH->GetParam(2,pAng);
@@ -768,7 +768,7 @@ int CScriptObjectEntity::DrawObject(IFunctionHandler *pH)
 {
 
 	CHECK_PARAMETERS(2);
-	int nPos,nMode;
+	int nPos=0,nMode=0;
 	pH->GetParam(1,nPos);
 	pH->GetParam(2,nMode);
 
@@ -799,7 +799,7 @@ int CScriptObjectEntity::DestroyPhysics(IFunctionHandler *pH)
 int CScriptObjectEntity::EnablePhysics(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bEnable;
+	bool bEnable=false;
 	pH->GetParam(1,bEnable);
 	m_pEntity->EnablePhysics(bEnable);
 	return pH->EndFunction();
@@ -809,8 +809,8 @@ int CScriptObjectEntity::CreateParticlePhys(IFunctionHandler *pH)
 {
 	// CHECK_PARAMETERS(2);
 	assert(pH->GetParamCount() == 2 || pH->GetParamCount() == 3);
-	float fSize;
-	float fMass;
+	float fSize=0;
+	float fMass=0;
 	//int nSurfaceID=m_pGame->m_XSurfaceMgr.GetSurfaceIDByMaterialName("mat_bounce");
 	int nSurfaceID=-1;
 	int iSingleContact;
@@ -836,8 +836,8 @@ int CScriptObjectEntity::CreateArticulatedBody(IFunctionHandler *pH)
 int CScriptObjectEntity::CreateRigidOrArticulatedBody(pe_type type, IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount() == 3 || pH->GetParamCount() == 4 || pH->GetParamCount() == 5);
-	float fDensity;
-	float fMass;
+	float fDensity=0;
+	float fMass=0;
 	int nSurfaceID=0;
 
 	if(m_pEntity)
@@ -878,8 +878,8 @@ int CScriptObjectEntity::CreateRigidOrArticulatedBody(pe_type type, IFunctionHan
 int CScriptObjectEntity::CreateRigidBodyPiece(IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount() == 3 || pH->GetParamCount() == 4);
-	float fDensity;
-	float fMass;
+	float fDensity=0;
+	float fMass=0;
 	int nSurfaceID=0;
 
 	if(m_pEntity)
@@ -905,7 +905,7 @@ int CScriptObjectEntity::CreateStaticEntity(IFunctionHandler *pH)
 //	CHECK_PARAMETERS(2);
 	assert((unsigned int)pH->GetParamCount()-1u<3u);
 
-	float fMass;
+	float fMass=0;
 	int nSurfaceID=-1;
 	int	nSlotToUse=-1;
 	pH->GetParam(1,fMass);
@@ -922,7 +922,7 @@ int CScriptObjectEntity::CreateStaticEntity(IFunctionHandler *pH)
 int CScriptObjectEntity::CreateSoftEntity(IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount()>=2);
-	float fMass,fDensity;
+	float fMass=0,fDensity=0;
 	int bCloth=1;
 	IEntity *pEnt;
 	IPhysicalEntity *pPhysEnt = WORLD_ENTITY;
@@ -965,7 +965,7 @@ int CScriptObjectEntity::SetAngles(IFunctionHandler *pH)
 */
 int CScriptObjectEntity::SetStatObjScale(IFunctionHandler *pH)
 {
-	float fScale;
+	float fScale=0;
 	CHECK_PARAMETERS(1);
 	pH->GetParam(1, fScale);
 	m_pEntity->SetScale(fScale);
@@ -1013,7 +1013,7 @@ int CScriptObjectEntity::GetDirectionVector(IFunctionHandler *pH)
 	//if there is a parameter we want to get something different by the forward vector, 0=x, 1=y, 2=z
 	if( pH->GetParamCount()==1 )
 	{
-		int dir;
+		int dir=0;
 		pH->GetParam(1,dir);
 
 		switch(dir)
@@ -1058,7 +1058,7 @@ int CScriptObjectEntity::AttachObjectToBone(IFunctionHandler *pH)
 	//CHECK_PARAMETERS(2); can be 2 or 3 or 4 params.
 
 	char *boneName;
-	int slot;
+	int slot=0;
 	bool bMultipleAttachments = false;
 	bool bUseZOffset = false;
 	pH->GetParam(1,slot);
@@ -1119,7 +1119,7 @@ int CScriptObjectEntity::AttachToBone(IFunctionHandler *pH)
 	CHECK_PARAMETERS(2);
 
 	char *boneName;
-	int nID;
+	int nID=0;
 	_SmartScriptObject pObj(m_pScriptSystem,true);
 	pH->GetParam(1,*pObj);
 	pH->GetParam(2,boneName);
@@ -1134,7 +1134,7 @@ int CScriptObjectEntity::Bind(IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount() == 1 || pH->GetParamCount() == 2);
 //	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 	int cParam=0;
 	_SmartScriptObject pObj(m_pScriptSystem,true);
 	pH->GetParam(1,*pObj);
@@ -1156,7 +1156,7 @@ int CScriptObjectEntity::Unbind(IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount() == 1 || pH->GetParamCount() == 2);
 //	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 	int cParam=0;
 	_SmartScriptObject pObj(m_pScriptSystem,true);
 	pH->GetParam(1,*pObj);
@@ -1189,11 +1189,11 @@ int CScriptObjectEntity::CreateParticleEntity(IFunctionHandler *pH)
 	CHECK_PARAMETERS(1);
 	_SmartScriptObject pTable(m_pScriptSystem, true);
 	pH->GetParam(1, *pTable);
-	float Size, Mass;
+	float Size=0, Mass=0;
 	Vec3 Heading;
-	float Thrust, Resistance, Lift, Gravity;
-	int Surface;
-	bool b;
+	float Thrust=0, Resistance=0, Lift=0, Gravity=0;
+	int Surface=0;
+	bool b=false;
 	pTable->GetValue("size", Size);
 	pTable->GetValue("mass", Mass);
 	CScriptObjectVector oVecHeading(m_pScriptSystem, true);
@@ -1219,7 +1219,7 @@ int CScriptObjectEntity::CreateLivingEntity(IFunctionHandler *pH)
 	_SmartScriptObject pTable(m_pScriptSystem,true);
 	int nSurfaceID=0;
 	pH->GetParam(1,*pTable);
-	float mass,height,eyeh,sph,rad,grav,aircontrol;
+	float mass=0,height=0,eyeh=0,sph=0,rad=0,grav,aircontrol;
 	int	collide = 0;
 	
 	pTable->GetValue("mass",mass);
@@ -1338,7 +1338,7 @@ int CScriptObjectEntity::NetPresent(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 	
-	bool bPresence;
+	bool bPresence=false;
 	
 	pH->GetParam(1,bPresence);
 	m_pEntity->SetNetPresence(bPresence);
@@ -1351,7 +1351,7 @@ int CScriptObjectEntity::SetStateClientside(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 	
-	bool bEnable;
+	bool bEnable=false;
 	
 	pH->GetParam(1,bEnable);
 	m_pEntity->SetStateClientside(bEnable);
@@ -1371,7 +1371,7 @@ int CScriptObjectEntity::StartAnimation(IFunctionHandler *pH)
 	
 	//CHECK_PARAMETERS(2);
 	const char *animname;
-	int pos, layer=0;
+	int pos=0, layer=0;
 	bool bLooping = false;
 	bool bLoopSpecified = false;
 	float fBlendTime = 0.15f;
@@ -1449,7 +1449,7 @@ int CScriptObjectEntity::ResetAnimation(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 //	char *animname;
-	int pos;
+	int pos=0;
 	pH->GetParam(1,pos);
 
 	m_pEntity->ResetAnimations(pos);
@@ -1509,7 +1509,7 @@ int CScriptObjectEntity::RenderShadow(IFunctionHandler *pH)
     return pH->EndFunction();
   }
 
-  bool bRender;
+  bool bRender=false;
   pH->GetParam(1,bRender);
 
   int iEntityRender=-1;
@@ -1544,7 +1544,7 @@ int CScriptObjectEntity::DrawCharacter(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 
-	int nPos,nMode;
+	int nPos=0,nMode=0;
 	pH->GetParam(1,nPos);
 	pH->GetParam(2,nMode);
 
@@ -1561,7 +1561,7 @@ int CScriptObjectEntity::SetRegisterInSectors(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 
-	bool bFlag;
+	bool bFlag=false;
 	pH->GetParam(1,bFlag);
 	
 	if(m_pEntity)
@@ -1613,7 +1613,7 @@ int CScriptObjectEntity::ResetPhysics(IFunctionHandler *pH)
 int CScriptObjectEntity::AwakeCharacterPhysics(IFunctionHandler *pH)
 {
 	assert(pH->GetParamCount()==2 || pH->GetParamCount()==3);
-	int iSlot,nAwake=1;
+	int iSlot=0,nAwake=1;
 	pe_action_awake aa;
 	const char *pRootBoneName;
 	pH->GetParam(1, iSlot);
@@ -1631,7 +1631,7 @@ int CScriptObjectEntity::AwakeCharacterPhysics(IFunctionHandler *pH)
 int CScriptObjectEntity::SetCharacterPhysicParams(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(4);
-	int iSlot;
+	int iSlot=0;
 	const char *pRootBoneName;
 	pH->GetParam(1, iSlot);
 	pH->GetParam(2, pRootBoneName);
@@ -1657,7 +1657,7 @@ int CScriptObjectEntity::SetPhysicParams(IFunctionHandler *pH)
 
 int CScriptObjectEntity::SetEntityPhysicParams(IPhysicalEntity *pe, IFunctionHandler *pH,int iOffs, ICryCharInstance *pIChar)
 {
-	int nType;
+	int nType=0;
 	pH->GetParam(1+iOffs, nType);
 	CScriptObjectVector vec(m_pScriptSystem,true);
 	_SmartScriptObject pTable(m_pScriptSystem,true);
@@ -2110,7 +2110,7 @@ int CScriptObjectEntity::GetObjectStatus(IFunctionHandler *pH)
 	CScriptObjectVector oVecScale(m_pScriptSystem);
 	CScriptObjectVector oVecOffset(m_pScriptSystem);
 	
-	int nSlot;
+	int nSlot=0;
 	CEntityObject theEntityObject;
 
 	pH->GetParam(1,nSlot);	
@@ -2148,7 +2148,7 @@ int CScriptObjectEntity::SetObjectStatus(IFunctionHandler *pH)
 	CScriptObjectVector oVecScale(m_pScriptSystem);
 	CScriptObjectVector oVecOffset(m_pScriptSystem);
 	CEntityObject theEntityObject;
-	int nSlot;
+	int nSlot=0;
 
 	pH->GetParam(1,nSlot);
 	pH->GetParam(2,*pTable);
@@ -2182,7 +2182,7 @@ int CScriptObjectEntity::IsAnimationRunning(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
 
-	int iAnimationPos;
+	int iAnimationPos=0;
 	ICryCharInstance *pCharacter = NULL;
 	
 	pH->GetParam(1, iAnimationPos);
@@ -2319,7 +2319,7 @@ int CScriptObjectEntity::GetDistanceFromPoint(IFunctionHandler *pH)
 int CScriptObjectEntity::EnableSave(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bEnable;
+	bool bEnable=false;
 	pH->GetParam(1,bEnable);
 	m_pEntity->EnableSave(bEnable);
 
@@ -2372,7 +2372,7 @@ int CScriptObjectEntity::PlaySound(IFunctionHandler *pH)
 int CScriptObjectEntity::TriggerEvent(IFunctionHandler *pH)
 {
 
-	int eventType;
+	int eventType=0;
 
 	pH->GetParam(1,eventType);
 	SAIEVENT eventParams;
@@ -2381,7 +2381,7 @@ int CScriptObjectEntity::TriggerEvent(IFunctionHandler *pH)
 	{
 		case AIEVENT_ONBODYSENSOR:
 		{
-			float fSuspendFireTimeout;
+			float fSuspendFireTimeout=0;
 			pH->GetParam(2,fSuspendFireTimeout);
 			eventParams.fInterest = fSuspendFireTimeout;	// interest used just for convinience
 		}
@@ -2855,7 +2855,7 @@ int CScriptObjectEntity::GetLocalBBox(IFunctionHandler *pH)
 int CScriptObjectEntity::SetRadius(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float radius;
+	float radius=0;
 
 	pH->GetParam(1,radius);
 
@@ -2894,9 +2894,9 @@ int CScriptObjectEntity::GetUpdateRadius(IFunctionHandler *pH)
 
 int CScriptObjectEntity::SetShaderFloat(IFunctionHandler *pH)
 {
-	float fFloat,fFadeValue;
+	float fFloat=0,fFadeValue=0;
   const char *sName;
-	int		dwMask;
+	int		dwMask=0;
 
 	CHECK_PARAMETERS(4);
 	
@@ -2939,9 +2939,9 @@ int CScriptObjectEntity::SetShaderFloat(IFunctionHandler *pH)
 
 int CScriptObjectEntity::SetColor(IFunctionHandler *pH)
 {
-  float fR, fG, fB, fA;
+  float fR=0, fG=0, fB=0, fA=0;
   const char *sName;
-  int		dwMask;
+  int		dwMask=0;
 
   CHECK_PARAMETERS(6);
 
@@ -2969,7 +2969,7 @@ int CScriptObjectEntity::SetColor(IFunctionHandler *pH)
 int CScriptObjectEntity::EnableUpdate(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bEnable;
+	bool bEnable=false;
 	pH->GetParam(1,bEnable);
 	m_pEntity->SetNeedUpdate( bEnable );
 
@@ -2980,7 +2980,7 @@ int CScriptObjectEntity::EnableUpdate(IFunctionHandler *pH)
 int CScriptObjectEntity::SetUpdateIfPotentiallyVisible(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bEnable;
+	bool bEnable=false;
 	pH->GetParam(1,bEnable);
   m_pEntity->SetUpdateVisLevel(bEnable ? eUT_PotVisible : eUT_Always);
 	return pH->EndFunction();
@@ -3000,7 +3000,7 @@ int CScriptObjectEntity::SetUpdateType(IFunctionHandler *pH)
 int CScriptObjectEntity::SetAnimationEvent(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int idSource;
+	int idSource=0;
 	const char *sAnimation;
 	pH->GetParam(1,idSource);
 	pH->GetParam(2,sAnimation);
@@ -3026,7 +3026,7 @@ int CScriptObjectEntity::SetAnimationKeyEvent(IFunctionHandler *pH)
 
 
 	const char *szAnimation;
-	int nFrameID;
+	int nFrameID=0;
 	INT_PTR nActionType = -1;
 	USER_DATA udUserData = USER_DATA(-1);
 	AnimSinkEventData ased;
@@ -3068,7 +3068,7 @@ int CScriptObjectEntity::SetAnimationKeyEvent(IFunctionHandler *pH)
 int CScriptObjectEntity::DisableAnimationEvent(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int idSource;
+	int idSource=0;
 	const char *sAnimation;
 	pH->GetParam(1,idSource);
 	pH->GetParam(2,sAnimation);
@@ -3087,7 +3087,7 @@ int CScriptObjectEntity::DisableAnimationEvent(IFunctionHandler *pH)
 int CScriptObjectEntity::SetAnimationSpeed(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fSpeed;
+	float fSpeed=0;
 	pH->GetParam(1,fSpeed);
 	m_pEntity->SetAnimationSpeed( fSpeed );
 	return pH->EndFunction();
@@ -3135,7 +3135,7 @@ int CScriptObjectEntity::SelectPipe(IFunctionHandler *pH)
 {
 //	CHECK_PARAMETERS(2);
 
-	int iIdentifier;
+	int iIdentifier=0;
 	int nID=0;
 	const char *pName;
 	const char *pTargetName=0;
@@ -3187,7 +3187,7 @@ int CScriptObjectEntity::SelectPipe(IFunctionHandler *pH)
 
 int CScriptObjectEntity::InsertSubpipe(IFunctionHandler * pH)
 {
-	int iIdentifier;
+	int iIdentifier=0;
 	int nID=0;
 	const char *pName;
 	const char *pTargetName=0;
@@ -3287,7 +3287,7 @@ int CScriptObjectEntity::GetState(IFunctionHandler *pH)
 
 int CScriptObjectEntity::GetCurAnimation(IFunctionHandler *pH)
 {
-	int iPos;
+	int iPos=0;
 	ICryCharInstance *pCharacter = NULL;
 
 	CHECK_PARAMETERS(1);
@@ -3308,7 +3308,7 @@ int CScriptObjectEntity::GetCurAnimation(IFunctionHandler *pH)
 
 /*int CScriptObjectEntity::SetDamage(IFunctionHandler *pH)
 {
-	int dmg;
+	int dmg=0;
 	CHECK_PARAMETERS(1);
 
 	pH->GetParam(1, dmg);
@@ -3322,7 +3322,7 @@ int CScriptObjectEntity::GetCurAnimation(IFunctionHandler *pH)
 int CScriptObjectEntity::SetTimer(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int msec;
+	int msec=0;
 	pH->GetParam(1, msec);
 	m_pEntity->SetTimer(msec);
 	return pH->EndFunction();
@@ -3337,7 +3337,7 @@ int CScriptObjectEntity::KillTimer(IFunctionHandler *pH)
 int CScriptObjectEntity::SetScriptUpdateRate(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int msec;
+	int msec=0;
 	pH->GetParam(1, msec);
 	m_pEntity->SetScriptUpdateRate( ((float)msec)/1000.0f );
 	return pH->EndFunction();
@@ -3356,8 +3356,8 @@ int CScriptObjectEntity::RegisterState(IFunctionHandler *pH)
 int CScriptObjectEntity::ApplyForceToEnvironment(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	float	force;
-	float	radius;
+	float	force=0;
+	float	radius=0;
 	pH->GetParam(1, radius);
 	pH->GetParam(2, force);
 	m_pEntity->ApplyForceToEnvironment(radius, force);
@@ -3477,7 +3477,7 @@ int CScriptObjectEntity::GetBoneDir(IFunctionHandler *pH)
 int CScriptObjectEntity::GetBoneNameFromTable(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int idx;
+	int idx=0;
 	pH->GetParam(1,idx);
 
   IEntityCharacter *pIChar = m_pEntity->GetCharInterface();
@@ -3809,7 +3809,7 @@ int CScriptObjectEntity::AddDynamicLight(IFunctionHandler *pH)
 	if (pH->GetParam(1,*oVec))
 		pDynLight->m_Origin=oVec.Get();
 	pH->GetParam(2,pDynLight->m_fRadius);
-	float r, g, b, a;
+	float r=0, g=0, b=0, a=0;
 	pH->GetParam(3,r);
 	pH->GetParam(4,g);
 	pH->GetParam(5,b);
@@ -4049,7 +4049,7 @@ int CScriptObjectEntity::LoadBoat(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
 	const char *sFileName;
-	float fMass;
+	float fMass=0;
 	int nSurfaceID=0;
 
 	pH->GetParam(1,sFileName);
@@ -4092,8 +4092,8 @@ int CScriptObjectEntity::LoadBoat(IFunctionHandler *pH)
 int CScriptObjectEntity::EnableProp(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2);
-	int propertyID;
-	bool enable;
+	int propertyID=0;
+	bool enable=false;
 
 	pH->GetParam(1,propertyID);
 	pH->GetParam(2,enable);
@@ -4161,7 +4161,7 @@ int CScriptObjectEntity::UpdateInSector(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 
-	int curBuildingId,curSectorId;
+	int curBuildingId=0,curSectorId=0;
 	int nBuildingId,nSectorId;
 
 	pH->GetParam(1, curBuildingId);
@@ -4209,8 +4209,8 @@ int CScriptObjectEntity::ChangeAIParameter(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2);
 
-	int nParameter;
-	float fValue;
+	int nParameter=0;
+	float fValue=0;
 	pH->GetParam(1,nParameter);
 	pH->GetParam(2,fValue);
 
@@ -4323,7 +4323,7 @@ int CScriptObjectEntity::ActivatePhysics(IFunctionHandler *pH)
 	if (!m_pEntity)
 		return pH->EndFunction(0);
 
-	int active;
+	int active=0;
 	pH->GetParam(1, active);
 	m_pEntity->ActivatePhysics( active!=0 );
 	return pH->EndFunction(0);
@@ -4694,7 +4694,7 @@ int CScriptObjectEntity::SetDefaultIdleAnimations(IFunctionHandler *pH)
 	assert(pH->GetParamCount() == 1 || pH->GetParamCount() == 2);
 
 	const char *animname=NULL;
-	int pos;
+	int pos=0;
 	pH->GetParam(1,pos);
 	if (pH->GetParamCount() > 1 )
 		pH->GetParam(2,animname);
@@ -4714,7 +4714,7 @@ CHECK_PARAMETERS(1);
 	return pH->EndFunction(m_pEntity->GetAnimationLength(aniName));
 
 /*
-	int iAnimationPos;
+	int iAnimationPos=0;
 	const char *pszAnimName;
 	float fSecLen = 0.0f;
 
@@ -4829,8 +4829,8 @@ int CScriptObjectEntity::SayDialog(IFunctionHandler *pH)
 	if (pH->GetParamCount()<4)
 		CHECK_PARAMETERS(4);
 	const char *pszFilename;
-	float fMin, fMax;
-	int nVol, nFlags=0;
+	float fMin=0, fMax=0;
+	int nVol=0, nFlags=0;
 	float fClipDistance=500.0f;
 	pH->GetParam(1, pszFilename);
 	pH->GetParam(2, nVol);
@@ -4972,7 +4972,7 @@ int CScriptObjectEntity::ApplyImpulseToEnvironment(IFunctionHandler * pH)
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 
 	Vec3 pos;
-	float rmin, rmax, impulsive_pressure;
+	float rmin=0, rmax=0, impulsive_pressure=0;
 	float rmin_occ = 0.1f;
 	int nOccRes=0,nGrow=0;
 
@@ -5022,7 +5022,7 @@ int CScriptObjectEntity::GetViewDistRatio(IFunctionHandler * pH)
 int CScriptObjectEntity::SetViewDistRatio(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int value;
+	int value=0;
 	pH->GetParam(1, value);
 	m_pEntity->SetViewDistRatio(value);
 
@@ -5054,7 +5054,7 @@ int CScriptObjectEntity::RemoveDecals(IFunctionHandler * pH)
 int CScriptObjectEntity::SwitchLight(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int	lightOn;
+	int	lightOn=0;
 	pH->GetParam(1, lightOn);
 	m_pEntity->SwitchLights(lightOn!=0);
 	return pH->EndFunction();
@@ -5064,7 +5064,7 @@ int CScriptObjectEntity::SwitchLight(IFunctionHandler * pH)
 int CScriptObjectEntity::ForceCharacterUpdate(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int pos;
+	int pos=0;
 	pH->GetParam(1,pos);
 	m_pEntity->ForceCharacterUpdate(pos);
 	return pH->EndFunction();

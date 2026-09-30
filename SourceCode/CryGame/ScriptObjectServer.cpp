@@ -247,7 +247,7 @@ int CScriptObjectServer::GetServerSlotByEntityId(IFunctionHandler *pH)
 int CScriptObjectServer::MultiCastObituary(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(3);
-	int targid, attid, situation;
+	int targid=0, attid=0, situation=0;
 	pH->GetParam(1, targid);
 	pH->GetParam(2, attid);
 	pH->GetParam(3, situation);
@@ -683,7 +683,7 @@ int CScriptObjectServer::SetTeamScoreByEntity(IFunctionHandler *pH)
 
 	EntityId nEntityId = val;
 
-	int nScore;
+	int nScore=0;
 
 	pH->GetParam(2, nScore);
 	int nTID=m_pServer->m_pISystem->GetEntityTeam(nEntityId);
@@ -703,7 +703,7 @@ int CScriptObjectServer::SetTeamScore(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *team;
-	int score;
+	int score=0;
 	if(pH->GetParam(1,team))
 	{
 		pH->GetParam(2,score);
@@ -722,7 +722,7 @@ int CScriptObjectServer::SetTeamFlags(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
 	const char *team;
-	int flags;
+	int flags=0;
 	if(pH->GetParam(1,team))
 	{
 		pH->GetParam(2,flags);

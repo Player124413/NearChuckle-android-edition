@@ -155,7 +155,7 @@ int CScriptObjectServerSlot::Disconnect(IFunctionHandler *pH)
 int CScriptObjectServerSlot::SetGameState(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int state, time;
+	int state=0, time=0;
 	pH->GetParam(1,state);
 	pH->GetParam(2,time);
 	if(m_pSS)
@@ -266,7 +266,7 @@ int CScriptObjectServerSlot::SendText(IFunctionHandler *pH)
 */
 int CScriptObjectServerSlot::Ready(IFunctionHandler *pH)
 {
-	bool bReady;
+	bool bReady=false;
 	pH->GetParam(1,bReady);
 	m_pSS->m_bReady=bReady;
 	return pH->EndFunction();

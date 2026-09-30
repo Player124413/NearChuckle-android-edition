@@ -473,7 +473,7 @@ int CScriptObjectGame::SetTimer(IFunctionHandler *pH)
 		m_pScriptSystem->RaiseError("Game.SetTimer wrong number of arguments"); 
 		return pH->EndFunctionNull();
 	}
-	float fMilliseconds;
+	float fMilliseconds=0;
 	IScriptObject *pParam=m_pScriptSystem->CreateEmptyObject();
 	IScriptObject *pTable=m_pScriptSystem->CreateEmptyObject();
 	pH->GetParam(1,pTable);
@@ -493,7 +493,7 @@ int CScriptObjectGame::SetTimer(IFunctionHandler *pH)
 int CScriptObjectGame::KillTimer(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nTimerID;
+	int nTimerID=0;
 	pH->GetParam(1,nTimerID);
 	m_pGame->m_pScriptTimerMgr->RemoveTimer(nTimerID);
 	return pH->EndFunction();
@@ -724,8 +724,8 @@ int CScriptObjectGame::WriteHudNumber(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(9);
 	CUIHud *pHud = m_pGame->GetHud();
-	int px,py,number;
-	float r,g,b,a,bxsize,ysize;
+	int px=0,py=0,number=0;
+	float r=0,g=0,b=0,a=0,bxsize=0,ysize=0;
 	pH->GetParam(1,px);
 	pH->GetParam(2,py);
 	pH->GetParam(3,number);
@@ -762,8 +762,8 @@ int CScriptObjectGame::WriteHudString(IFunctionHandler *pH)
 	}
 
 	CUIHud *pHud = m_pGame->GetHud();
-	int px,py;
-	float r,g,b,a,bxsize,ysize;
+	int px=0,py=0;
+	float r=0,g=0,b=0,a=0,bxsize=0,ysize=0;
 	//const char *pszStr;
 	bool bCenter=false;
 	float fWrapWidth=0;
@@ -841,8 +841,8 @@ int CScriptObjectGame::WriteHudStringFixed(IFunctionHandler *pH)
   CHECK_PARAMETERS(10);
 //#endif
 	CUIHud *pHud = m_pGame->GetHud();
-	int px,py;
-	float r,g,b,a,bxsize,ysize,fWidthScale;
+	int px=0,py=0;
+	float r=0,g=0,b=0,a=0,bxsize=0,ysize=0,fWidthScale=0;
 	//const char *pszStr;
   /*
 #ifdef _XBOX
@@ -1788,7 +1788,7 @@ int CScriptObjectGame::GetActions(IFunctionHandler *pH)
 int CScriptObjectGame::IsPlayer(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nEntityId;
+	int nEntityId=0;
 	pH->GetParam(1, nEntityId);
 	IEntity *pEnt=m_pSystem->GetIEntitySystem()->GetEntity(nEntityId);
 	if (!pEnt)
@@ -1963,7 +1963,7 @@ int CScriptObjectGame::GetPlayerEntitiesInRadius(IFunctionHandler *pH)
   pVec->GetValue("x", Center.x);
   pVec->GetValue("y", Center.y);
   pVec->GetValue("z", Center.z);
-  float fRadius;
+  float fRadius=0;
   pH->GetParam(2, fRadius);
   fRadius*=fRadius;	// square radius for faster check
 
@@ -2083,7 +2083,7 @@ int CScriptObjectGame::DrawRadar(IFunctionHandler *pH)
   CHECK_PARAMETERS(14);
 
   ASSERT(m_pEntitySystem);  
-  float x, y, w, h, fRange;
+  float x=0, y=0, w=0, h=0, fRange=0;
   char *pRadarObjective;
   int nCookie=0;
 
@@ -2119,11 +2119,11 @@ int CScriptObjectGame::DrawHalfCircleGauge(IFunctionHandler *pH)
 	if (!m_pRenderer)
 		return pH->EndFunctionNull();	// no renderer
 	int nCookie=0;
-	float x, y, w, h;	// size of gauge
-	float u, v, uw, vh;	// tex-coords
+	float x=0, y=0, w=0, h=0;	// size of gauge
+	float u=0, v=0, uw=0, vh=0;	// tex-coords
 	float r=1.0f, g=1.0f, b=1.0f, a=1.0f;
 	INT_PTR nTid;	// texture
-	float fValue;	// 0<=value<=100
+	float fValue=0;	// 0<=value<=100
 	pH->GetParam(1, x);
 	pH->GetParam(2, y);
 	pH->GetParam(3, w);
@@ -2235,8 +2235,8 @@ int CScriptObjectGame::ShowIngameDialog(IFunctionHandler *pH)
 	if (pH->GetParamCount()<5)
 		return (pH->EndFunctionNull());
 	int nId=-1;
-	int nFillId;
-	int nSize;	
+	int nFillId=0;
+	int nSize=0;	
 	const char *pszFontName;
 	const char *pszEffectName;
 	//const char *pszText=NULL;
@@ -2274,7 +2274,7 @@ int CScriptObjectGame::ShowIngameDialog(IFunctionHandler *pH)
 int CScriptObjectGame::HideIngameDialog(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	int nId;
+	int nId=0;
 	// read params
 	pH->GetParam(1,nId);
 	if (m_pGame)
@@ -2504,7 +2504,7 @@ int CScriptObjectGame::GetTeamFlags(IFunctionHandler *pH)
 int CScriptObjectGame::ForceScoreBoard(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(2);
-	int reqid;
+	int reqid=0;
 	bool isshown = false;
 	pH->GetParam(1, reqid);
 	pH->GetParam(2, isshown);
@@ -2560,7 +2560,7 @@ int CScriptObjectGame::SetThirdPerson(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
 
-	bool bThirdPerson;
+	bool bThirdPerson=false;
 	pH->GetParam(1,bThirdPerson);
 
 //[kirill] this check is done in m_pGame->SetViewMode
@@ -2992,7 +2992,7 @@ int CScriptObjectGame::GetEntityClassIDByClassName(IFunctionHandler *pH)
 int CScriptObjectGame::SetCameraFov(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(1);
-	float fFOV;
+	float fFOV=0;
 	pH->GetParam(1,fFOV);
 	IEntity *pEntity;;
 	CXClient *pClient=m_pGame->GetClient();
@@ -3043,7 +3043,7 @@ int CScriptObjectGame::ApplyStormToEnvironment(IFunctionHandler * pH)
 	CScriptObjectVector pVecWindDirection(m_pScriptSystem,false);
 
 	Vec3 vOrigin,vWind;
-	float fRainAmount;
+	float fRainAmount=0;
 
 	pH->GetParam(1,pVecWindDirection);
 	vWind=pVecWindDirection.Get();
@@ -3082,13 +3082,13 @@ int CScriptObjectGame::CreateExplosion(IFunctionHandler *pH)
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 
 	Vec3 pos;
-	float damage, rmin, rmax, radius, impulsive_pressure;
+	float damage=0, rmin=0, rmax=0, radius=0, impulsive_pressure=0;
 	float fDeafnessRadius=0.0f;
 	float fDeafnessTime=0.0f;
 	float fShakeFactor=1.0f;
 	//float	falloff, curDamage;
 	float	ImpactForceMul=45, ImpactForceMulFinal=62, ImpactForceMulFinalTorso=0;
-	int nID;
+	int nID=0;
 	IEntity *shooter, *weapon=0;
 	float rmin_occ = 0.1f;
 	int nOccRes=0,nGrow=0;
@@ -3146,7 +3146,7 @@ int CScriptObjectGame::DrawLabel(IFunctionHandler *pH)
 	CHECK_PARAMETERS(3);
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	const char *szParam=NULL;
-	float size;
+	float size=0;
 	
 	pH->GetParam(1,*oVec);
 	pH->GetParam(2,size);
@@ -3182,9 +3182,9 @@ int CScriptObjectGame::GetInstantHit(IFunctionHandler *pH)
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 
 	IEntity *shooter;
-	int nID;
+	int nID=0;
 	Vec3 pos, angles, dir;
-	float fDistance;
+	float fDistance=0;
 	int res;
 
 	pH->GetParam(1,*pObj);
@@ -3259,9 +3259,9 @@ int CScriptObjectGame::GetMeleeHit(IFunctionHandler *pH)
 
 	IEntity *shooter;
 	IEntity *target = NULL;
-	int nID;
+	int nID=0;
 	Vec3 pos, angles, dir;
-	float fDistance;
+	float fDistance=0;
 
 	pH->GetParam(1,*pObj);
 	pObj->GetValue( "shooter",*pShooter);
@@ -3558,8 +3558,8 @@ int CScriptObjectGame::CreateRenderer(IFunctionHandler *pH)
 int CScriptObjectGame::SoundEvent(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(4);
-	float fThreat,fRadius; //fInterest,
-	int nID;
+	float fThreat=0,fRadius=0; //fInterest,
+	int nID=0;
 	CScriptObjectVector oVec(m_pScriptSystem,true);	
 
 	pH->GetParam(1,*oVec);
@@ -3927,7 +3927,7 @@ int CScriptObjectGame::GetCurrentModName(IFunctionHandler * pH)
 int CScriptObjectGame::EnableQuicksave(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	bool bEnable;
+	bool bEnable=false;
 
 	pH->GetParam(1,bEnable);
 	m_pGame->AllowQuicksave(bEnable);

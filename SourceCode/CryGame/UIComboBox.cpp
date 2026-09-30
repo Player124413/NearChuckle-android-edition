@@ -1009,7 +1009,7 @@ int CUIComboBox::SelectIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), SelectIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SelectIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1022,7 +1022,7 @@ int CUIComboBox::DeselectIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), DeselectIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), DeselectIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1038,7 +1038,7 @@ int CUIComboBox::IsSelectedIndex(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), IsSelectedIndex, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), IsSelectedIndex, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1127,7 +1127,7 @@ int CUIComboBox::GetItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), GetItem, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), GetItem, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1230,7 +1230,7 @@ int CUIComboBox::InsertItem(IFunctionHandler *pH)
 	UISkinTexture pTexture;
 	char					*szRect = 0;
 	color4f	cColor = color4f(0,0,0,0);
-	int						iPosition;
+	int						iPosition=0;
 
 	// get the texture first
 	if (pH->GetParamCount() > 2)
@@ -1287,7 +1287,7 @@ int CUIComboBox::RemoveItem(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), RemoveItem, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), RemoveItem, 1, svtNumber);
 
-	int iItemIndex;
+	int iItemIndex=0;
 
 	pH->GetParam(1, iItemIndex);
 
@@ -1336,7 +1336,7 @@ int CUIComboBox::Sort(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), Sort, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), Sort, 1, svtNumber);
 
-	int iSortOrder;
+	int iSortOrder=0;
 
 	pH->GetParam(1, iSortOrder);
 

@@ -4889,7 +4889,7 @@ int CUISystem::ConvertToWString(wstring &szWString, IFunctionHandler *pH, int iP
 
 	if (!pH->GetParam(iParam, szString))
 	{
-		int iValue;
+		int iValue=0;
 
 		pH->GetParam(iParam, iValue);
 

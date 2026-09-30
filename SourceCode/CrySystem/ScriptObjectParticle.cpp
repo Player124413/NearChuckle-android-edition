@@ -226,7 +226,7 @@ CHECK_PARAMETERS(4);
 	CScriptObjectColor  oCol(m_pScriptSystem,true);
 	Vec3 v3Pos,v3SysDir,v3Offset(0,0,0), vSpaceLoopBoxSize(0,0,0);
 
-	float fDensity;
+	float fDensity=0;
 
 	pH->GetParam(1,*oVec);
 	v3Pos=oVec.Get();
@@ -593,7 +593,7 @@ int CScriptObjectParticle::Attach(IFunctionHandler * pH)
 int CScriptObjectParticle::Detach(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2);
-	int nID,nHandle;
+	int nID=0,nHandle=0;
 
 	pH->GetParam(1,nID);
 	pH->GetParam(2,nHandle);

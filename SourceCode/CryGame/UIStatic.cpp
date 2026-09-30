@@ -1010,7 +1010,7 @@ int CUIStatic::SetLine(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SetLine, 2, svtString);
 
 	char			*szLine;
-	int				iLine;
+	int				iLine=0;
 
 	pH->GetParam(1, iLine);
 	pH->GetParam(2, szLine);

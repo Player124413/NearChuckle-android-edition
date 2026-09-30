@@ -257,7 +257,7 @@ int CUIScreen::GetWidget(IFunctionHandler *pH)
 	}
 	else
 	{
-		int iIndex;
+		int iIndex=0;
 
 		pH->GetParam(1, iIndex);
 

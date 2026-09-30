@@ -78,8 +78,8 @@ void CAdvCamSystem::Update( void )
 		vSrcPos = (1.0f - blendFactor) * vSrcPos + blendFactor * vSrcPos2;
 		vDstPos = (1.0f - blendFactor) * vDstPos + blendFactor * vDstPos2;
 
-		float currentRadius;
-		float futureRadius;
+		float currentRadius=0;
+		float futureRadius=0;
 
 		current->GetValue("max_radius", currentRadius);
 		future->GetValue("max_radius", futureRadius);
@@ -195,7 +195,7 @@ void CAdvCamSystem::ProcessKeys( CXEntityProcessingCmd &epc )
 		m_pEntity->GetScriptObject()->GetValue("states", sm);
 		sm->GetAt(currentState, current);
 
-		bool linked_a;
+		bool linked_a=false;
 
 		current->GetValue("linked_a", linked_a);
 
@@ -233,11 +233,11 @@ void CAdvCamSystem::ProcessKeys( CXEntityProcessingCmd &epc )
 
 		if (pInput->JoyIsRawBtnDown(pInput->JoyGetDefaultControllerId(),7))
 		{
-			bool isBlending;
+			bool isBlending=false;
 			m_pEntity->GetScriptObject()->GetValue("isBlending", isBlending);
 			if (!isBlending)
 			{
-				int currentState;
+				int currentState=0;
 				m_pEntity->GetScriptObject()->GetValue("currentState", currentState);
 
 				if (currentState == 8)
@@ -249,11 +249,11 @@ void CAdvCamSystem::ProcessKeys( CXEntityProcessingCmd &epc )
 		}
 		if (pInput->JoyIsRawBtnDown(pInput->JoyGetDefaultControllerId(),6))
 		{
-			bool isBlending;
+			bool isBlending=false;
 			m_pEntity->GetScriptObject()->GetValue("isBlending", isBlending);
 			if (!isBlending)
 			{
-				int currentState;
+				int currentState=0;
 				m_pEntity->GetScriptObject()->GetValue("currentState", currentState);
 
 				if (currentState == 8)
@@ -265,11 +265,11 @@ void CAdvCamSystem::ProcessKeys( CXEntityProcessingCmd &epc )
 		}
 		if (!pInput->JoyIsRawBtnDown(pInput->JoyGetDefaultControllerId(),6) && !pInput->JoyIsRawBtnDown(pInput->JoyGetDefaultControllerId(),7))
 		{
-			bool isBlending;
+			bool isBlending=false;
 			m_pEntity->GetScriptObject()->GetValue("isBlending", isBlending);
 			if (!isBlending)
 			{
-				int currentState;
+				int currentState=0;
 				m_pEntity->GetScriptObject()->GetValue("currentState", currentState);
 
 				if (currentState != 8)

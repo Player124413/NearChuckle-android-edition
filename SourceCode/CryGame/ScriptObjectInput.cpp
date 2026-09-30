@@ -111,7 +111,7 @@ int CScriptObjectInput::BindCommandToKey(IFunctionHandler *pH)
 	const char *sCmd;
 	const char *sRes;
 	size_t i;
-	int nCex;
+	int nCex=0;
 	pH->GetParam(1,sCmd);
 	pH->GetParam(2,sRes);
 	pH->GetParam(3,nCex);
@@ -266,7 +266,7 @@ int CScriptObjectInput::ResetBinding(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(2);
 	const char *pszActionMapName;
-	int nAction;
+	int nAction=0;
 	pH->GetParam(1, pszActionMapName);
 	pH->GetParam(2, nAction);
 	IActionMap *pActionMap=m_pGame->m_pIActionMapManager->GetActionMap(pszActionMapName);
@@ -287,7 +287,7 @@ int CScriptObjectInput::GetBinding(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(2);
 	const char *pszActionMapName;
-	int nAction;
+	int nAction=0;
 	pH->GetParam(1, pszActionMapName);
 	pH->GetParam(2, nAction);
 	IActionMap *pActionMap=m_pGame->m_pIActionMapManager->GetActionMap(pszActionMapName);
@@ -330,7 +330,7 @@ int CScriptObjectInput::SetMouseSensitivity(IFunctionHandler *pH)
 {
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
-	float fSensitivity;
+	float fSensitivity=0;
 	pH->GetParam(1,fSensitivity);
   if(m_pInput->GetIMouse())
 	  m_pInput->GetIMouse()->SetSensitvity(fSensitivity);
@@ -358,7 +358,7 @@ int CScriptObjectInput::SetMouseSensitivityScale(IFunctionHandler *pH)
 {
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
-	float fSensScale;
+	float fSensScale=0;
 	pH->GetParam(1,fSensScale);
   if(m_pInput->GetIMouse())
 	  m_pInput->GetIMouse()->SetSensitvityScale(fSensScale);
@@ -384,7 +384,7 @@ int CScriptObjectInput::SetJoySensitivityHGain(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
 
-	float fHGain;
+	float fHGain=0;
 	pH->GetParam(1,fHGain);
 
 	m_pInput->SetJoySensitivityHGain(m_pInput->JoyGetDefaultControllerId(),fHGain);
@@ -396,7 +396,7 @@ int CScriptObjectInput::SetJoySensitivityHScale(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
 
-	float fHScale;
+	float fHScale=0;
 	pH->GetParam(1,fHScale);
 
 	m_pInput->SetJoySensitivityHScale(m_pInput->JoyGetDefaultControllerId(),fHScale);
@@ -408,7 +408,7 @@ int CScriptObjectInput::SetJoySensitivityVGain(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
 
-	float fVGain;
+	float fVGain=0;
 	pH->GetParam(1,fVGain);
 
 	m_pInput->SetJoySensitivityVGain(m_pInput->JoyGetDefaultControllerId(),fVGain);
@@ -420,7 +420,7 @@ int CScriptObjectInput::SetJoySensitivityVScale(IFunctionHandler *pH)
 	if(!m_pInput)return pH->EndFunctionNull();
 	CHECK_PARAMETERS(1);
 
-	float fVScale;
+	float fVScale=0;
 	pH->GetParam(1,fVScale);
 
 	m_pInput->SetJoySensitivityVScale(m_pInput->JoyGetDefaultControllerId(),fVScale);

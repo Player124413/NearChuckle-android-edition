@@ -929,9 +929,9 @@ int CScriptObjectUI::SendMessage(IFunctionHandler *pH)
 		return pH->EndFunctionNull();
 	}
 
-	int iMessage;
-	int wParam;
-	int lParam;
+	int iMessage=0;
+	int wParam=0;
+	int lParam=0;
 
 	pH->GetParam(2, iMessage);
 	pH->GetParam(3, wParam);
@@ -949,9 +949,9 @@ int CScriptObjectUI::BroadcastMessage(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, "UI", BroadcastMessage, 2, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, "UI", BroadcastMessage, 3, svtNumber);
 
-	int iMessage;
-	int wParam;
-	int lParam;
+	int iMessage=0;
+	int wParam=0;
+	int lParam=0;
 
 	pH->GetParam(1, iMessage);
 	pH->GetParam(2, wParam);
@@ -1006,7 +1006,7 @@ int CScriptObjectUI::SetBackgroundColor(IFunctionHandler *pH)
 	{
 		color4f cColor;
 
-		int iColor;
+		int iColor=0;
 
 		pH->GetParam(1, iColor);
 		cColor.v[0] = iColor * (1.0f / 255.0f);
@@ -1143,7 +1143,7 @@ int CScriptObjectUI::SetMouseCursorColor(IFunctionHandler *pH)
 	{
 		color4f cColor;
 
-		int iColor;
+		int iColor=0;
 
 		pH->GetParam(1, iColor);
 		cColor.v[0] = iColor * (1.0f / 255.0f);
@@ -1185,7 +1185,7 @@ int CScriptObjectUI::SetMouseCursorSize(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, "UI", SetMouseCursorSize, 1, svtNumber);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, "UI", SetMouseCursorSize, 2, svtNumber);
 
-	float fWidth, fHeight;
+	float fWidth=0, fHeight=0;
 
 	pH->GetParam(1, fWidth);
 	pH->GetParam(2, fHeight);
@@ -1267,7 +1267,7 @@ int CScriptObjectUI::SetGreyedColor(IFunctionHandler *pH)
 	{
 		color4f cColor;
 
-		int iColor;
+		int iColor=0;
 
 		pH->GetParam(1, iColor);
 		cColor.v[0] = iColor * (1.0f / 255.0f);
@@ -1809,7 +1809,7 @@ int CScriptObjectUI::GetScreen(IFunctionHandler *pH)
 	}
 	else
 	{
-		int iScreenIndex;
+		int iScreenIndex=0;
 
 		pH->GetParam(1, iScreenIndex);
 

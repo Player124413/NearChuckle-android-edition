@@ -7135,7 +7135,7 @@ void CPlayer::SaveAIState(CStream & stm, CScriptObjectStream & scriptStream)
 		const char *szName;
 		pCurrentConversation->GetValue("NAME",szName);
 		stm.Write(szName);
-		int iProgress,conv_id;
+		int iProgress=0,conv_id=0;
 		pCurrentConversation->GetValue("CONV_ID",conv_id);
 		stm.Write(conv_id);
 		pCurrentConversation->GetValue("Progress",iProgress);
@@ -7151,7 +7151,7 @@ void CPlayer::SaveAIState(CStream & stm, CScriptObjectStream & scriptStream)
 			_SmartScriptObject pActorEntity(m_pScriptSystem,true);
 			if (pActors->GetAt(i,pActorEntity))
 			{
-				int Actor_ID;
+				int Actor_ID=0;
 				pActorEntity->GetValue("id",Actor_ID);
 				stm.Write(Actor_ID);
 			}
@@ -7249,7 +7249,7 @@ void CPlayer::LoadAIState(CStream & stm, CScriptObjectStream & scriptStream)
 				{
 					IScriptObject *pActorScriptObject = pActorEntity->GetScriptObject();
 					pActorScriptObject->SetValue("CurrentConversation",pNewConversation);
-					unsigned int funcHandle;
+					unsigned int funcHandle=0;
 					pNewConversation->GetValue("Join",funcHandle);
 					m_pScriptSystem->BeginCall(funcHandle);
 					m_pScriptSystem->PushFuncParam(pNewConversation);
@@ -7261,12 +7261,12 @@ void CPlayer::LoadAIState(CStream & stm, CScriptObjectStream & scriptStream)
 			}
 
 			// if joined is equal to amount of participants, continue the conversation
-			int iJoined,iParticipants;
+			int iJoined=0,iParticipants=0;
 			pNewConversation->GetValue("Joined",iJoined);
 			pNewConversation->GetValue("Participants",iParticipants);
 			if (iJoined == iParticipants)
 			{
-					unsigned int funcHandle;
+					unsigned int funcHandle=0;
 					pNewConversation->GetValue("Continue",funcHandle);
 					m_pScriptSystem->BeginCall(funcHandle);
 					m_pScriptSystem->PushFuncParam(pNewConversation);

@@ -218,7 +218,7 @@ int CScriptObjectAI::PushGoal(IFunctionHandler *pH)
 	string goalname;
 //	int id;
 	GoalParameters params;
-	bool blocking;
+	bool blocking=false;
 
 	pH->GetParam(1,pipename);
 	pH->GetParam(2,temp);
@@ -409,8 +409,8 @@ int CScriptObjectAI::PushGoal(IFunctionHandler *pH)
 int CScriptObjectAI::SoundEvent(IFunctionHandler *pH)
 {
 	CHECK_PARAMETERS(6);
-	float fThreat,fInterest,fRadius;
-	int nID;
+	float fThreat=0,fInterest=0,fRadius=0;
+	int nID=0;
 	USER_DATA val;
 	int cookie;
 	
@@ -466,10 +466,10 @@ int CScriptObjectAI::Log(IFunctionHandler * pH)
 int CScriptObjectAI::Signal(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(4);
-	int cFilter;
-	int nSignalID;
+	int cFilter=0;
+	int nSignalID=0;
 	const char *szSignalText;
-	int EntityID;
+	int EntityID=0;
 
 	pH->GetParam(1,cFilter);
 	pH->GetParam(2,nSignalID);
@@ -491,7 +491,7 @@ int CScriptObjectAI::Signal(IFunctionHandler * pH)
 int CScriptObjectAI::GetGroupCount(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1)
-	int nEntityID;
+	int nEntityID=0;
 
 	pH->GetParam(1,nEntityID);
 
@@ -520,7 +520,7 @@ int CScriptObjectAI::GetGroupCount(IFunctionHandler * pH)
 int CScriptObjectAI::GetAttentionTargetOf(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 	IEntity *pEntity = m_pEntitySystem->GetEntity(nID);
@@ -563,8 +563,8 @@ int CScriptObjectAI::ReloadAll(IFunctionHandler * pH)
 int CScriptObjectAI::MakePuppetIgnorant(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2);
-	int nID;
-	bool bIgnorant;
+	int nID=0;
+	bool bIgnorant=false;
 
 	pH->GetParam(1,nID);
 	pH->GetParam(2,bIgnorant);
@@ -588,8 +588,8 @@ int CScriptObjectAI::MakePuppetIgnorant(IFunctionHandler * pH)
 int CScriptObjectAI::FreeSignal(IFunctionHandler * pH)
 {
 	//CHECK_PARAMETERS(4);
-	float fRadius;
-	int nSignalID,nID = 0;
+	float fRadius=0;
+	int nSignalID=0,nID = 0;
 	const char *szSignalText;
 	CScriptObjectVector vPos(m_pScriptSystem,true);
 	
@@ -616,8 +616,8 @@ int CScriptObjectAI::FreeSignal(IFunctionHandler * pH)
 int CScriptObjectAI::SetAssesmentMultiplier(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2)
-	int type;
-	float fMultiplier;
+	int type=0;
+	float fMultiplier=0;
 
 	pH->GetParam(1,type);
 	pH->GetParam(2,fMultiplier);
@@ -637,8 +637,8 @@ int CScriptObjectAI::SetAssesmentMultiplier(IFunctionHandler * pH)
 int CScriptObjectAI::SetSpeciesThreatMultiplier(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2)
-	int species;
-	float fMultiplier;
+	int species=0;
+	float fMultiplier=0;
 
 	pH->GetParam(1,species);
 	pH->GetParam(2,fMultiplier);
@@ -651,15 +651,15 @@ int CScriptObjectAI::SetSpeciesThreatMultiplier(IFunctionHandler * pH)
 //////////////////////////////////////////////////////////////////////
 int CScriptObjectAI::FindObjectOfType(IFunctionHandler * pH)
 {	
-	int type;
+	int type=0;
 	Vec3d pos;
-	float fRadius;
+	float fRadius=0;
 	int nFlags = 0;
 	CScriptObjectVector vPos(m_pScriptSystem,true);
 
 	if (pH->GetParamType(1) == svtNumber)
 	{
-		int nID;
+		int nID=0;
 		
 		pH->GetParam(1,nID);
 		pH->GetParam(2,fRadius);
@@ -727,7 +727,7 @@ int CScriptObjectAI::GetGroupOf(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
 
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 
@@ -753,9 +753,9 @@ int CScriptObjectAI::GetAnchor(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(3);
 
-	int nAnchor;
-	int nID;
-	float fRadius;
+	int nAnchor=0;
+	int nID=0;
+	float fRadius=0;
 
 	pH->GetParam(1,nID);
 	pH->GetParam(2,nAnchor);
@@ -798,12 +798,12 @@ int CScriptObjectAI::RegisterWithAI(IFunctionHandler *pH)
 	AIObjectParameters params;
 	_SmartScriptObject pTable(m_pScriptSystem,true);
 	_SmartScriptObject pTableInstance(m_pScriptSystem,true);
-	int type;
+	int type=0;
 	_SmartScriptObject pObj(m_pScriptSystem,true);
 	_SmartScriptObject pTempObj(m_pScriptSystem,true);
 
 	IEntity *pEntity;
-	int nID;
+	int nID=0;
 	float fRadius = 0;
 
 	params.bUsePathfindOutdoors = true;
@@ -822,7 +822,7 @@ int CScriptObjectAI::RegisterWithAI(IFunctionHandler *pH)
 	{
 		case AIOBJECT_PUPPET:
 			{
-				float fwdspeed,bckspeed;
+				float fwdspeed=0,bckspeed=0;
 				CXPuppetProxy *pProxy;
 				pProxy = new CXPuppetProxy(pEntity,m_pScriptSystem,m_pGame);
 
@@ -934,8 +934,8 @@ int CScriptObjectAI::RegisterWithAI(IFunctionHandler *pH)
 		case AIOBJECT_AIRPLANE:
 			{
 				const char *rootbone;
-				float fwdspeed,bckspeed;
-				float	minAlt;
+				float fwdspeed=0,bckspeed=0;
+				float	minAlt=0;
 				CXVehicleProxy *pProxy;
 				fwdspeed = bckspeed = 0.0f;
 //				pProxy = new CXPuppetProxy(m_pEntity,m_pScriptSystem,m_pGame);
@@ -1036,7 +1036,7 @@ int CScriptObjectAI::RegisterWithAI(IFunctionHandler *pH)
 				{
 					if (pH->GetParamCount() > 2)
 					{
-						int ownerID;
+						int ownerID=0;
 						IEntity *pOwnerEntity;
 						pH->GetParam(3,ownerID);
 						pOwnerEntity=m_pEntitySystem->GetEntity(ownerID);
@@ -1084,7 +1084,7 @@ int CScriptObjectAI::AIBind(IFunctionHandler *pH)
 	CHECK_PARAMETERS(2);
 	IEntity *pParent;
 	IEntity *pChild;
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 	pParent=m_pEntitySystem->GetEntity(nID);
@@ -1115,8 +1115,8 @@ int CScriptObjectAI::CreateBoundObject(IFunctionHandler *pH)
 {
 CHECK_PARAMETERS(4);
 	IEntity *pParent;
-	int		type;
-	int		nID;
+	int		type=0;
+	int		nID=0;
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,nID);
 	pH->GetParam(2,type);
@@ -1156,7 +1156,7 @@ int CScriptObjectAI::DeCloak(IFunctionHandler * pH)
 int CScriptObjectAI::ProjectileShoot(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(2);
-	int nID;
+	int nID=0;
 	_SmartScriptObject pParamsTable(m_pScriptSystem,true);
 
 	pH->GetParam(1,nID);
@@ -1259,7 +1259,7 @@ int CScriptObjectAI::ProjectileShoot(IFunctionHandler * pH)
 int CScriptObjectAI::SetTheSkip(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 
@@ -1282,7 +1282,7 @@ int CScriptObjectAI::SetTheSkip(IFunctionHandler * pH)
 int CScriptObjectAI::SetAllowedDeathCount(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int nDeaths;
+	int nDeaths=0;
 
 	pH->GetParam(1,nDeaths);
 	if (m_pAISystem->GetAutoBalanceInterface())
@@ -1312,7 +1312,7 @@ int CScriptObjectAI::RegisterPlayerHit(IFunctionHandler * pH)
 int CScriptObjectAI::FireOverride(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 	IEntity *pEntity = m_pEntitySystem->GetEntity(nID);
@@ -1339,8 +1339,8 @@ int CScriptObjectAI::FireOverride(IFunctionHandler * pH)
 int CScriptObjectAI::EnablePuppetMovement(IFunctionHandler * pH)
 {
 	//CHECK_PARAMETERS(2);
-	int nID;
-	int nEnable;
+	int nID=0;
+	int nEnable=0;
 	float fDuration=-1;
 
 	
@@ -1371,7 +1371,7 @@ int CScriptObjectAI::EnablePuppetMovement(IFunctionHandler * pH)
 int CScriptObjectAI::IsMoving(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(1);
-	int nID;
+	int nID=0;
 
 	pH->GetParam(1,nID);
 
@@ -1393,8 +1393,8 @@ int CScriptObjectAI::IsMoving(IFunctionHandler * pH)
 int CScriptObjectAI::EnableNodesInSphere(IFunctionHandler * pH)
 {
 	CHECK_PARAMETERS(3);
-	float fRadius;
-	bool bEnable;
+	float fRadius=0;
+	bool bEnable=false;
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	
 	pH->GetParam(1,*oVec);

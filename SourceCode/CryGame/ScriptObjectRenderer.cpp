@@ -64,7 +64,7 @@ int CScriptObjectRenderer::PushQuad(IFunctionHandler *pH)
 		m_pScriptSystem->RaiseError("CScriptObjectRenderer::PushQuad wrong number of params");
 		return pH->EndFunction();
 	}
-	float x,y,w,h,r=1,g=1,b=1,a=1,u0,v0,u1,v1;
+	float x=0,y=0,w=0,h=0,r=1,g=1,b=1,a=1,u0=0,v0=0,u1=0,v1=0;
 	_SmartScriptObject pTI(m_pScriptSystem,true);
 	pH->GetParam(1,x);
 	pH->GetParam(2,y);

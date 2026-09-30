@@ -502,7 +502,7 @@ int CUIVideoPanel::Pause(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), Pause, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), Pause, 1, svtNumber);
 
-	int iPause;
+	int iPause=0;
 
 	pH->GetParam(1, iPause);
 
@@ -543,7 +543,7 @@ int CUIVideoPanel::SetVolume(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), SetVolume, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SetVolume, 1, svtNumber);
 
-	float fVolume;
+	float fVolume=0;
 
 	pH->GetParam(1, fVolume);
 
@@ -561,7 +561,7 @@ int CUIVideoPanel::SetPan(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), SetPan, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SetPan, 1, svtNumber);
 
-	float fPan;
+	float fPan=0;
 
 	pH->GetParam(1, fPan);
 
@@ -579,7 +579,7 @@ int CUIVideoPanel::SetFrameRate(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), SetFrameRate, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), SetFrameRate, 1, svtNumber);
 
-	int iFrameRate;
+	int iFrameRate=0;
 
 	pH->GetParam(1, iFrameRate);
 
@@ -594,7 +594,7 @@ int CUIVideoPanel::EnableVideo(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), EnableVideo, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), EnableVideo, 1, svtNumber);
 
-	int iEnable;
+	int iEnable=0;
 
 	pH->GetParam(1, iEnable);
 
@@ -609,7 +609,7 @@ int CUIVideoPanel::EnableAudio(IFunctionHandler *pH)
 	CHECK_SCRIPT_FUNCTION_PARAMCOUNT(m_pScriptSystem, GetName().c_str(), EnableAudio, 1);
 	CHECK_SCRIPT_FUNCTION_PARAMTYPE(m_pScriptSystem, GetName().c_str(), EnableAudio, 1, svtNumber);
 
-	int iEnable;
+	int iEnable=0;
 
 	pH->GetParam(1, iEnable);
 
