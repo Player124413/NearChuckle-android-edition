@@ -2206,10 +2206,10 @@ int CScriptObjectEntity::AddImpulse(IFunctionHandler *pH)
 //	if(hitImpulse == 0)
 //		return pH->EndFunctionNull();
 
-	int ipart;
+	int ipart=-1;
 	bool bPos;
 	Vec3 pos,dir;
-	float impulse,impulseScale=1.0f;
+	float impulse=0,impulseScale=1.0f;
 
 	pH->GetParam(1, ipart);
 
@@ -2224,7 +2224,9 @@ int CScriptObjectEntity::AddImpulse(IFunctionHandler *pH)
 		bPos=false;
 	}
 	pH->GetParam(3,*oVec); dir=oVec.Get();
-	pH->GetParam(4, impulse);
+	// Melee hits pass a nil strength; it read an uninitialised float, which launched the player on ARM.
+	if (!pH->GetParam(4, impulse))
+		return pH->EndFunctionNull();
 	pH->GetParam(5, impulseScale);
 	bPos = bPos && GetLengthSquared(pos)>0;
 
@@ -2242,7 +2244,7 @@ int CScriptObjectEntity::AddImpulseObj(IFunctionHandler *pH)
 	CHECK_PARAMETERS(2);
 
 	Vec3 dir;
-	float impulse;
+	float impulse=0;
 
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,*oVec); 
