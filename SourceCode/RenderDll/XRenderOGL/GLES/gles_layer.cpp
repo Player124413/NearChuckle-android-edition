@@ -10,13 +10,23 @@
 #include "gles_arb.h"
 #include <signal.h>
 #include <execinfo.h>
+#include <dlfcn.h>
+#include <sys/ucontext.h>
 #include <unistd.h>
 
 // Development aid: print a native backtrace on a crash, since the engine has no handler on POSIX.
-static void CrashHandler(int sig)
+static void CrashHandler(int sig, siginfo_t* info, void* ctx)
 {
   void* frames[64];
   int n = backtrace(frames, 64);
+#if defined(__APPLE__) && defined(__aarch64__)
+  // The faulting function is missing from the frame chain when it is a leaf; print its pc.
+  void* pc = (void*)((ucontext_t*)ctx)->uc_mcontext->__ss.__pc;
+  Dl_info di;
+  if (dladdr(pc, &di))
+    fprintf(stderr, "GLES: fault at %p (%s %s+%ld, image base %p), address %p\n", pc, di.dli_fname,
+            di.dli_sname ? di.dli_sname : "?", (long)((char*)pc - (char*)di.dli_saddr), di.dli_fbase, info->si_addr);
+#endif
   fprintf(stderr, "GLES: signal %d, backtrace:\n", sig);
   backtrace_symbols_fd(frames, n, STDERR_FILENO);
   if (iLog) iLog->Log("GLES: crashed with signal %d (backtrace on stderr)\n", sig);
@@ -147,9 +157,12 @@ static std::map<std::string, void*>& ImplTable()
 
 bool GLES_Init()
 {
-  signal(SIGSEGV, CrashHandler);
-  signal(SIGBUS, CrashHandler);
-  signal(SIGABRT, CrashHandler);
+  struct sigaction sa = {};
+  sa.sa_sigaction = CrashHandler;
+  sa.sa_flags = SA_SIGINFO;
+  sigaction(SIGSEGV, &sa, NULL);
+  sigaction(SIGBUS, &sa, NULL);
+  sigaction(SIGABRT, &sa, NULL);
   if (!GLES_LoadNative())
     return false;
   GLES_InitState();
