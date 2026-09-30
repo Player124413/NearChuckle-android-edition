@@ -790,7 +790,7 @@ bool CXGame::IsInPause(IProcess *pProcess)
 
 // Development aid: FARCRY_DEVCMD=<file> drives the UI unattended. The file is read and deleted
 // whenever it appears, one line per frame: "mouse x y" (800x600 virtual screen), "click [x y]",
-// "key <SDL key name>", "wait n". Presses are held a frame, as CryInput samples once per frame.
+// "key <SDL key name> [frames]", "wait n". Presses are held a frame, as CryInput samples once per frame.
 static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 {
 	static std::deque<string> cmds;
@@ -858,7 +858,7 @@ static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 		ev.key.down = true;
 		SDL_PushEvent(&ev);
 		cmds.push_front(string("_keyup ") + arg);
-		nHold = 1;
+		nHold = sscanf(cmd.c_str(), "key %*s %f", &x) == 1 ? (int)x : 1;
 	}
 	else if (sscanf(cmd.c_str(), "_keyup %63s", arg) == 1)
 	{
