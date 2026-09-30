@@ -809,13 +809,20 @@ static void TouchZoomToggle(CXClient* pClient, ISystem* pSystem)
 		pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing);
 }
 
-// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
-static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
+static CPlayer* TouchPlayer(CXClient* pClient, ISystem* pSystem)
 {
 	IEntity* pEntity = pSystem->GetIEntitySystem()->GetEntity(pClient->GetPlayerId());
 	IEntityContainer* pCnt = pEntity ? pEntity->GetContainer() : NULL;
 	CPlayer* pPlayer = NULL;
-	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer) && pPlayer)
+	if (pCnt && pCnt->QueryContainerInterface(CIT_IPLAYER, (void**)&pPlayer))
+		return pPlayer;
+	return NULL;
+}
+
+// The crouch button's stance change, applied to the local player (see CPlayer::TouchStance).
+static void TouchStance(CXClient* pClient, ISystem* pSystem, bool bHold)
+{
+	if (CPlayer* pPlayer = TouchPlayer(pClient, pSystem))
 		pPlayer->TouchStance(bHold);
 }
 
@@ -831,8 +838,18 @@ static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
 	static const XACTIONID held[FC_HELD_COUNT] = {
 		ACTION_FIRE0, ACTION_JUMP, ACTION_MOVEMODE, ACTION_RUNSPRINT, ACTION_WALK,
 		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE };
+	// Sprint changes seat each frame it is held in a vehicle, so there send only its press.
+	static unsigned prevHeld;
+	unsigned heldNow = in.held;
+	if (heldNow & (1u << FC_HELD_SPRINT))
+	{
+		CPlayer* pPlayer = TouchPlayer(pClient, pSystem);
+		if (pPlayer && pPlayer->GetVehicle() && (prevHeld & (1u << FC_HELD_SPRINT)))
+			heldNow &= ~(1u << FC_HELD_SPRINT);
+	}
+	prevHeld = in.held;
 	for (int i = 0; i < FC_HELD_COUNT; i++)
-		if (in.held & (1u << i))
+		if (heldNow & (1u << i))
 			pClient->OnAction(held[i], 1.0f, etHolding);
 
 	for (int i = 0; i < in.impulseCount; i++)
