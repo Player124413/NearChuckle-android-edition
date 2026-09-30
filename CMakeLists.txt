@@ -43,6 +43,8 @@ else()
         set(DISABLE_CG ON CACHE BOOL "" FORCE)
         # Modules resolve each other's symbols at dlopen time, as they do on Linux.
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
+        # Apple clang 21 fuses a virtual ILog::Log call with a sibling virtual call into one variadic call, whose argument then goes on the stack instead of x2.
+        add_compile_options(-mllvm -simplifycfg-sink-common=false)
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
