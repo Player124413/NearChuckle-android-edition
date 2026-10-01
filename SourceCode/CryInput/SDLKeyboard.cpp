@@ -158,6 +158,24 @@ unsigned short CSDLKeyboard::SDL2XKEY(SDL_Keycode kc)
 	case SDLK_PAGEDOWN:      return XKEY_PAGE_DOWN;
 	case SDLK_INSERT:        return XKEY_INSERT;
 	case SDLK_DELETE:        return XKEY_DELETE;
+
+	// Keypad: missing until now, so its keys never reached the game (Android's custom touch buttons send them).
+	case SDLK_KP_0:          return XKEY_NUMPAD0;
+	case SDLK_KP_1:          return XKEY_NUMPAD1;
+	case SDLK_KP_2:          return XKEY_NUMPAD2;
+	case SDLK_KP_3:          return XKEY_NUMPAD3;
+	case SDLK_KP_4:          return XKEY_NUMPAD4;
+	case SDLK_KP_5:          return XKEY_NUMPAD5;
+	case SDLK_KP_6:          return XKEY_NUMPAD6;
+	case SDLK_KP_7:          return XKEY_NUMPAD7;
+	case SDLK_KP_8:          return XKEY_NUMPAD8;
+	case SDLK_KP_9:          return XKEY_NUMPAD9;
+	case SDLK_KP_MULTIPLY:   return XKEY_MULTIPLY;
+	case SDLK_KP_PLUS:       return XKEY_ADD;
+	case SDLK_KP_MINUS:      return XKEY_SUBTRACT;
+	case SDLK_KP_PERIOD:     return XKEY_DECIMAL;
+	case SDLK_KP_DIVIDE:     return XKEY_DIVIDE;
+	case SDLK_KP_ENTER:      return XKEY_NUMPADENTER;
 	}
 
 	return XKEY_NULL;

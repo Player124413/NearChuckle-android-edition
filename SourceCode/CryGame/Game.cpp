@@ -790,7 +790,14 @@ bool CXGame::IsInPause(IProcess *pProcess)
 
 // Development aid: FARCRY_DEVCMD=<file> drives the UI unattended. The file is read and deleted
 // whenever it appears, one line per frame: "mouse x y" (800x600 virtual screen), "click [x y]",
-// "key <SDL key name> [frames]", "wait n". Presses are held a frame, as CryInput samples once per frame.
+// "key <SDL key name, _ for spaces> [frames]", "wait n". Presses are held a frame, as CryInput samples once per frame.
+static SDL_Keycode DevKey(const char* szName)
+{
+	string sName(szName);
+	std::replace(sName.begin(), sName.end(), '_', ' ');
+	return SDL_GetKeyFromName(sName.c_str());
+}
+
 static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 {
 	static std::deque<string> cmds;
@@ -854,7 +861,7 @@ static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 	else if (sscanf(cmd.c_str(), "key %63s", arg) == 1)
 	{
 		ev.type = SDL_EVENT_KEY_DOWN;
-		ev.key.key = SDL_GetKeyFromName(arg);
+		ev.key.key = DevKey(arg);
 		ev.key.down = true;
 		SDL_PushEvent(&ev);
 		cmds.push_front(string("_keyup ") + arg);
@@ -863,7 +870,7 @@ static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
 	else if (sscanf(cmd.c_str(), "_keyup %63s", arg) == 1)
 	{
 		ev.type = SDL_EVENT_KEY_UP;
-		ev.key.key = SDL_GetKeyFromName(arg);
+		ev.key.key = DevKey(arg);
 		SDL_PushEvent(&ev);
 	}
 	else if (sscanf(cmd.c_str(), "wait %f", &x) == 1)
