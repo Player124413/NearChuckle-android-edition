@@ -1722,6 +1722,10 @@ void CXGame::SaveConfiguration( const char *pszSystemCfg,const char *pszGameCfg,
 }
 
 //////////////////////////////////////////////////////////////////////////
+#ifdef __ANDROID__
+bool FarCry_IsStockKeypadBindLine(const char *szLine);
+#endif
+
 void CXGame::LoadConfiguration(const string &sSystemCfgIn,const string &sGameCfgIn)
 {			
 	string sSystemCfg = sSystemCfgIn, sGameCfg = sGameCfgIn;
@@ -1822,6 +1826,10 @@ void CXGame::LoadConfiguration(const string &sSystemCfgIn,const string &sGameCfg
 			bValid=true;
 		}
 
+#ifdef __ANDROID__
+		if (bValid && FarCry_IsStockKeypadBindLine(szLine))
+			continue;
+#endif
 		if (bValid)
 		{					
 			strcpy(szBuffer,szLine);
