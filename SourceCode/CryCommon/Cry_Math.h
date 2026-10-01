@@ -361,7 +361,7 @@ inline int64 iszero(__int64 x)
 }
 #endif
 
-#if defined(LINUX64)
+#if defined(LINUX64) && defined(__LP64__)
 inline int64 iszero(intptr_t x) 
 {
 	return (sizeof(x) == 8)?iszero((__int64)x) : iszero((int)x);

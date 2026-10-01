@@ -596,7 +596,7 @@ struct IFunctionHandler
 	virtual bool GetParam(int nIdx, const char * &s) = 0;
 
 	inline bool GetParam(int nIdx, char * &s) {return GetParam(nIdx, (const char*&)s);}
-#if defined(WIN64) || defined(LINUX64)
+#if defined(WIN64) || (defined(LINUX64) && defined(__LP64__))
 	virtual bool GetParam(int nIdx, INT_PTR &n) = 0;	//## AMD Port
 #endif
 	virtual bool GetParam(int nIdx,bool &b) = 0;

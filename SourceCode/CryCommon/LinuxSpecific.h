@@ -360,7 +360,7 @@ typedef struct
 		CHandle(const HandleType cHandle = U) : m_Value(cHandle){}
 		CHandle(const PointerType cpHandle) : m_Value((HandleType)(intptr_t)(cpHandle)){}
 		CHandle(INVALID_HANDLE_VALUE_ENUM) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
-#if defined(LINUX64)
+#if defined(LINUX64) && defined(__LP64__)
 		//treat __null tyope also as invalid handle type
 		CHandle(typeof(__null)) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
 #endif

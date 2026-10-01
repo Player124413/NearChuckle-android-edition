@@ -130,6 +130,7 @@ void CChunkFileReader::close()
 {
 	m_arrChunkSize.clear();
 	m_pFile = NULL;
+	m_mapAlignedChunks.clear();
 	m_pChunks = NULL;
 }
 
@@ -157,8 +158,17 @@ const void* CChunkFileReader::getChunkData(int nChunkIdx)const
 		int nOffset = m_pChunks[nChunkIdx].FileOffset;
 		if (nOffset < sizeof(FileHeader) || nOffset >= getFileHeader().ChunkTableOffset)
 			return 0;
-		else
-			return m_pFile->getData(nOffset);
+		const void* pData = m_pFile->getData(nOffset);
+		if (((UINT_PTR)pData & 3) == 0)
+			return pData;
+		std::vector<double>& arrCopy = m_mapAlignedChunks[nChunkIdx];
+		if (arrCopy.empty())
+		{
+			int nSize = getChunkSize(nChunkIdx);
+			arrCopy.resize((nSize + 7) / 8 + 1);
+			memcpy(&arrCopy[0], pData, nSize);
+		}
+		return &arrCopy[0];
 	}
 	else
 		return 0;

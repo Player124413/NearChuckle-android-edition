@@ -41,7 +41,11 @@ typedef unsigned int				u32;
 typedef unsigned long long	u64;
 
 
+#if UINTPTR_MAX == 0xffffffffu
+typedef uint32							DWORD_PTR;
+#else
 typedef uint64							DWORD_PTR;
+#endif
 typedef intptr_t INT_PTR, *PINT_PTR;
 typedef uintptr_t UINT_PTR, *PUINT_PTR;
 typedef char *LPSTR, *PSTR;

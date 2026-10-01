@@ -9,7 +9,7 @@ private:
   _I* p;
 public:
   _smart_ptr() : p(NULL) {}
-#if defined(LINUX64)
+#if defined(LINUX64) && defined(__LP64__)
 	_smart_ptr(typeof(__null)) : p(NULL) {}
 #endif
 	_smart_ptr(int Null) : p(NULL) {}

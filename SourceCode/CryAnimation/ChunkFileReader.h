@@ -14,6 +14,8 @@
 
 #include "CryHeaders.h"
 #include "smartptr.h"
+#include <map>
+#include <vector>
 
 class CFileMapping;
 TYPEDEF_AUTOPTR(CFileMapping);
@@ -85,6 +87,8 @@ protected:
 	ChunkSizeArray m_arrChunkSize;
 	// pointer to the array of chunks in the m_pFile
 	const ChunkHeader* m_pChunks;
+	// aligned copies of chunks that start misaligned in the file; 32-bit arm faults on misaligned float loads
+	mutable std::map<int, std::vector<double> > m_mapAlignedChunks;
 };
 
 TYPEDEF_AUTOPTR(CChunkFileReader);

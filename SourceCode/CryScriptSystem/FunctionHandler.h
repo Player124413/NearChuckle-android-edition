@@ -29,7 +29,7 @@ public:
 	int GetParamCount();
 
 	bool GetParam(int nIdx,int &n);					//AMD Port				
-#if defined(WIN64) || defined(LINUX64)
+#if defined(WIN64) || (defined(LINUX64) && defined(__LP64__))
 	bool GetParam(int nIdx,INT_PTR &n);					//AMD Port				
 #endif
 	bool GetParam(int nIdx,float &f);
