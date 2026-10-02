@@ -54,7 +54,6 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(new touchcontrols::Button("attack", touchcontrols::RectF(20, 7, 23, 10), "shoot", KEY_SHOOT, false, false, "Attack!"));
     tc->addControl(new touchcontrols::Button("attack2", touchcontrols::RectF(3, 5, 6, 8), "shoot", KEY_SHOOT, false, true, "Attack! (duplicate)"));
 
-    tc->addControl(new touchcontrols::Button("zoom", touchcontrols::RectF(21, 3, 23, 5), "zoom", PORT_ACT_ZOOM_IN, false, false, "Zoom"));
     tc->addControl(new touchcontrols::Button("reload", touchcontrols::RectF(0, 5, 3, 7), "reload", PORT_ACT_RELOAD, false, false, "Reload"));
     tc->addControl(new touchcontrols::Button("flashlight", touchcontrols::RectF(19, 3, 21, 5), "flashlight", PORT_ACT_FLASH_LIGHT, false, false, "Flashlight"));
     tc->addControl(new touchcontrols::Button("binoculars", touchcontrols::RectF(16, 0, 18, 2), "binocular", PORT_ACT_HELPCOMP, false, false, "Binoculars"));
@@ -77,9 +76,10 @@ void TouchInterface::addGameControls(touchcontrols::TouchControls *tc)
     tc->addControl(new touchcontrols::Button("grenade_cycle", touchcontrols::RectF(24, 5, 26, 7), "grenade_cycle", PORT_ACT_INVNEXT, false, false, "Change grenade"));
     tc->addControl(new touchcontrols::Button("objectives", touchcontrols::RectF(14, 0, 16, 2), "notebook", PORT_ACT_MP_SCORES, false, false, "Objectives (hold)"));
 
-    // Delta Touch's fly slider with only up and down: scope zoom steps.
-    touchcontrols::QuadSlide *zoomSlide = new touchcontrols::QuadSlide("zoom_slide", touchcontrols::RectF(19, 5, 21, 7), "zoom", "slide_arrow",
-                                                                      PORT_ACT_MAP_ZOOM_IN, 0, PORT_ACT_MAP_ZOOM_OUT, 0, false, "Scope zoom in/out slider");
+    // Delta Touch's fly slider with only up and down: tap for the scope, slide for its zoom steps.
+    touchcontrols::QuadSlide *zoomSlide = new touchcontrols::QuadSlide("zoom_slide", touchcontrols::RectF(21, 3, 23, 5), "zoom", "slide_arrow",
+                                                                      PORT_ACT_MAP_ZOOM_IN, 0, PORT_ACT_MAP_ZOOM_OUT, 0, false, "Scope (tap), zoom in/out (slide)");
+    zoomSlide->setTapValue(PORT_ACT_ZOOM_IN);
     zoomSlide->signal.connect(sigc::mem_fun(this, &TouchInterface::gameButton));
     tc->addControl(zoomSlide);
     tc->addControl(new touchcontrols::Button("lean_left", touchcontrols::RectF(12, 8, 14, 10), "lean", PORT_ACT_LEAN_LEFT, false, true, "Lean left"));
