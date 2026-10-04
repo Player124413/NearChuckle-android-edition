@@ -213,6 +213,12 @@ unsigned char CSDLKeyboard::XKEY2ASCII(unsigned short nCode, int modifiers)
 		HANDLE_CASE(XKEY_SLASH, '/')
 		HANDLE_CASE(XKEY_MINUS, '-')
 		HANDLE_CASE(XKEY_PERIOD, '.')
+		HANDLE_CASE(XKEY_EQUALS, '=')
+		HANDLE_CASE(XKEY_LBRACKET, '[')
+		HANDLE_CASE(XKEY_RBRACKET, ']')
+		HANDLE_CASE(XKEY_SEMICOLON, ';')
+		HANDLE_CASE(XKEY_APOSTROPHE, '\'')
+		HANDLE_CASE(XKEY_COMMA, ',')
 	default:
 		ret = '\0';
 	}
@@ -228,16 +234,16 @@ unsigned char CSDLKeyboard::XKEY2ASCII(unsigned short nCode, int modifiers)
 		//STUB
 		return 0;
 	}
-	else if ((modifiers & XKEY_MOD_LSHIFT) != 0)
+	else if ((modifiers & XKEY_MOD_SHIFT) != 0 && ret)
 	{
-		switch (ret)
-		{
-			case '-':
-				ret = '_';
-				break;
-			default:
-				ret += 32;
-		}
+		// US layout; it only mapped '-', and added 32 to everything else ('1' gave 'Q').
+		static const char szBase[] = "1234567890-=[]\\;',./";
+		static const char szShifted[] = "!@#$%^&*()_+{}|:\"<>?";
+		const char *p = strchr(szBase, ret);
+		if (ret >= 'a' && ret <= 'z')
+			ret -= 32;
+		else if (p)
+			ret = szShifted[p - szBase];
 	}
 
 	return ret;
