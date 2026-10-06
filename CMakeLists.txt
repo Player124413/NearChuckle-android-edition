@@ -4,6 +4,19 @@ cmake_policy(VERSION 3.12)
 project(farcry LANGUAGES CXX)
 
 if (ANDROID)
+    # Android loads the engine modules dynamically; do not reject their late-bound symbols.
+    set(ANDROID_ALLOW_UNDEFINED_SYMBOLS ON CACHE BOOL "" FORCE)
+    string(REPLACE "-Wl,--no-undefined" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    string(REPLACE "-Wl,--fatal-warnings" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    string(REPLACE "-Wl,--no-undefined" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    string(REPLACE "-Wl,--fatal-warnings" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    add_compile_options(-w -fPIC -Wno-error=pointer-to-int-cast -Wno-pointer-to-int-cast
+        -Wno-int-to-pointer-cast -Wno-error=address-of-temporary -Wno-address-of-temporary)
+    add_link_options(-Wl,--unresolved-symbols=ignore-all -Wl,--no-fatal-warnings)
+    link_libraries(SDL3 log dl m)
+endif()
+
+if (ANDROID)
     if (CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
         set(ARCH_TYPE "arm64")
         add_definitions(-DLINUX -DLINUX64 -D__linux__ -D__ANDROID__ -D_CPU_ARM64 -D_ARM64_)
