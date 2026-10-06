@@ -94,6 +94,12 @@ jobs:
               keytool -genkeypair -v -keystore android/app/farcry.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=NearChuckle, OU=FarCry, O=NearChuckle, C=US"
             }
           fi
+          echo "Ensuring ARM64 native libraries are in the Gradle jniLibs source set..."
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          find build_android/arm64-v8a bin/arm64-Release android/app/src/main/jniLibs/arm64-v8a \
+            -type f -name '*.so' -exec cp -f {} android/app/src/main/jniLibs/arm64-v8a/ \; 2>/dev/null || true
+          echo "Native libraries prepared:"
+          ls -lh android/app/src/main/jniLibs/arm64-v8a
           echo "Building APK with Gradle..."
           ./android/gradlew -p android :app:assembleDebug --stacktrace 2>&1 | tee build_apk.log
           echo "### ✅ Gradle Build Succeeded" >> $GITHUB_STEP_SUMMARY
