@@ -25,6 +25,9 @@
 
 #include "../Common/Shadow_Renderer.h"
 #include "limits.h"
+#ifdef GLES_RENDERER
+#include "GLES/gles_layer.h"
+#endif
 
 int CGLRenderer::CV_gl_useextensions;
 int CGLRenderer::CV_gl_3dfx_gamma_control;
@@ -381,7 +384,7 @@ void CGLRenderer::ChangeLog()
     {      
       iLog->Log("OpenGL log file '%s' opened\n", "OpenGLLog.txt");
       fprintf(m_LogFile, "\n==========================================\n");
-#ifndef __linux
+#ifndef LINUX
       char time[128];
        char date[128];
       _strtime( time );
@@ -404,7 +407,7 @@ void CGLRenderer::ChangeLog()
   {
     SetLogFuncs(false);
     fprintf(m_LogFile, "\n==========================================\n");
-#ifndef __linux
+#ifndef LINUX
     char time[128];
     char date[128];
     _strtime( time );
@@ -552,28 +555,6 @@ bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDep
 #else
 bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDepth, int nNewRefreshHZ, bool bFullScreen)
 {
-#ifdef __ANDROID__
-  int winW = 0, winH = 0;
-  if (m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Window)
-  {
-    SDL_GetWindowSizeInPixels(m_RContexts[0]->m_Window, &winW, &winH);
-  }
-  if (winW <= 0 || winH <= 0)
-  {
-    winW = (m_width > 0) ? m_width : nNewWidth;
-    winH = (m_height > 0) ? m_height : nNewHeight;
-  }
-  m_width = winW;
-  m_height = winH;
-  m_FullScreen = true;
-  ChangeViewport(0, 0, winW, winH);
-  if (iConsole)
-  {
-    if (ICVar* cvW = iConsole->GetCVar("r_Width")) cvW->Set(winW);
-    if (ICVar* cvH = iConsole->GetCVar("r_Height")) cvH->Set(winH);
-  }
-  return true;
-#else
   m_FullScreen = bFullScreen;
   SDL_SetWindowFullscreen(m_RContexts[0]->m_Window, bFullScreen);
   SDL_SetWindowSize(m_RContexts[0]->m_Window, nNewWidth, nNewHeight);
@@ -581,7 +562,6 @@ bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDep
   SDL_SyncWindow(m_RContexts[0]->m_Window);
   ChangeViewport(0, 0, nNewWidth, nNewHeight);
   return false;
-#endif
 }
 #endif
 
@@ -656,18 +636,6 @@ bool CGLRenderer::ChangeDisplay(unsigned int width,unsigned int height,unsigned 
 //////////////////////////////////////////////////////////////////////
 void CGLRenderer::ChangeViewport(unsigned int x,unsigned int y,unsigned int width,unsigned int height)
 {
-#ifdef USE_SDL
-  if (x == 0 && y == 0 && m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Window)
-  {
-    int winW = 0, winH = 0;
-    SDL_GetWindowSizeInPixels(m_RContexts[0]->m_Window, &winW, &winH);
-    if (winW > 0 && winH > 0 && (width <= 0 || (int)width == m_width || width == 800 || width == 1024))
-    {
-      width = winW;
-      height = winH;
-    }
-  }
-#endif
   SetViewport(x, y, width, height);
   m_width = width;
   m_height = height;
@@ -1183,9 +1151,10 @@ void CGLRenderer::Update()
   {
 #ifndef USE_SDL
     SwapBuffers(m_CurrContext->m_hDC);
+#elif defined(GLES_RENDERER)
+    GLES_SwapWindow(m_CurrContext->m_Window);
 #else
-    if (m_CurrContext && m_CurrContext->m_Window)
-      SDL_GL_SwapWindow(m_CurrContext->m_Window);
+    SDL_GL_SwapWindow(m_CurrContext->m_Window);
 #endif
   }
 
@@ -1197,6 +1166,47 @@ void CGLRenderer::Update()
 		ScreenShot();
 		CV_r_GetScreenShot = 0;
 	}
+
+#ifdef LINUX
+	// Development aid for renderer comparisons: FARCRY_SCREENSHOT_FRAME=<n> dumps frame n to
+	// FARCRY_SCREENSHOT_FILE; FARCRY_SCREENSHOT_EVERY=<n> dumps every nth frame to <prefix>_<frame>.jpg.
+	{
+		static int nShotFrame = getenv("FARCRY_SCREENSHOT_FRAME") ? atoi(getenv("FARCRY_SCREENSHOT_FRAME")) : -1;
+		int nEvery = getenv("FARCRY_SCREENSHOT_EVERY") ? atoi(getenv("FARCRY_SCREENSHOT_EVERY")) : 0; // per frame: the dev hook toggles it
+		static int nFrame = 0;
+		++nFrame;
+		if (nFrame == nShotFrame)
+			ScreenShot(getenv("FARCRY_SCREENSHOT_FILE"));
+		else if (nEvery > 0 && nFrame % nEvery == 0)
+		{
+			char name[256];
+			sprintf(name, "%s_%05d.jpg", getenv("FARCRY_SCREENSHOT_FILE") ? getenv("FARCRY_SCREENSHOT_FILE") : "frame", nFrame);
+			ScreenShot(name);
+		}
+		// FARCRY_FPS_EVERY=<n>: average frame rate over the last n frames, to stderr.
+		static int nFpsEvery = getenv("FARCRY_FPS_EVERY") ? atoi(getenv("FARCRY_FPS_EVERY")) : 0;
+		if (nFpsEvery > 0 && nFrame % nFpsEvery == 0)
+		{
+			static float fLast = 0;
+			float fNow = iTimer->GetAsyncCurTime();
+			if (fLast > 0)
+			{
+				fprintf(stderr, "FPS: frame %d, %.1f fps over last %d frames\n", nFrame, nFpsEvery / (fNow - fLast), nFpsEvery);
+				iLog->Log("FPS: frame %d, %.1f fps over last %d frames (min frame %.1f ms)", nFrame, nFpsEvery / (fNow - fLast), nFpsEvery, 1000.0f * (fNow - fLast) / nFpsEvery); // log.txt too
+			}
+			fLast = fNow;
+			// FARCRY_DEPTH_PROBE=1: depth at a few pixels, to compare the GLES readback against GL.
+			if (getenv("FARCRY_DEPTH_PROBE"))
+			{
+				float d[3];
+				glReadPixels(m_width / 2, m_height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &d[0]);
+				glReadPixels(m_width / 4, m_height / 4, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &d[1]);
+				glReadPixels(m_width / 2, m_height - 8, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &d[2]);
+				fprintf(stderr, "DEPTH: frame %d centre %.6f lower-left %.6f top %.6f\n", nFrame, d[0], d[1], d[2]);
+			}
+		}
+	}
+#endif
 }
 
 extern int BindSizes[];
@@ -1342,7 +1352,7 @@ void CGLRenderer::GetMemoryUsage(ICrySizer* Sizer)
 
 WIN_HWND CGLRenderer::GetHWND()
 {
-#ifndef __linux
+#ifndef LINUX
   return m_CurrContext ? m_CurrContext->m_Glhwnd : 0;
 #else
   return m_RContexts[0]->m_Window;
@@ -1692,7 +1702,7 @@ void CGLRenderer::UpdateTextureInVideoMemory(uint tnum, unsigned char *newdata,i
 
   SetTexture(tnum, eTT); 
 
-  int srcformat = GL_RGB;
+  int srcformat;
   if (eTF == eTF_DXT1)
     srcformat=GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 
@@ -1701,9 +1711,6 @@ void CGLRenderer::UpdateTextureInVideoMemory(uint tnum, unsigned char *newdata,i
 
 	if (eTF==eTF_8888)
     srcformat=GL_BGRA_EXT;// GL_RGBA;
-
-	if (eTF==eTF_RGBA)
-    srcformat=GL_RGBA;
 
 	if (eTF==eTF_4444)
 	{
@@ -1721,8 +1728,16 @@ void CGLRenderer::UpdateTextureInVideoMemory(uint tnum, unsigned char *newdata,i
   }
   else
   {
-    int target = TargetTex[tnum] ? TargetTex[tnum] : GL_TEXTURE_2D;
-    glTexSubImage2D(target, 0, posx, posy, w, h, srcformat, GL_UNSIGNED_BYTE, newdata);
+    if (TargetTex[tnum] == GL_TEXTURE_2D)
+    {
+      int nw = ilog2(w);
+      if (w != nw)
+        return;
+      int nh = ilog2(h);
+      if (h != nh)
+        return;
+    }
+    glTexSubImage2D(TargetTex[tnum],0,posx,posy,w,h,srcformat,GL_UNSIGNED_BYTE,newdata);
   }
 }
 
@@ -1759,6 +1774,9 @@ void CGLRenderer::RemoveTexture(unsigned int nTextureId)
 void CGLRenderer::Draw2dImage(float xpos,float ypos,float w,float h,int texture_id,float s0,float t0,float s1,float t1,float angle,float r,float g,float b,float a, float z)
 { 
   PROFILE_FRAME(Draw_2DImage);
+
+  if (!angle)
+    Extend2DBoxEdges(xpos, ypos, w, h, texture_id, s0, t0, s1, t1, r, g, b, a, z);
 
   xpos=(float)ScaleCoordX(xpos);
   ypos=(float)ScaleCoordY(ypos)-1.0f;
@@ -2046,7 +2064,7 @@ void CGLRenderer::SetLodBias(float value)
 ///////////////////////////////////////////
 void CGLRenderer::EnableVSync(bool enable)
 {
-#ifndef __linux
+#ifndef LINUX
   if (wglSwapIntervalEXT)
   {
     if (enable)
@@ -2239,7 +2257,7 @@ int CGLRenderer::SetPolygonMode(int mode)
 ///////////////////////////////////////////
 void CGLRenderer::SetPerspective(const CCamera &cam)
 {
-    gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
+    gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());    
 }
 
 ///////////////////////////////////////////
@@ -2249,7 +2267,7 @@ void CGLRenderer::SetCamera(const CCamera &cam)
   glLoadIdentity();
   // camera.fov is for horizontal -> GL needs it vertical
   // projection.ratio is height/width -> GL needs width/height
-  gluPerspective(cam.GetFov()/(gf_PI/180.0f)*cam.GetProjRatio(), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
+  gluPerspective(cam.GetVertFov()/(gf_PI/180.0f), 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
   glMatrixMode(GL_MODELVIEW);
 
   Matrix44 mat = cam.GetVCMatrixD3D9();
@@ -2264,53 +2282,13 @@ void CGLRenderer::SetViewport(int x, int y, int width, int height)
 {
   if (!x && !y && !width && !height)
   {
-#ifdef USE_SDL
-    if (m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Window)
-    {
-      int winW = 0, winH = 0;
-      SDL_GetWindowSizeInPixels(m_RContexts[0]->m_Window, &winW, &winH);
-      if (winW > 0 && winH > 0)
-      {
-        m_VWidth = m_width = winW;
-        m_VHeight = m_height = winH;
-      }
-    }
-#endif
-    int gl_y = m_VY;
-    if (!m_RP.m_bDrawToTexture && m_height > 0)
-    {
-      gl_y = m_height - m_VY - m_VHeight;
-      if (gl_y < 0) gl_y = 0;
-    }
     if(glViewport)
-      glViewport(m_VX, gl_y, m_VWidth, m_VHeight);
+      glViewport(m_VX, m_VY, m_VWidth, m_VHeight);
     return;
   }
 
-#ifdef USE_SDL
-  if (x == 0 && y == 0 && m_RContexts.Num() && m_RContexts[0] && m_RContexts[0]->m_Window)
-  {
-    int winW = 0, winH = 0;
-    SDL_GetWindowSizeInPixels(m_RContexts[0]->m_Window, &winW, &winH);
-    if (winW > 0 && winH > 0 && (width <= 0 || width == m_width || width == 800 || width == 1024))
-    {
-      width = winW;
-      height = winH;
-      m_width = winW;
-      m_height = winH;
-    }
-  }
-#endif
-
-  int gl_y = y;
-  if (!m_RP.m_bDrawToTexture && m_height > 0)
-  {
-    gl_y = m_height - y - height;
-    if (gl_y < 0) gl_y = 0;
-  }
-
   if(glViewport)
-    glViewport(x, gl_y, width, height);
+    glViewport(x, y, width, height);
 
   m_VX = x;
   m_VY = y;
@@ -2588,11 +2566,18 @@ void CGLRenderer::ScreenShot(const char *filename)
   if (!filename)
   {           
     strcpy(scname,"FarCry00.jpg");
+#ifdef __ANDROID__
+    char szDir[1024];
+    CryUserFile("screenshots", szDir, sizeof(szDir));
+    mkdir(szDir, 0755);
+    snprintf(scname, sizeof(scname), "%s/FarCry00.jpg", szDir);
+#endif
+    char *szDigits = scname + strlen(scname) - 6;
       
     for (i=0 ; i<=99 ; i++) 
     { 
-      scname[6] = i/10 + '0'; 
-      scname[7] = i%10 + '0'; 
+      szDigits[0] = i/10 + '0'; 
+      szDigits[1] = i%10 + '0'; 
       //if (!CXFile::FileExist(scname)) 
 			fp=fxopen(scname,"rb");
 			if (!fp)
@@ -2833,12 +2818,7 @@ void CGLRenderer::ResetToDefault()
 
   CPShader::m_CurRC = NULL;
   CVProgram::m_LastVP = NULL;
-  CVProgram::m_LastTypeVP = 0;
   CPShader::m_LastVP = NULL;
-  CPShader::m_LastTypeVP = 0;
-  m_RP.m_LastVP = NULL;
-  m_RP.m_CurVP = NULL;
-  m_RP.m_CurPS = NULL;
 }
 
 int CGLRenderer::GenerateAlphaGlowTexture(float k)

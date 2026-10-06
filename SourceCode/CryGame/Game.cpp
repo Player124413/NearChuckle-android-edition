@@ -740,8 +740,7 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 bool CXGame::Run(bool &bRelaunch)
 {
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
-	CryLogAlways("CXGame::Run: entered main game loop");
-
+	
 	if(m_bDedicatedServer)
 	{
 		return Update();
@@ -752,26 +751,12 @@ bool CXGame::Run(bool &bRelaunch)
 		m_bRelaunch=false;
 		while(1) 
 		{		
-			bool bUpdate = Update();
-			if (!bUpdate || (m_pSystem && m_pSystem->IsQuitting()) || m_bRelaunch) 
-			{
-				if ((m_pSystem && m_pSystem->IsQuitting()) || m_bRelaunch)
-				{
-					CryLogAlways("CXGame::Run: Exiting loop normally (IsQuitting=%d, bRelaunch=%d)", 
-						m_pSystem ? (int)m_pSystem->IsQuitting() : 0, (int)m_bRelaunch);
-					break;
-				}
-				else
-				{
-					CryLogAlways("CXGame::Run: Update() returned false but engine is NOT quitting (IsQuitting=0, bRelaunch=0)! Recovering and continuing loop.");
-					m_bUpdateRet = true;
-				}
-			}
+			if (!Update()) 
+				break;
 		}
 
 		bRelaunch=m_bRelaunch;
 	}
-	CryLogAlways("CXGame::Run: main loop exited, bRelaunch=%d", (int)bRelaunch);
 	return true;
 }
 
@@ -794,6 +779,201 @@ bool CXGame::IsInPause(IProcess *pProcess)
 	return (bPause);
 }
 
+#ifdef LINUX
+#include <SDL3/SDL.h>
+#include <deque>
+#include <unistd.h>
+#endif
+
+#ifdef __ANDROID__
+#include "farcry_bridge.h"
+
+// Touch input for this frame, drained every frame so nothing stale fires later.
+static FarCryTouchInput s_TouchInput;
+
+// Turn the drained touch state into client actions by name (docs/porting/phase2.md).
+static void ApplyTouchInput(CXClient* pClient, ISystem* pSystem)
+{
+	const FarCryTouchInput& in = s_TouchInput;
+	if (in.moveFwd != 0.0f)
+		pClient->OnAction(ACTION_MOVEFB, -in.moveFwd, etHolding); // negative is forward
+	if (in.moveSide != 0.0f)
+		pClient->OnAction(ACTION_MOVELR, in.moveSide, etHolding);
+
+	static const XACTIONID held[FC_HELD_COUNT] = {
+		ACTION_FIRE0, ACTION_JUMP, ACTION_MOVEMODE, ACTION_RUNSPRINT, ACTION_WALK,
+		ACTION_LEANLEFT, ACTION_LEANRIGHT, ACTION_FIRE_GRENADE };
+	for (int i = 0; i < FC_HELD_COUNT; i++)
+		if (in.held & (1u << i))
+			pClient->OnAction(held[i], 1.0f, etHolding);
+
+	for (int i = 0; i < in.impulseCount; i++)
+	{
+		int imp = in.impulses[i];
+		if (imp >= FC_IMP_WEAPON_0 && imp <= FC_IMP_WEAPON_0 + 8)
+		{
+			pClient->OnAction(ACTION_WEAPON_0 + (imp - FC_IMP_WEAPON_0), 1.0f, etPressing);
+			continue;
+		}
+		switch (imp)
+		{
+			case FC_IMP_USE:           pClient->OnAction(ACTION_USE, 1.0f, etPressing); break;
+			case FC_IMP_RELOAD:        pClient->OnAction(ACTION_RELOAD, 1.0f, etPressing); break;
+			case FC_IMP_FLASHLIGHT:    pClient->OnAction(ACTION_FLASHLIGHT, 1.0f, etPressing); break;
+			case FC_IMP_NEXT_WEAPON:   pClient->OnAction(ACTION_NEXT_WEAPON, 1.0f, etPressing); break;
+			case FC_IMP_PREV_WEAPON:   pClient->OnAction(ACTION_PREV_WEAPON, 1.0f, etPressing); break;
+			case FC_IMP_CROUCH_TOGGLE: pClient->OnAction(ACTION_MOVEMODE_TOGGLE, 1.0f, etPressing); break;
+			case FC_IMP_PRONE:         pClient->OnAction(ACTION_MOVEMODE2, 1.0f, etPressing); break;
+			case FC_IMP_ZOOM_TOGGLE:   pClient->OnAction(ACTION_ZOOM_TOGGLE, 1.0f, etPressing); break;
+			case FC_IMP_BINOCULARS:    pClient->OnAction(ACTION_ITEM_0, 1.0f, etPressing); break;
+			case FC_IMP_FIREMODE:      pClient->OnAction(ACTION_FIREMODE, 1.0f, etPressing); break;
+			case FC_IMP_CYCLE_GRENADE: pClient->OnAction(ACTION_CYCLE_GRENADE, 1.0f, etPressing); break;
+			case FC_IMP_DROP_WEAPON:   pClient->OnAction(ACTION_DROPWEAPON, 1.0f, etPressing); break;
+			case FC_IMP_CHANGE_VIEW:   pClient->OnAction(ACTION_CHANGE_VIEW, 1.0f, etPressing); break;
+			// Not in the action map; the F5/F6 triggers the client keeps for them.
+			case FC_IMP_QUICKSAVE:     pClient->TriggerQuickSave(1.0f, etPressing); break;
+			case FC_IMP_QUICKLOAD:     pClient->TriggerQuickLoad(1.0f, etPressing); break;
+			default: break;
+		}
+	}
+}
+#endif
+
+#ifdef LINUX
+
+// Development aid: FARCRY_DEVCMD=<file> drives the UI unattended. The file is read and deleted
+// whenever it appears, one line per frame: "mouse x y" (800x600 virtual screen), "click [x y]",
+// "key <SDL key name, _ for spaces> [frames]", "keydown/_keyup <name>", "wait n". Presses are held a frame, as CryInput samples once per frame.
+static SDL_Keycode DevKey(const char* szName)
+{
+	string sName(szName);
+	std::replace(sName.begin(), sName.end(), '_', ' ');
+	return SDL_GetKeyFromName(sName.c_str());
+}
+
+static void DevCmdUpdate(ISystem* pSystem, const char* szFile, CXGame* pGame)
+{
+	static std::deque<string> cmds;
+	static int nHold = 0;
+	if (FILE* f = fopen(szFile, "r"))
+	{
+		char line[256];
+		int nRead = 0;
+		while (fgets(line, sizeof(line), f))
+		{
+			size_t n = strlen(line);
+			while (n && (line[n - 1] == '\n' || line[n - 1] == '\r'))
+				line[--n] = 0;
+			if (n)
+				cmds.push_back(line), nRead++;
+		}
+		fclose(f);
+		// An empty file is one the writer has created but not filled yet.
+		if (nRead)
+			unlink(szFile);
+	}
+	if (nHold > 0)
+	{
+		nHold--;
+		return;
+	}
+	if (cmds.empty())
+		return;
+	string cmd = cmds.front();
+	cmds.pop_front();
+	IMouse* pMouse = pSystem->GetIInput() ? pSystem->GetIInput()->GetIMouse() : NULL;
+	char arg[64] = { 0 };
+	float x = 0, y = 0;
+	SDL_Event ev;
+	memset(&ev, 0, sizeof(ev));
+	if (sscanf(cmd.c_str(), "mouse %f %f", &x, &y) == 2 && pMouse)
+	{
+		pMouse->SetVScreenX(x);
+		pMouse->SetVScreenY(y);
+	}
+	else if (strncmp(cmd.c_str(), "click", 5) == 0)
+	{
+		if (sscanf(cmd.c_str(), "click %f %f", &x, &y) == 2 && pMouse)
+		{
+			pMouse->SetVScreenX(x);
+			pMouse->SetVScreenY(y);
+		}
+		ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+		ev.button.button = SDL_BUTTON_LEFT;
+		ev.button.down = true;
+		SDL_PushEvent(&ev);
+		cmds.push_front("_release");
+		nHold = 1;
+	}
+	else if (cmd == "_release")
+	{
+		ev.type = SDL_EVENT_MOUSE_BUTTON_UP;
+		ev.button.button = SDL_BUTTON_LEFT;
+		SDL_PushEvent(&ev);
+	}
+	else if (sscanf(cmd.c_str(), "keydown %63s", arg) == 1)
+	{
+		// Held until "_keyup <name>", so it can be combined with other keys.
+		ev.type = SDL_EVENT_KEY_DOWN;
+		ev.key.key = DevKey(arg);
+		ev.key.down = true;
+		SDL_PushEvent(&ev);
+		nHold = 1;
+	}
+	else if (sscanf(cmd.c_str(), "key %63s", arg) == 1)
+	{
+		ev.type = SDL_EVENT_KEY_DOWN;
+		ev.key.key = DevKey(arg);
+		ev.key.down = true;
+		SDL_PushEvent(&ev);
+		cmds.push_front(string("_keyup ") + arg);
+		nHold = sscanf(cmd.c_str(), "key %*s %f", &x) == 1 ? (int)x : 1;
+	}
+	else if (sscanf(cmd.c_str(), "_keyup %63s", arg) == 1)
+	{
+		ev.type = SDL_EVENT_KEY_UP;
+		ev.key.key = DevKey(arg);
+		SDL_PushEvent(&ev);
+	}
+	else if (sscanf(cmd.c_str(), "wait %f", &x) == 1)
+		nHold = (int)x;
+	else if (sscanf(cmd.c_str(), "hold %f", &x) == 1)
+	{
+		// Hold the left mouse button (fire in game) for n frames, without any touch traffic.
+		ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+		ev.button.button = SDL_BUTTON_LEFT;
+		ev.button.down = true;
+		SDL_PushEvent(&ev);
+		cmds.push_front("_release");
+		nHold = (int)x;
+	}
+	else if (sscanf(cmd.c_str(), "turn %f %f", &x, &y) == 2)
+	{
+		// Relative mouse motion in pixels (0.2 degrees each), the path the real mouse and the touch look use.
+		ev.type = SDL_EVENT_MOUSE_MOTION;
+		ev.motion.xrel = x;
+		ev.motion.yrel = y;
+		SDL_PushEvent(&ev);
+	}
+	else if (sscanf(cmd.c_str(), "look %f %f", &x, &y) == 2)
+	{
+		// Point the player's view (pitch, yaw), e.g. at the ground for decal tests.
+		if (pGame->GetMyPlayer()) pGame->GetMyPlayer()->SetAngles(Vec3(x, 0, y));
+	}
+	else if (strncmp(cmd.c_str(), "cmd ", 4) == 0)
+		pSystem->GetIConsole()->ExecuteString(cmd.c_str() + 4, false, true); // "#lua" and cheats regardless of devmode
+	else if (sscanf(cmd.c_str(), "env %63s %n", arg, &nHold) == 1)
+	{
+		// Set (or clear) one of the FARCRY_* development variables; the renderer re-reads FARCRY_SCREENSHOT_EVERY each frame.
+		const char* val = cmd.c_str() + nHold;
+		nHold = 0;
+		*val ? setenv(arg, val, 1) : unsetenv(arg);
+	}
+	pSystem->GetILog()->Log("DEVCMD: %s", cmd.c_str());
+	printf("DEVCMD: %s -> mouse %.0f %.0f\n", cmd.c_str(), pMouse ? pMouse->GetVScreenX() : -1.0f, pMouse ? pMouse->GetVScreenY() : -1.0f);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////
 //! update all game and children
 bool CXGame::Update()
@@ -803,6 +983,50 @@ bool CXGame::Update()
 		m_fDEBUG_STARTTIMER = m_pSystem->GetITimer()->GetAsyncCurTime();
 		m_nDEBUG_TIMING = 1;
 	}
+
+#ifdef LINUX
+	// Development aid: FARCRY_RESUME_FRAME=<n> drops the in-game menu once, at frame n, for
+	// unattended renderer captures; the menu can be reopened afterwards.
+	{
+		static int nResumeFrame = getenv("FARCRY_RESUME_FRAME") ? atoi(getenv("FARCRY_RESUME_FRAME")) : -1;
+		static int nFrame = 0;
+		static bool bResumed = false;
+		if (nResumeFrame > 0 && ++nFrame >= nResumeFrame && !bResumed && m_bMenuOverlay && !m_bEditor && m_pClient && m_pClient->IsConnected())
+		{
+			MenuOff();
+			bResumed = true;
+		}
+		// FARCRY_LOOK="pitch yaw": point the player's view there once gameplay is on screen, for captures.
+		static const char* szLook = getenv("FARCRY_LOOK");
+		if (szLook && nResumeFrame > 0 && nFrame == nResumeFrame + 200 && GetMyPlayer())
+		{
+			float fPitch = 0, fYaw = 0;
+			sscanf(szLook, "%f %f", &fPitch, &fYaw);
+			GetMyPlayer()->SetAngles(Vec3(fPitch, 0, fYaw));
+		}
+		// FARCRY_SKIP_CUTSCENES=1: keep stopping cutscenes once the menu is off (Training opens on one).
+		static bool bSkipCutScenes = getenv("FARCRY_SKIP_CUTSCENES") != NULL;
+		if (bSkipCutScenes && nResumeFrame > 0 && nFrame > nResumeFrame && (nFrame % 30) == 0)
+			m_pSystem->GetIMovieSystem()->StopAllCutScenes();
+		// FARCRY_QUIT_FRAME=<n>: clean shutdown at frame n, so logs and reports are flushed.
+		static int nQuitFrame = getenv("FARCRY_QUIT_FRAME") ? atoi(getenv("FARCRY_QUIT_FRAME")) : -1;
+		if (nQuitFrame > 0 && nFrame >= nQuitFrame && !m_pSystem->IsQuitting())
+			m_pSystem->Quit();
+		static const char* szDevCmd = getenv("FARCRY_DEVCMD");
+		if (szDevCmd)
+			DevCmdUpdate(m_pSystem, szDevCmd, this);
+	}
+#endif
+
+#ifdef __ANDROID__
+	{
+		bool bInGame = !m_bMenuOverlay && !m_bEditor && m_pClient && m_pClient->IsConnected();
+		FarCry_ReportScreenMode(bInGame, m_pSystem->GetIConsole()->GetStatus());
+		FarCry_DrainTouchInput(&s_TouchInput, m_pSystem->GetITimer()->GetFrameTime());
+		if (!bInGame)
+			s_TouchInput.impulseCount = 0;
+	}
+#endif
 
 	if (!m_bEditor)
 	{
@@ -837,13 +1061,20 @@ bool CXGame::Update()
 //		float	extraTime = pTimer->GetAsyncCurTime() + 1.0f/maxFPS - pTimer->GetFrameTime();
 //		while(extraTime - pTimer->GetAsyncCurTime() > 0)
 //			;
-		DWORD	extraTime = (DWORD)((1.0f/maxFPS - pTimer->GetFrameTime())*1000.0f);
 #if !defined(LINUX)
+		DWORD	extraTime = (DWORD)((1.0f/maxFPS - pTimer->GetFrameTime())*1000.0f);
 		if(extraTime>0&&extraTime<300)//thread sleep not process sleep
 			Sleep(extraTime);
 #else
-		if(extraTime > 0 && extraTime < 300)
-			SDL_Delay(extraTime);
+		// Pace against a running deadline: the frame time already includes the previous sleep, so
+		// sleeping "budget minus frame time" alternates between sleeping and not, landing near 2x the cap.
+		static Uint64 nNextFrame = 0;
+		Uint64 nNow = SDL_GetTicksNS(), nPeriod = (Uint64)(1.0e9 / maxFPS);
+		if (nNextFrame == 0 || nNow > nNextFrame + nPeriod)
+			nNextFrame = nNow;
+		else if (nNow < nNextFrame)
+			SDL_DelayNS(nNextFrame - nNow);
+		nNextFrame += nPeriod;
 #endif
 	}
 
@@ -868,16 +1099,7 @@ bool CXGame::Update()
 	//bool bPause=false;
 	IProcess *pProcess=m_pSystem->GetIProcess();
 	if (!pProcess)
-	{
-		CryLogAlways("CXGame::Update: pProcess was NULL, restoring m_p3DEngine");
-		m_pSystem->SetIProcess(m_p3DEngine);
-		pProcess = m_pSystem->GetIProcess();
-		if (!pProcess)
-		{
-			CryLogAlways("CXGame::Update: pProcess still NULL, continuing frame");
-			return true;
-		}
-	}
+		return false;
 
 	bool bPause=IsInPause(pProcess);
 	if (m_bIsLoadingLevelFromFile)
@@ -923,19 +1145,13 @@ bool CXGame::Update()
 		fov = pVarFOV->GetFVal();
 	}
 	
+	// The multiplayer flag selects fixed-step (g_MP_fixed_timestep) physics with catch-up and no
+	// interpolation: rigid bodies then move in 10 ms quanta, visible as vehicle jitter. Only the
+	// networked game needs that determinism; single player steps physics by the frame time.
 	if (!m_pSystem->Update(
-#if 1
-		ESYSUPDATE_MULTIPLAYER,
-#else
 		IsMultiplayer() ? ESYSUPDATE_MULTIPLAYER:0,
-#endif
 		nPauseMode)) //Update returns false when quitting
-	{
-		CryLogAlways("CXGame::Update: m_pSystem->Update returned false (IsQuitting=%d)", (int)m_pSystem->IsQuitting());
-		if (m_pSystem->IsQuitting())
-			return (false);
-		return true;
-	}
+		return (false);
 
 	if (pVarFOV)
 	{
@@ -982,6 +1198,10 @@ bool CXGame::Update()
 			pTimer->MeasureTime("Net");
 
 			assert(m_pClient);
+#ifdef __ANDROID__
+			if (!m_bMenuOverlay && !m_bEditor && m_pClient->IsConnected())
+				ApplyTouchInput(m_pClient, m_pSystem);
+#endif
 			m_pClient->Update();
 			
 			if(m_pClient->DestructIfMarked())			//  to make sure the client is only released in one place - here
@@ -1043,8 +1263,8 @@ bool CXGame::Update()
 		FRAME_PROFILER( "GameUpdate:HUD",m_pSystem,PROFILE_GAME );
 
 		// update hud itself
-		if (m_pCurrentUI)
-			m_pCurrentUI->Update();
+		if(!m_pCurrentUI->Update())
+			m_bUpdateRet = false;
 
     // update ingame-dialog-manager
 		if (m_pIngameDialogMgr)
@@ -1119,7 +1339,6 @@ bool CXGame::Update()
 		{
 			string smsg=m_qMessages.front();
 			m_qMessages.pop();
-			CryLogAlways("CXGame: Processing PMessage '%s'", smsg.c_str());
 			ProcessPMessages(smsg.c_str());		
 		}
 
@@ -1146,7 +1365,6 @@ bool CXGame::Update()
 	{
 		if (!DevModeUpdate())
 		{
-			CryLogAlways("CXGame::Update: DevModeUpdate() returned false");
 			return false;
 		}
 	}
@@ -1161,12 +1379,6 @@ bool CXGame::Update()
 	// End Profiling Frame
 	m_pSystem->GetIProfileSystem()->EndFrame();
 	//////////////////////////////////////////////////////////////////////////
-
-	if (!m_bUpdateRet && (m_pSystem && !m_pSystem->IsQuitting()) && !m_bRelaunch)
-	{
-		CryLogAlways("CXGame::Update: m_bUpdateRet was false without quit/relaunch request, recovering to true");
-		m_bUpdateRet = true;
-	}
 
 	return (m_bUpdateRet);
 }
@@ -1233,8 +1445,6 @@ void CXGame::ProcessPMessages(const char *szMsg)
 	if (!szMsg) 
 		return;
 
-	CryLogAlways("CXGame::ProcessPMessages: message='%s'", szMsg);
-
 	if ((stricmp(szMsg,"EndDemo") == 0) || (stricmp(szMsg,"EndDemoQuit") == 0))	// used for demos (e3, magazine demos)
 	{ 
 		ITexPic * pPic = m_pRenderer->EF_LoadTexture("Textures/end_screen.dds", FT_NORESIZE, 0, eTT_Base);
@@ -1261,8 +1471,6 @@ void CXGame::ProcessPMessages(const char *szMsg)
 		if (stricmp(szMsg,"EndDemoQuit") == 0)
 		{
 			m_bUpdateRet = false;
-			if (m_pSystem)
-				m_pSystem->Quit();
 		}
 		else
 		{
@@ -1271,12 +1479,9 @@ void CXGame::ProcessPMessages(const char *szMsg)
 		return;
 	}
 	else
-	if ((stricmp(szMsg,"Quit-Yes") == 0) || (stricmp(szMsg,"Quit") == 0))	// quit message
+	if (stricmp(szMsg,"Quit-Yes") == 0)	// quit message
 	{
-		CryLogAlways("CXGame::ProcessPMessages: Quitting game via '%s'", szMsg);
 		m_bUpdateRet = false;
-		if (m_pSystem)
-			m_pSystem->Quit();
 		return;
 	}
 	else
@@ -1309,16 +1514,12 @@ void CXGame::ProcessPMessages(const char *szMsg)
 			// if this is a singleplayer game, and the player is alive, we can go back to game
 			// otherwise, if this is not multiplayer game and the player is dead, it is locked in the menu
 			// also, the client must not be loading, or waiting to connect
-			if (m_bMapLoadedFromCheckpoint || (m_pClient && m_pClient->IsConnected() && m_pUISystem->GetScriptObjectUI()->CanSwitch(0)))
+			if (m_pClient && m_pClient->IsConnected() && m_pUISystem->GetScriptObjectUI()->CanSwitch(0))
 			{
-				if (m_bMapLoadedFromCheckpoint || IsMultiplayer() || (!pPlayer || pPlayer->m_stats.health > 0))
+				if (IsMultiplayer() || (!pPlayer || pPlayer->m_stats.health > 0))
 				{
 					MenuOff();
 				}
-			}
-			else if (m_bMapLoadedFromCheckpoint)
-			{
-				SendMessage("Switch");
 			}
 		}	
 		else if (m_pUISystem->GetScriptObjectUI()->CanSwitch(1))
@@ -1341,9 +1542,15 @@ void CXGame::ProcessPMessages(const char *szMsg)
 	{
 		if (m_bMenuOverlay)				// we're in menu-mode; switch to game
 		{
-			if (m_pClient && m_pClient->IsConnected())
+			if (m_pClient)
 			{
 				MenuOff();
+			}
+			else if(!IsMultiplayer())
+			{
+				// there's no game, so lets quit...
+				// exit from game-must be prompted with "Are you Sure?"
+				m_pSystem->Quit();
 			}
 		}	
 	}
@@ -1514,7 +1721,7 @@ void CXGame::ProcessPMessages(const char *szMsg)
 //	}
 }
 
-#ifdef __linux
+#ifdef LINUX
 string CXGame::GetCorrectedLevelPath(string in)
 {
 	string ret;
@@ -1591,18 +1798,9 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 		m_pSystem->GetILog()->Log("UISystem: Enabled 3D Engine!");
 	}
 
-	if (m_pSystem->GetIMusicSystem())
-	{
-		m_pSystem->GetIMusicSystem()->Silence();
-	}
-	if (m_pSystem->GetISoundSystem())
-	{
-		m_pSystem->GetISoundSystem()->Silence();
-	}
 
 	if (m_pSystem->GetIMovieSystem())
 		m_pSystem->GetIMovieSystem()->StopAllCutScenes();
-	DeleteMessage("EndCutScene");
 	//m_lstPlayedCutScenes.clear();
 
 	bool bDedicated=GetSystem()->IsDedicated();
@@ -1618,7 +1816,7 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 	{
 		// This is just a map name, not a folder.
 		sLevelFolder = GetLevelsFolder() + "/" + sLevelFolder;
-#ifdef __linux
+#ifdef LINUX
 		DIR *fdir;
 
 		fdir = opendir(sLevelFolder.c_str());
@@ -1934,18 +2132,6 @@ void CXGame::MenuOn()
 //////////////////////////////////////////////////////////////////////////
 void CXGame::MenuOff()
 {
-	if (m_pUISystem && m_pUISystem->IsEnabled())
-	{
-		m_pUISystem->StopAllVideo();
-		m_pSystem->GetIInput()->RemoveEventListener(m_pUISystem);
-		m_pSystem->GetIInput()->ClearKeyState();
-		m_pUISystem->GetScriptObjectUI()->OnSwitch(0);
-
-		if (GetMyPlayer())
-			m_XAreaMgr.ReTriggerArea(GetMyPlayer(), GetMyPlayer()->GetPos(),false);
-		//					m_XAreaMgr.ReTriggerArea(GetMyPlayer(), m_pSystem->GetISoundSystem()->GetListenerPos(),false);
-	}
-
 	// resume sounds and timers affected by game pause
 	ISoundSystem* snd = m_pSystem->GetISoundSystem();
 	IMusicSystem* mus = m_pSystem->GetIMusicSystem();
@@ -1960,8 +2146,19 @@ void CXGame::MenuOff()
 
 	m_pScriptTimerMgr->Pause(false);
 
+
+	if (m_pUISystem && m_pUISystem->IsEnabled())
+	{
+		m_pSystem->GetIInput()->RemoveEventListener(m_pUISystem);
+		m_pSystem->GetIInput()->ClearKeyState();
+		m_pUISystem->GetScriptObjectUI()->OnSwitch(0);
+
+		if (GetMyPlayer())
+			m_XAreaMgr.ReTriggerArea(GetMyPlayer(), GetMyPlayer()->GetPos(),false);
+		//					m_XAreaMgr.ReTriggerArea(GetMyPlayer(), m_pSystem->GetISoundSystem()->GetListenerPos(),false);
+	}
+
 	m_bMenuOverlay = 0;
-	m_bMapLoadedFromCheckpoint = false;
 
 	m_pSystem->SetIProcess(m_p3DEngine);
 	m_pSystem->GetIProcess()->SetFlags(PROC_3DENGINE);
@@ -2150,9 +2347,64 @@ ITagPointManager* CXGame::GetTagPointManager()
 	return m_pTagPointManager;
 }
 
+#ifdef __ANDROID__
+// First run: copy the game folder's Profiles/Player (default profile, its checkpoint saves and
+// cfgs) into the user folder, so the profile screen has something to show.
+static void CopyTree(const string& sSrc, const string& sDst)
+{
+	mkdir(sDst.c_str(), 0755);
+	DIR* pDir = opendir(sSrc.c_str());
+	if (!pDir)
+		return;
+	while (struct dirent* d = readdir(pDir))
+	{
+		if (d->d_name[0] == '.')
+			continue;
+		string sFrom = sSrc + "/" + d->d_name, sTo = sDst + "/" + d->d_name;
+		// FUSE storage reports DT_UNKNOWN, so ask stat.
+		struct stat st;
+		if (d->d_type == DT_DIR || (d->d_type == DT_UNKNOWN && stat(sFrom.c_str(), &st) == 0 && S_ISDIR(st.st_mode)))
+		{
+			CopyTree(sFrom, sTo);
+			continue;
+		}
+		FILE* fIn = fopen(sFrom.c_str(), "rb");
+		if (!fIn)
+			continue;
+		if (FILE* fOut = fopen(sTo.c_str(), "wb"))
+		{
+			char buf[65536];
+			size_t n;
+			while ((n = fread(buf, 1, sizeof(buf), fIn)) > 0)
+				fwrite(buf, 1, n, fOut);
+			fclose(fOut);
+		}
+		fclose(fIn);
+	}
+	closedir(pDir);
+}
+#endif
+
 string CXGame::GetPlayerProfilePath()
 {
-#ifdef __linux
+#ifdef __ANDROID__
+	static string sProfiles;
+	if (sProfiles.empty())
+	{
+		char szPath[1024];
+		CryUserFile("Profiles/Player/", szPath, sizeof(szPath));
+		sProfiles = szPath;
+		m_pSystem->GetIPak()->MakeDir(szPath); // nested; CopyTree's mkdir is not
+		struct stat st;
+		char szSrc[1024];
+		if (stat((sProfiles + "default").c_str(), &st) != 0 && casepath("Profiles/Player", szSrc))
+		{
+			printf("Seeding player profiles from %s\n", szSrc);
+			CopyTree(szSrc, sProfiles.substr(0, sProfiles.length() - 1));
+		}
+	}
+	return sProfiles;
+#elif defined(LINUX)
 	DIR *fdir;
 	int found_profiles = 0;
 	int found_player = 0;

@@ -10,6 +10,7 @@ endif()
 
 set(SRC_FILES
     "AdvCamSystem.cpp"
+    "AimAssist.cpp"
     "AIHandler.cpp"
     "BitStream_Base.cpp"
     "BitStream_Compressed.cpp"
@@ -108,6 +109,7 @@ else()
 set(SRC_FILES ${SRC_FILES} 
 "UIVideoBinkDec.cpp"
 "libbinkdec/src/BinkAudio.cpp"
+"libbinkdec/src/BinkAudio.cpp"
 "libbinkdec/src/BinkDecoder.cpp"
 "libbinkdec/src/BinkVideo.cpp"
 "libbinkdec/src/BitReader.cpp"
@@ -130,12 +132,12 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/SourceCode/BinkSDK
+    ${farcry_SOURCE_DIR}/SourceCode/BinkSDK
 )
 
 if (MSVC)
@@ -146,5 +148,10 @@ else()
 if (NOT DISABLE_FFMPEG)
 target_link_libraries(${PROJECT_NAME} PRIVATE avutil avformat swscale)
 endif()
-target_link_libraries(${PROJECT_NAME} PRIVATE CrySoundSystem)
+if (ANDROID)
+# CS_Stream_* live in CrySoundSystem; the Android linker resolves nothing lazily.
+# farcry (the launcher) carries the touch input bridge, farcry_bridge.h.
+target_link_libraries(${PROJECT_NAME} PRIVATE CrySoundSystem farcry)
+target_include_directories(${PROJECT_NAME} PRIVATE ${farcry_SOURCE_DIR}/SourceCode/FARCRY/mobile)
+endif()
 endif()

@@ -16,7 +16,6 @@
 #define _CRY_COMMON_LINUX_SPECIFIC_HDR_
 
 #include <stdint.h>
-#include <stddef.h>
 #include <pthread.h>
 #include <math.h>
 #include <string.h>
@@ -86,7 +85,7 @@ inline int IsHeapValid ()
 #define TEXT
 
 #ifndef __cplusplus
-#if !defined(_WCHAR_T_DEFINED) && !defined(__WCHAR_TYPE__) && !defined(__ANDROID__)
+#if !defined(_WCHAR_T_DEFINED) && !defined(__APPLE__) && !defined(__ANDROID__)
 typedef unsigned short wchar_t;
 #define TCHAR wchar_t;
 #define _WCHAR_T_DEFINED
@@ -200,16 +199,40 @@ typedef struct in_addr_windows
 //#define __TIMESTAMP__ __DATE__" "__TIME__
 
 // function renaming
-#ifdef __cplusplus
-#include <cmath>
-#define _finite std::isfinite
-#define _isnan std::isnan
-#else
-#include <math.h>
+#ifdef __APPLE__
 #define _finite isfinite
-#define _isnan isnan
+#define stat64 stat
+#define fstat64 fstat
+#elif defined(__ANDROID__)
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+// Sigma Touch: everything the game writes lives under $USER_FILES/farcry, never in the
+// game folder (docs/porting/phase2.md). Without USER_FILES it falls back to the cwd.
+inline const char* CryUserDir()
+{
+	static char szDir[1024];
+	if (!szDir[0])
+	{
+		const char* szUser = getenv("USER_FILES");
+		snprintf(szDir, sizeof(szDir), "%s/farcry", szUser && szUser[0] ? szUser : ".");
+		mkdir(szDir, 0755);
+	}
+	return szDir;
+}
+inline const char* CryUserFile(const char* szRelative, char* szOut, size_t nOut)
+{
+	snprintf(szOut, nOut, "%s/%s", CryUserDir(), szRelative);
+	return szOut;
+}
+// bionic has no __finite
+#define _finite isfinite
+#define __finite isfinite
+#else
+#define _finite __finite
 #endif
 #define _snprintf snprintf
+#define _isnan isnan
 #define stricmp strcasecmp
 #define _stricmp strcasecmp
 #define strnicmp strncasecmp
@@ -328,7 +351,7 @@ typedef struct
 #pragma pack(pop) // Re-enable default padding settings
 
 #ifdef __cplusplus
-	static pthread_mutex_t mutex_t;
+	static pthread_mutex_t mutex_t = PTHREAD_MUTEX_INITIALIZER;
 	template<typename T>
 	const volatile T InterlockedIncrement(volatile T* pT)
 	{
@@ -362,7 +385,7 @@ typedef struct
 		CHandle(const HandleType cHandle = U) : m_Value(cHandle){}
 		CHandle(const PointerType cpHandle) : m_Value((HandleType)(intptr_t)(cpHandle)){}
 		CHandle(INVALID_HANDLE_VALUE_ENUM) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
-#if defined(LINUX64)
+#if defined(LINUX64) && defined(__LP64__)
 		//treat __null tyope also as invalid handle type
 		CHandle(typeof(__null)) : m_Value(U){}//to be able to use a common value for all InvalidHandle - types
 #endif

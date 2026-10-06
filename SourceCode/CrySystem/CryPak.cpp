@@ -32,7 +32,11 @@
 #endif
 
 #ifdef LINUX
+#ifdef __ANDROID__
 #include <dirent.h>
+#else
+#include <sys/dir.h>
+#endif
 #include <unistd.h>
 #else
 #	include <direct.h>
@@ -57,7 +61,7 @@ m_pPakVars (pPakVars?pPakVars:&g_PakVars),
 m_mapMissingFiles ( std::less<const string>(), MissingFileMapAllocator(g_pBigHeap) )
 {
 	char szCurrentDir[0x800];
-#ifndef __linux
+#ifndef LINUX
 	if (GetCurrentDirectory(sizeof(szCurrentDir), szCurrentDir))
 #else
 	if (getcwd( szCurrentDir, sizeof(szCurrentDir) ))
@@ -206,7 +210,7 @@ char* CCryPak::BeautifyPath(char* dst)
 	return q;
 }
 
-#ifdef __linux
+#ifdef LINUX
 const char* CCryPak::AdjustFileName(const char *src, char *dst, unsigned nFlags,bool *bFoundInPak)
 {
 	char* rp;
@@ -739,7 +743,7 @@ CCachedFileDataPtr CCryPak::GetFileData(const char* szName)
 		{
 			//const char	*szDebug1=itZip->strBindRoot.c_str();
 			//const char	*szDebug2=itZip->pZip->GetFilePath();
-#ifdef __linux
+#ifdef LINUX
 			if (*(szName+nBindRootLen) == '/')
 			{
 				nBindRootLen++;
@@ -1004,7 +1008,7 @@ const char *GetExtension (const char *in);
 #endif //_XBOX
 
 //////////////////////////////////////////////////////////////////////////
-#ifndef __linux
+#ifndef LINUX
 intptr_t CCryPak::FindFirst(const char *pDir, struct _finddata_t *fd)
 #else
 intptr_t CCryPak::FindFirst(const char *pDir, struct dirent *fd)
@@ -1043,7 +1047,7 @@ intptr_t CCryPak::FindFirst(const char *pDir, struct dirent *fd)
 }
 
 //////////////////////////////////////////////////////////////////////////
-#ifndef __linux
+#ifndef LINUX
 int CCryPak::FindNext(intptr_t handle, struct _finddata_t *fd)
 #else
 int CCryPak::FindNext(intptr_t handle, struct dirent *fd)
@@ -1086,7 +1090,7 @@ bool CCryPak::OpenPack(const char *szPath, unsigned nFlags)
 
 	const char *szFullPath = AdjustFileName(szPath, szFullPathBuf, nFlags|FLAGS_IGNORE_MOD_DIRS);
 	string strBindRoot;
-#ifndef __linux
+#ifndef LINUX
 	const char *pLastSlash = strrchr(szFullPath, g_cNativeSlash);
 #else
 	const char *pLastSlash = strrchr(szFullPath, g_cNonNativeSlash);
@@ -1179,7 +1183,7 @@ bool CCryPak::OpenPacks(const char* szBindRoot, const char *pWildcardIn, unsigne
 	return OpenPacksCommon(pBindRoot, cWorkBuf, nFlags);
 }
 
-#ifndef __linux
+#ifndef LINUX
 bool CCryPak::OpenPacksCommon(const char* szDir, char *cWork, unsigned nFlags)
 {
 	__finddata64_t fd;
@@ -1654,7 +1658,7 @@ void CCryPakFindData::ScanFS(CCryPak*pPak, const char *szDirIn)
 {
 	//char cWork[CCryPak::g_nMaxPath];
 	//pPak->AdjustFileName(szDirIn, cWork);
-#ifndef __linux
+#ifndef LINUX
 	__finddata64_t fd;
 #ifdef WIN64
 	memset (&fd, 0, sizeof(fd));
@@ -1809,7 +1813,7 @@ bool CCryPakFindData::empty() const
 	return m_mapFiles.empty();
 }
 
-#ifndef __linux
+#ifndef LINUX
 bool CCryPakFindData::Fetch(_finddata_t* pfd)
 {
 	if (m_mapFiles.empty())
@@ -1870,7 +1874,7 @@ CCryPakFindData::FileDesc::FileDesc (struct __finddata64_t* fd)
 	tWrite  = (time_t)fd->time_write;
 }
 
-#ifdef __linux
+#ifdef LINUX
 CCryPakFindData::FileDesc::FileDesc (struct dirent* fd)
 {
 	nSize   = 0;
@@ -1945,7 +1949,7 @@ size_t CCryPakFindData::sizeofThis()const
 
 bool CCryPak::MakeDir(const char* szPath)
 {
-#ifdef __linux
+#ifdef LINUX
 	struct stat st;
 #endif
 	for (const char*p = szPath; *p; )
@@ -1955,7 +1959,7 @@ bool CCryPak::MakeDir(const char* szPath)
 
 		string strSubdir(szPath, p - szPath);
 		// check whether such file or dir exists
-#ifndef __linux
+#ifndef LINUX
 		DWORD dwAttr = GetFileAttributes(strSubdir.c_str());
 #else
 		int dwAttr = stat(strSubdir.c_str(), &st);
@@ -1965,7 +1969,7 @@ bool CCryPak::MakeDir(const char* szPath)
 			// this is the disk specification - do nothing, the disk should already exist
 		}
 		else
-#ifndef __linux
+#ifndef LINUX
 			if (dwAttr == INVALID_FILE_ATTRIBUTES)
 			{
 				if (_mkdir (strSubdir.c_str()))
@@ -1979,7 +1983,7 @@ bool CCryPak::MakeDir(const char* szPath)
 			}
 #endif
 			else
-#ifndef __linux
+#ifndef LINUX
 				if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
 #else
 				if (S_ISDIR(st.st_mode ))

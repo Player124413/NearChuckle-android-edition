@@ -1,12 +1,8 @@
 project(XRenderOGL)
 
-add_definitions(-DENABLE_FRAME_PROFILER -DOPENGL -D_USRDLL -DXRENDEROGL_EXPORTS -DDO_RENDERLOG -DDO_RENDERSTATS -D_RENDERER -DUSE_3DC)
+add_definitions(-DENABLE_FRAME_PROFILER -DPROC_INTEL -DOPENGL -D_USRDLL -DXRENDEROGL_EXPORTS -DDO_RENDERLOG -DDO_RENDERSTATS -D_RENDERER -DUSE_3DC)
 if (${ARCH_TYPE} STREQUAL "x86")
-    add_definitions(-DPROC_INTEL -DDO_ASM)
-endif()
-
-if (ANDROID)
-    set(DISABLE_CG ON)
+    add_definitions(-DDO_ASM)
 endif()
 
 option(DISABLE_CG "DISABLE CG Compiler shaders" OFF)
@@ -87,7 +83,6 @@ set(SRC_FILES
     "GLCGVProgram.cpp"
     "GLFont.cpp"
     "GLHelper.cpp"
-    "GLUCompat.cpp"
     "GLLog.cpp"
     "GLObjSprites.cpp"
     "GLPBuffer.cpp"
@@ -157,13 +152,14 @@ else() #x64
     )
 endif()
 
+if (NOT ANDROID)
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
-    ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll
-    ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll/Common/Shaders
+    ${farcry_SOURCE_DIR}/SourceCode/CryCommon
+    ${farcry_SOURCE_DIR}/SourceCode/RenderDll
+    ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Common/Shaders
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE
@@ -180,13 +176,8 @@ if (MSVC)
         "cg.lib"
         "cgGL.lib"
     )
-elseif (ANDROID)
-    set(SYSTEM_DEPS
-        SDL3
-        log
-        dl
-        m
-    )
+elseif (APPLE)
+    set(SYSTEM_DEPS "-framework OpenGL")
 else()
     set(SYSTEM_DEPS
         GLU
@@ -200,3 +191,20 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ARCH_LIBS}
     ${SYSTEM_DEPS}
 )
+endif() # NOT ANDROID
+
+# OpenGL ES 3.0 build of the same renderer, routed through GLES/ (see GLES-PORT-PLAN.md).
+if (NOT MSVC)
+    add_library(XRenderGLES SHARED ${SRC_FILES} GLES/gles_layer.cpp GLES/gles_glu.cpp GLES/gles_native.cpp GLES/gles_state.cpp GLES/gles_texture.cpp GLES/gles_vertex.cpp GLES/gles_ffp.cpp GLES/gles_arb.cpp GLES/gles_arb_translate.cpp GLES/gles_query.cpp GLES/gles_dxt.cpp GLES/gles_fbo.cpp)
+    target_compile_definitions(XRenderGLES PRIVATE GLES_RENDERER DISABLE_CG)
+    target_include_directories(XRenderGLES PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${farcry_SOURCE_DIR}/SourceCode/CryCommon
+        ${farcry_SOURCE_DIR}/SourceCode/RenderDll
+        ${farcry_SOURCE_DIR}/SourceCode/RenderDll/Common/Shaders
+    )
+    target_link_libraries(XRenderGLES PRIVATE ${ARCH_LIBS} SDL3)
+    if (ANDROID)
+        target_link_libraries(XRenderGLES PRIVATE log)
+    endif()
+endif()

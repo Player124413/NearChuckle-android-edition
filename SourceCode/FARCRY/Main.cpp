@@ -13,20 +13,18 @@
 
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 
-#ifndef __linux
+#ifndef LINUX
 #include <SDL.h>
 #else
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 #endif
-
-#include <locale.h>
 
 #ifdef WIN32
 #include <windows.h>
 #include <process.h>
 #else
 #include <unistd.h>
+#include <locale.h>
 #include "CryLibrary.h"
 #endif
 
@@ -44,10 +42,10 @@ void AuthCheckFunction( void *data )
 	// key is 128bit:  int key[4] = {n1,n2,n3,n4};
 	// void encipher(unsigned int *const v,unsigned int *const w,const unsigned int *const k )
 #define TEA_ENCODE( src,trg,len,key ) {\
-	register unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
-	register unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
+	unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
+	unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
 	while (nlen--) {\
-	register unsigned int y=v[0],z=v[1],n=32,sum=0; \
+	unsigned int y=v[0],z=v[1],n=32,sum=0; \
 	while(n-->0) { sum += delta; y += (z << 4)+a ^ z+sum ^ (z >> 5)+b; z += (y << 4)+c ^ y+sum ^ (y >> 5)+d; } \
 	w[0]=y; w[1]=z; v+=2,w+=2; }}
 
@@ -56,10 +54,10 @@ void AuthCheckFunction( void *data )
 	// key is 128bit: int key[4] = {n1,n2,n3,n4};
 	// void decipher(unsigned int *const v,unsigned int *const w,const unsigned int *const k)
 #define TEA_DECODE( src,trg,len,key ) {\
-	register unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
-	register unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
+	unsigned int *v = (src), *w = (trg), *k = (key), nlen = (len) >> 3; \
+	unsigned int delta=0x9E3779B9,a=k[0],b=k[1],c=k[2],d=k[3]; \
 	while (nlen--) { \
-	register unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32; \
+	unsigned int y=v[0],z=v[1],sum=0xC6EF3720,n=32; \
 	while(n-->0) { z -= (y << 4)+c ^ y+sum ^ (y >> 5)+d; y -= (z << 4)+a ^ z+sum ^ (z >> 5)+b; sum -= delta; } \
 	w[0]=y; w[1]=z; v+=2,w+=2; }}
 
@@ -104,20 +102,10 @@ void AuthCheckFunction( void *data )
 //
 
 static ISystem *g_pISystem=NULL;
-
-ISystem* GetISystem()
-{
-	return g_pISystem;
-}
-
 static bool g_bSystemRelaunch = false;
 static char szMasterCDFolder[_MAX_PATH];
 
-#ifdef WIN32
-static void* g_hSystemHandle=NULL;
-#else
 static SDL_SharedObject* g_hSystemHandle=NULL;
-#endif
 #ifdef _WIN32
 #define DLL_SYSTEM "CrySystem.dll"
 #define DLL_GAME	 "CryGame.dll"
@@ -176,7 +164,7 @@ char * getenv( const char *varname )
 
 void SetMasterCDFolder()
 {
-#ifndef __linux
+#ifndef LINUX
 	char szExeFileName[_MAX_PATH];
 	// Get the path of the executable
 	GetModuleFileName( GetModuleHandle(NULL), szExeFileName, sizeof(szExeFileName));
@@ -193,28 +181,12 @@ void SetMasterCDFolder()
 	SetCurrentDirectory( path_buffer );
 	GetCurrentDirectory( sizeof(szMasterCDFolder),szMasterCDFolder );
 #elif defined(__ANDROID__)
-	const char* pDataDir = getenv("FARCRY_DATA_DIR");
-	if (pDataDir && strlen(pDataDir) > 0)
-	{
-		strncpy(szMasterCDFolder, pDataDir, sizeof(szMasterCDFolder) - 1);
-		szMasterCDFolder[sizeof(szMasterCDFolder) - 1] = '\0';
-		chdir(szMasterCDFolder);
-	}
-	else
-	{
-		getcwd(szMasterCDFolder, sizeof(szMasterCDFolder));
-	}
-	const char* pModPath = getenv("MODULE_PATH");
-	if (pModPath && strlen(pModPath) > 0)
-	{
-		SetModulePath(pModPath);
-	}
-	// Automatically delete system.cfg as requested by user because it breaks mobile game
-	remove("system.cfg");
-	remove("System.cfg");
-	remove("SYSTEM.CFG");
-	remove("SystemCfgOverride.Cfg");
-	remove("systemcfgoverride.cfg");
+	// The modules live in the APK's native library dir and the host has already
+	// chdir()ed into the game folder, so no "../" hop: cwd is the root.
+	extern const char *nativeLibsPath;
+	string modulePath = string(nativeLibsPath ? nativeLibsPath : ".") + "/";
+	SetModulePath(modulePath.c_str());
+	getcwd(szMasterCDFolder, sizeof(szMasterCDFolder));
 #else
 	char* last_slash;
 	char dll_path[_MAX_PATH];
@@ -298,13 +270,13 @@ void CheckFarCryCD( HINSTANCE hInstance ) {};
 #endif // FARCRY_CD_CHECK_RUSSIAN
 
 ///////////////////////////////////////////////
-#ifdef __ANDROID__
-extern "C" SDLMAIN_DECLSPEC int SDL_main(int argc, char* argv[])
-#elif !defined(__linux) && !defined(__linux__)
+#ifndef LINUX
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
+#elif defined(__ANDROID__)
+int FarCry_AndroidMain(int argc, char** argv)
 #else
 int main(int argc, char** argv)
 #endif
@@ -323,7 +295,7 @@ int main(int argc, char** argv)
   // [marco] If a previous instance is running, activate
   // the old one and terminate the new one, depending
 	// on command line devmode status
-#ifndef __linux
+#ifndef LINUX
   HWND hwndPrev;
 	static char szWndClass[] = "CryENGINE";
 	bool bDevMode=false;
@@ -350,7 +322,7 @@ int main(int argc, char** argv)
 		}
 	}
 #endif
-#ifndef __linux
+#ifndef LINUX
 	CheckFarCryCD(hInstance);
 #endif
 	SetMasterCDFolder();
@@ -364,7 +336,7 @@ int main(int argc, char** argv)
 #endif
 	return 0;
 }
-#ifndef __linux
+#ifndef LINUX
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Window procedure
@@ -671,7 +643,7 @@ string FormatWinError(DWORD dwError)
 }
 
 #define MAX_CMDLINE_LEN 256
-#ifndef __linux
+#ifndef LINUX
 #include <crtdbg.h>
 #endif
 ///////////////////////////////////////////////
@@ -723,21 +695,17 @@ InvokeExternalConfigTool()
 
 
 //////////////////////////////////////////////////////////////////////////
-#ifndef __linux
+#ifndef LINUX
 bool RunGame(HINSTANCE hInstance,const char *sCmdLine)
 #else
 bool RunGame(int argc, char** argv)
 #endif
 {
-#ifdef __linux
+#ifdef LINUX
 	int i;
 #endif
 	SDL_Init(SDL_INIT_VIDEO);
-#ifdef __ANDROID__
-	setlocale(LC_ALL, "C");
-#else
 	setlocale(LC_ALL, "en_US.utf8");
-#endif
 
 //	InvokeExternalConfigTool();
 
@@ -747,7 +715,7 @@ bool RunGame(int argc, char** argv)
 
 	char szLocalCmdLine[MAX_CMDLINE_LEN];
 	memset(szLocalCmdLine,0,MAX_CMDLINE_LEN);
-#ifndef __linux
+#ifndef LINUX
 	if (sCmdLine)
 		strncpy(szLocalCmdLine,sCmdLine,MAX_CMDLINE_LEN);
 #else
@@ -773,6 +741,10 @@ bool RunGame(int argc, char** argv)
 
 		SSystemInitParams sip;
 		sip.sLogFileName = "log.txt";
+#ifdef __ANDROID__
+		static char szLogPath[1024];
+		sip.sLogFileName = CryUserFile("log.txt", szLogPath, sizeof(szLogPath));
+#endif
 
 		if (szLocalCmdLine[0])
 		{
@@ -794,51 +766,24 @@ bool RunGame(int argc, char** argv)
 		//	}
 		//}
 #ifdef __ANDROID__
-		string sysPath = DLL_SYSTEM;
-		if (GetModulePath() && strlen(GetModulePath()) > 0)
-		{
-			sysPath = string(GetModulePath());
-			if (sysPath.back() != '/')
-				sysPath += "/";
-			sysPath += DLL_SYSTEM;
-		}
-		// Load libCrySystem.so with RTLD_GLOBAL so exported symbols are visible to all engine modules
-		void* hSys = dlopen(sysPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-		if (!hSys)
-			hSys = dlopen(sysPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-		if (!hSys)
-			hSys = dlopen(DLL_SYSTEM, RTLD_NOW | RTLD_GLOBAL);
-		if (!hSys)
-			hSys = dlopen(DLL_SYSTEM, RTLD_LAZY | RTLD_GLOBAL);
-		if (!hSys)
-			g_hSystemHandle = SDL_LoadObject(sysPath.c_str());
-		else
-			g_hSystemHandle = (SDL_SharedObject*)hSys;
-		if (!g_hSystemHandle)
-			g_hSystemHandle = SDL_LoadObject(DLL_SYSTEM);
+		g_hSystemHandle = SDL_LoadObject((string(GetModulePath()) + DLL_SYSTEM).c_str());
 #else
 		g_hSystemHandle = SDL_LoadObject((string(szMasterCDFolder) + "/" + DLL_SYSTEM).c_str());
 #endif
 		if (!g_hSystemHandle)
 		{
 			string errorStr = "CrySystem.dll Loading Failed:\n";
-			const char* dlErr = dlerror();
-			if (dlErr)
-				errorStr += dlErr;
-			else
-				errorStr += SDL_GetError();
+			errorStr += SDL_GetError();
 			fprintf(stderr, "%s\n", errorStr.c_str());
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FarCry Error", errorStr.c_str(), nullptr);
 
 			return false;
 		}
 
-		PFNCREATESYSTEMINTERFACE pfnCreateSystemInterface = (PFNCREATESYSTEMINTERFACE)dlsym( (void*)g_hSystemHandle,"CreateSystemInterface" );
-		if (!pfnCreateSystemInterface)
-			pfnCreateSystemInterface = (PFNCREATESYSTEMINTERFACE)SDL_LoadFunction( g_hSystemHandle,"CreateSystemInterface" );
+		PFNCREATESYSTEMINTERFACE pfnCreateSystemInterface = (PFNCREATESYSTEMINTERFACE)SDL_LoadFunction( g_hSystemHandle,"CreateSystemInterface" );
 
 		// Initialize with instance and window handles.
-#ifndef __linux
+#ifndef LINUX
 		sip.hInstance = hInstance;
 #else
 		sip.hInstance = NULL;
@@ -904,7 +849,7 @@ bool RunGame(int argc, char** argv)
 				strncpy(ip.szGameCmdLine,szLocalCmdLine,sizeof(ip.szGameCmdLine));
 			if (!g_pISystem->CreateGame( ip ))
 			{
-				SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "FarCry Error", "CreateGame Failed: CryGame.dll", nullptr);
+				//Error( "CreateGame Failed" );
 				return false;
 			}
 	#endif
@@ -916,19 +861,11 @@ bool RunGame(int argc, char** argv)
 		g_bSystemRelaunch = false;
 
 		// set the controls to exclusive mode
-		if (g_pISystem && g_pISystem->GetIInput())
-		{
-			g_pISystem->GetIInput()->ClearKeyState();
-			g_pISystem->GetIInput()->SetMouseExclusive(true);
-			g_pISystem->GetIInput()->SetKeyboardExclusive(true);
-		}
+		g_pISystem->GetIInput()->ClearKeyState();
+		g_pISystem->GetIInput()->SetMouseExclusive(true);
+		g_pISystem->GetIInput()->SetKeyboardExclusive(true);
 
-		IGame *pGame = g_pISystem ? g_pISystem->GetIGame() : nullptr;
-		if (!pGame)
-		{
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FarCry Error", "GetIGame returned NULL", nullptr);
-			return false;
-		}
+		IGame *pGame = g_pISystem->GetIGame();
 
 //////////////////////////////////////////////////////////////////////////
 #ifdef GERMAN_GORE_CHECK
@@ -963,11 +900,7 @@ bool RunGame(int argc, char** argv)
 #endif
 //////////////////////////////////////////////////////////////////////////
 
-		if (g_pISystem && g_pISystem->GetILog())
-			g_pISystem->GetILog()->Log("Main: Invoking pGame->Run()");
 		pGame->Run(bRelaunch);
-		if (g_pISystem && g_pISystem->GetILog())
-			g_pISystem->GetILog()->Log("Main: pGame->Run() completed (bRelaunch=%d)", (int)bRelaunch);
 
 		// remove the previous cmdline in case we relaunch
 		memset(szLocalCmdLine,0,MAX_CMDLINE_LEN);
@@ -1060,14 +993,6 @@ bool RunGame(int argc, char** argv)
 
 #endif WIN32
 	}
-
-#if defined(__ANDROID__)
-	if (!bRelaunch)
-	{
-		CryLogAlways("Main: Application finished normally, exiting process");
-		exit(0);
-	}
-#endif
 
 	return true;
 }

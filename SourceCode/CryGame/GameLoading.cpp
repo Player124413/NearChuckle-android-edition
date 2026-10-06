@@ -154,31 +154,24 @@ void LoadProperties(IScriptObject *table, CStream &stm, IScriptSystem *ss, const
 	ASSERT(ss);  // martin made me do it
 	for(;;)
 	{
-		char what = 0;
-		if (!stm.Read(what) || what == (char)TABLE_END) return;     
+		char what;
+		if(!stm.Read(what)) { TRACE("WARNING: properties table (%s) truncated", parent); return; }
+		if(what==TABLE_END) return;     
 
-		char iskey = 0;
-		if (!stm.Read(iskey)) return;
+		char iskey;
+		stm.Read(iskey);
 		int idx = 0;
 		string key;
-		if (iskey)
-		{
-			if (!stm.Read(key)) return;
-		}
-		else
-		{
-			if (!stm.Read(idx)) return;
-		}
+		iskey ? stm.Read(key) : stm.Read(idx);
 
 		switch(what)
 		{
-		case svtNull:   { iskey ? table->SetToNull(key.c_str()) : table->SetNullAt(idx); break; };
-		case svtString: { string s; if (stm.Read(s)) { iskey ? table->SetValue(key.c_str(), s.c_str()) : table->SetAt(idx, s.c_str()); } break; };
-		case svtNumber: { float f = 0; if (stm.Read(f)) { iskey ? table->SetValue(key.c_str(), f) : table->SetAt(idx, f); } break; }; 
-		case svtObject: { _SmartScriptObject t(ss); iskey ? table->SetValue(key.c_str(), *t) : table->SetAt(idx, *t); LoadProperties(t, stm, ss, (char *)key.c_str()); break; }; 
+		case svtNull:   {                             iskey ? table->SetToNull(key.c_str())           : table->SetNullAt(idx);        break; };
+		case svtString: { string s; stm.Read(s); iskey ? table->SetValue(key.c_str(), s.c_str()) : table->SetAt(idx, s.c_str()); break; };
+		case svtNumber: { float f = 0;   stm.Read(f); iskey ? table->SetValue(key.c_str(), f)         : table->SetAt(idx, f);         break; }; 
+		case svtObject: { _SmartScriptObject t(ss);   iskey ? table->SetValue(key.c_str(), *t)         : table->SetAt(idx, *t);  LoadProperties(t, stm, ss, (char *)key.c_str()); break; }; 
 		case svtUserData:
-		case svtFunction: TRACE("WARNING: can't restore userdata or function in properties table (%s.%s)", parent, key.c_str()); break;
-		default: return; // unrecognized variable type in stream, stop to avoid infinite loop
+		case svtFunction: TRACE("WARNING: can't restore userdata or function in properties table (%s.%s)", parent, key.c_str()); 
 		};
 	}; 
 };
@@ -683,7 +676,7 @@ void CXGame::Save(string sFileName, Vec3d *pos, Vec3d *angles,bool bFirstCheckpo
 
 		// replace / by \ because MakeSureDirectoryPathExists does not work with unix paths
 		size_t pos = 1;
-#ifndef __linux
+#ifndef LINUX
 		for(;;)
 		{
 			pos = sFileName.find_first_of("/", pos);
@@ -835,26 +828,14 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 
 	// load saved cvars
 	string varname,val;
-	int nCount = 0, i;
-	if (!stm.Read(nCount)) nCount = 0;
-	if (nCount < 0 || nCount > 10000) nCount = 0;
+	int nCount,i;
+	stm.Read(nCount);
 	IConsole *pCon=m_pSystem->GetIConsole();	
 	for (i=0;i<nCount;i++)
 	{
-		if(stm.Read(varname) && stm.Read(val))
+		if(stm.Read(varname))
+		if(stm.Read(val))
 		{
-#ifdef __ANDROID__
-			// Ignore desktop cvars saved into savegames
-			if (strcasecmp(varname.c_str(), "r_Driver") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Width") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Height") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Fullscreen") == 0 ||
-			    strcasecmp(varname.c_str(), "r_GL_NV30_PS20") == 0 ||
-			    strcasecmp(varname.c_str(), "r_NoPS20") == 0)
-			{
-				continue;
-			}
-#endif
 			ICVar *pCVar=m_pSystem->GetIConsole()->GetCVar(varname.c_str());
 			if (!pCVar)
 			{
@@ -871,19 +852,6 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 			return false;
 		}
 	} //i
-
-#ifdef __ANDROID__
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Quality_BumpMapping"))
-		pVar->Set(3);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_NoPS20"))
-		pVar->Set(0);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_GL_NV30_PS20"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Fullscreen"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Driver"))
-		pVar->Set("OpenGL");
-#endif
 
   if(m_pSystem->GetISoundSystem())
     m_pSystem->GetISoundSystem()->Silence();
@@ -931,7 +899,6 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 		pConsole->SetScrollMax(600);
 		pConsole->ShowConsole(1);
 		DeleteMessage("Switch"); // no switching during loading
-		DeleteMessage("EndCutScene");
 
 		// local player has to exit all areas before starting to delete entities
 		IEntity *pIMyPlayer = GetMyPlayer();
@@ -1016,14 +983,12 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 
 	// loading reserver IDs for dynacally created saved entities
 	int dynReservedIDsNumber=0;
-	if (stm.Read(dynReservedIDsNumber) && dynReservedIDsNumber > 0 && dynReservedIDsNumber <= 100000)
+	stm.Read(dynReservedIDsNumber);
+	for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
 	{
-		for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
-		{
-			int reservedId = 0;
-			if (!stm.Read((int&)reservedId)) break;
-			pEntitySystem->MarkId( reservedId );
-		}
+	int reservedId;
+		stm.Read((int&)reservedId);
+		pEntitySystem->MarkId( reservedId );
 	}
 
   // only load this in case of older save
@@ -1043,11 +1008,10 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 
 	VERIFY_COOKIE_NO(stm,61);
 
-	while (!stm.EOS() && (stm.GetSize() - stm.GetReadPos() >= 8))
+	while (!stm.EOS())
 	{
 		BYTE cChunk=0;
-		if (!stm.Read(cChunk))
-			break;
+		stm.Read(cChunk);
 		switch(cChunk)
 		{
 		case CHUNK_ENTITY:
@@ -1390,11 +1354,8 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 				if (pMovies)
 				{
 					IAnimSequence *pSeq = pMovies->FindSequence(szName);
-					if (pSeq)
-					{
-						pMovies->PlaySequence(pSeq,false);
-						pMovies->SetPlayingTime(pSeq,fTime);
-					}
+					pMovies->PlaySequence(pSeq,false);
+					pMovies->SetPlayingTime(pSeq,fTime);
 				}
 			}
 			break;
@@ -1421,8 +1382,7 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
       break;  
 
 		default:
-			m_pLog->Log("CXGame::LoadFromStream: unknown chunk 0x%02X at bit %d/%d, breaking chunk loop", (unsigned int)cChunk, (int)stm.GetReadPos(), (int)stm.GetSize());
-			goto end_chunks_load;
+			ASSERT(0);
 		};
 
 		if (bLoadBar)
@@ -1430,7 +1390,6 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 			pConsole->TickProgressBar();	// advance progress
 		}
 	}
-end_chunks_load:
 
 	{	// [Anton] - allow entities to restore pointer links between them during post load step 
 		// [kirill]	restore all the bindings
@@ -1467,10 +1426,6 @@ end_chunks_load:
 
 	GotoGame(1);
 	m_nDEBUG_TIMING = 0;
-	if (m_bMenuOverlay)
-	{
-		MenuOff();
-	}
 
 	return true;
 };
@@ -1709,21 +1664,16 @@ void CXGame::SaveConfiguration( const char *pszSystemCfg,const char *pszGameCfg,
 		sSystemCfg=path+sProfileName+"_"+sSystemCfg;
 		sGameCfg=path+sProfileName+"_"+sGameCfg;
 	}
-
-	FILE *pFile = NULL;
 #ifdef __ANDROID__
-	// Never write system.cfg on Android, delete it if present
-	if (!sSystemCfg.empty())
+	else
 	{
-		remove(sSystemCfg.c_str());
+		char szBuf[1024];
+		sSystemCfg = CryUserFile(sSystemCfg.c_str(), szBuf, sizeof(szBuf));
+		sGameCfg = CryUserFile(sGameCfg.c_str(), szBuf, sizeof(szBuf));
 	}
-	remove("system.cfg");
-	remove("System.cfg");
-	remove("SYSTEM.CFG");
-	remove("SystemCfgOverride.Cfg");
-	remove("systemcfgoverride.cfg");
-#else
-	pFile=fxopen(sSystemCfg.c_str(), "wb");
+#endif
+
+	FILE *pFile=fxopen(sSystemCfg.c_str(), "wb");
 	if (pFile)
 	{
 		fputs("-- [System-Configuration]\r\n", pFile);
@@ -1733,7 +1683,6 @@ void CXGame::SaveConfiguration( const char *pszSystemCfg,const char *pszGameCfg,
 		//m_pConsole->DumpCVars(&SaveDump);
 		fclose(pFile); 
 	}
-#endif
 
 	if (m_pIActionMapManager)
 	{
@@ -1773,8 +1722,17 @@ void CXGame::SaveConfiguration( const char *pszSystemCfg,const char *pszGameCfg,
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CXGame::LoadConfiguration(const string &sSystemCfg,const string &sGameCfg)
+void CXGame::LoadConfiguration(const string &sSystemCfgIn,const string &sGameCfgIn)
 {			
+	string sSystemCfg = sSystemCfgIn, sGameCfg = sGameCfgIn;
+#ifdef __ANDROID__
+	// Bare names are the non-profile files, which SaveConfiguration writes to the user folder.
+	char szBuf[1024];
+	if (!strchr(sSystemCfg.c_str(), '/'))
+		sSystemCfg = CryUserFile(sSystemCfg.c_str(), szBuf, sizeof(szBuf));
+	if (!strchr(sGameCfg.c_str(), '/'))
+		sGameCfg = CryUserFile(sGameCfg.c_str(), szBuf, sizeof(szBuf));
+#endif
 	m_pSystem->LoadConfiguration(sSystemCfg);
 
 	FILE *pFile=fxopen(sGameCfg.c_str(), "rb");
@@ -1892,6 +1850,14 @@ void CXGame::RemoveConfiguration(string &sSystemCfg,string &sGameCfg,const char 
 		sSystemCfg=path+sProfileName+"_"+sSystemCfg;
 		sGameCfg=path+sProfileName+"_"+sGameCfg;
 	}
+#ifdef __ANDROID__
+	else
+	{
+		char szBuf[1024];
+		sSystemCfg = CryUserFile(sSystemCfg.c_str(), szBuf, sizeof(szBuf));
+		sGameCfg = CryUserFile(sGameCfg.c_str(), szBuf, sizeof(szBuf));
+	}
+#endif
 	
 #if defined(LINUX)
 	remove( sSystemCfg.c_str() ); 
@@ -1966,26 +1932,14 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 
 	// load saved cvars
 	string varname,val;
-	int nCount = 0, i;
-	if (!stm.Read(nCount)) nCount = 0;
-	if (nCount < 0 || nCount > 10000) nCount = 0;
+	int nCount,i;
+	stm.Read(nCount);
 	IConsole *pCon=m_pSystem->GetIConsole();	
 	for (i=0;i<nCount;i++)
 	{
-		if(stm.Read(varname) && stm.Read(val))
+		if(stm.Read(varname))
+		if(stm.Read(val))
 		{
-#ifdef __ANDROID__
-			// Ignore desktop cvars saved into savegames
-			if (strcasecmp(varname.c_str(), "r_Driver") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Width") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Height") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Fullscreen") == 0 ||
-			    strcasecmp(varname.c_str(), "r_GL_NV30_PS20") == 0 ||
-			    strcasecmp(varname.c_str(), "r_NoPS20") == 0)
-			{
-				continue;
-			}
-#endif
 			ICVar *pCVar=m_pSystem->GetIConsole()->GetCVar(varname.c_str());
 			if (!pCVar)
 			{
@@ -2002,19 +1956,6 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 			return false;
 		}
 	} //i
-
-#ifdef __ANDROID__
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Quality_BumpMapping"))
-		pVar->Set(3);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_NoPS20"))
-		pVar->Set(0);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_GL_NV30_PS20"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Fullscreen"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Driver"))
-		pVar->Set("OpenGL");
-#endif
 
   if(m_pSystem->GetISoundSystem())
     m_pSystem->GetISoundSystem()->Silence();
@@ -2062,7 +2003,6 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 		pConsole->SetScrollMax(600);
 		pConsole->ShowConsole(1);
 		DeleteMessage("Switch"); // no switching during loading
-		DeleteMessage("EndCutScene");
 
 		// local player has to exit all areas before starting to delete entities
 		IEntity *pIMyPlayer = GetMyPlayer();
@@ -2147,14 +2087,12 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 
 	// loading reserver IDs for dynacally created saved entities
 	int dynReservedIDsNumber=0;
-	if (stm.Read(dynReservedIDsNumber) && dynReservedIDsNumber > 0 && dynReservedIDsNumber <= 100000)
+	stm.Read(dynReservedIDsNumber);
+	for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
 	{
-		for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
-		{
-			int reservedId = 0;
-			if (!stm.Read((int&)reservedId)) break;
-			pEntitySystem->MarkId( reservedId );
-		}
+	int reservedId;
+		stm.Read((int&)reservedId);
+		pEntitySystem->MarkId( reservedId );
 	}
 	VERIFY_COOKIE_NO(stm,0x73);
 
@@ -2169,11 +2107,10 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 
 	VERIFY_COOKIE_NO(stm,61);
 
-	while (!stm.EOS() && (stm.GetSize() - stm.GetReadPos() >= 8))
+	while (!stm.EOS())
 	{
 		BYTE cChunk=0;
-		if (!stm.Read(cChunk))
-			break;
+		stm.Read(cChunk);
     
 		switch(cChunk)
 		{
@@ -2455,8 +2392,7 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 			}
 			break;
 		default:
-			m_pLog->Log("CXGame::LoadFromStream_RELEASEVERSION: unknown chunk 0x%02X at bit %d/%d, breaking chunk loop", (unsigned int)cChunk, (int)stm.GetReadPos(), (int)stm.GetSize());
-			goto end_chunks_release;
+			ASSERT(0);
 		};
 
 		if (bLoadBar)
@@ -2464,7 +2400,6 @@ bool CXGame::LoadFromStream_RELEASEVERSION(CStream &stm, bool isdemo, CScriptObj
 			pConsole->TickProgressBar();	// advance progress
 		}
 	}
-end_chunks_release:
 
 	{	// [Anton] - allow entities to restore pointer links between them during post load step 
 		// [kirill]	restore all the bindings
@@ -2500,10 +2435,6 @@ end_chunks_release:
 		m_pSystem->GetISoundSystem()->SetEaxListenerEnvironment(nPreset,&tProps);
 
 	GotoGame(1);
-	if (m_bMenuOverlay)
-	{
-		MenuOff();
-	}
 
 	return true;
 }
@@ -2567,55 +2498,30 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 
 	// load saved cvars
 	string varname,val;
-	int nCount = 0, i;
-	if (!stm.Read(nCount)) nCount = 0;
-	if (nCount < 0 || nCount > 10000) nCount = 0;
+	int nCount,i;
+	stm.Read(nCount);
 	IConsole *pCon=m_pSystem->GetIConsole();	
 	for (i=0;i<nCount;i++)
 	{
-		if(stm.Read(varname) && stm.Read(val))
-		{
-#ifdef __ANDROID__
-			// Ignore desktop cvars saved into savegames
-			if (strcasecmp(varname.c_str(), "r_Driver") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Width") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Height") == 0 ||
-			    strcasecmp(varname.c_str(), "r_Fullscreen") == 0 ||
-			    strcasecmp(varname.c_str(), "r_GL_NV30_PS20") == 0 ||
-			    strcasecmp(varname.c_str(), "r_NoPS20") == 0)
+		if(stm.Read(varname))
+			if(stm.Read(val))
 			{
-				continue;
-			}
-#endif
-			ICVar *pCVar=m_pSystem->GetIConsole()->GetCVar(varname.c_str());
-			if (!pCVar)
-			{
-				m_pSystem->GetILog()->Log("\001 WARNING, CVar %s(%s) was saved but is not present",varname.c_str(),val.c_str());
+				ICVar *pCVar=m_pSystem->GetIConsole()->GetCVar(varname.c_str());
+				if (!pCVar)
+				{
+					m_pSystem->GetILog()->Log("\001 WARNING, CVar %s(%s) was saved but is not present",varname.c_str(),val.c_str());
+				}
+				else
+					pCVar->Set(val.c_str());
 			}
 			else
-				pCVar->Set(val.c_str());
-		}
-		else
-		{
-			m_pSystem->GetILog()->LogError("CXGame::LoadFromStream %d/%d critical error",i,nCount);
-			stm.Debug();
-			m_bIsLoadingLevelFromFile = false;
-			return false;
-		}
+			{
+				m_pSystem->GetILog()->LogError("CXGame::LoadFromStream %d/%d critical error",i,nCount);
+				stm.Debug();
+				m_bIsLoadingLevelFromFile = false;
+				return false;
+			}
 	} //i
-
-#ifdef __ANDROID__
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Quality_BumpMapping"))
-		pVar->Set(3);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_NoPS20"))
-		pVar->Set(0);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_GL_NV30_PS20"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Fullscreen"))
-		pVar->Set(1);
-	if (ICVar* pVar = m_pSystem->GetIConsole()->GetCVar("r_Driver"))
-		pVar->Set("OpenGL");
-#endif
 
 	if(m_pSystem->GetISoundSystem())
 		m_pSystem->GetISoundSystem()->Silence();
@@ -2663,7 +2569,6 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 		pConsole->SetScrollMax(600);
 		pConsole->ShowConsole(1);
 		DeleteMessage("Switch"); // no switching during loading
-		DeleteMessage("EndCutScene");
 
 		// local player has to exit all areas before starting to delete entities
 		IEntity *pIMyPlayer = GetMyPlayer();
@@ -2748,14 +2653,12 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 
 	// loading reserver IDs for dynacally created saved entities
 	int dynReservedIDsNumber=0;
-	if (stm.Read(dynReservedIDsNumber) && dynReservedIDsNumber > 0 && dynReservedIDsNumber <= 100000)
+	stm.Read(dynReservedIDsNumber);
+	for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
 	{
-		for( ; dynReservedIDsNumber>0; --dynReservedIDsNumber )
-		{
-			int reservedId = 0;
-			if (!stm.Read((int&)reservedId)) break;
-			pEntitySystem->MarkId( reservedId );
-		}
+		int reservedId;
+		stm.Read((int&)reservedId);
+		pEntitySystem->MarkId( reservedId );
 	}
 
 	// only load this in case of older save
@@ -2771,11 +2674,10 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 
 	VERIFY_COOKIE_NO(stm,61);
 
-	while (!stm.EOS() && (stm.GetSize() - stm.GetReadPos() >= 8))
+	while (!stm.EOS())
 	{
 		BYTE cChunk=0;
-		if (!stm.Read(cChunk))
-			break;
+		stm.Read(cChunk);
 		switch(cChunk)
 		{
 		case CHUNK_ENTITY:
@@ -3115,15 +3017,9 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 				stm.Read(szName,1024);
 				float fTime;
 				stm.Read(fTime);
-				if (pMovies)
-				{
-					IAnimSequence *pSeq = pMovies->FindSequence(szName);
-					if (pSeq)
-					{
-						pMovies->PlaySequence(pSeq,false);
-						pMovies->SetPlayingTime(pSeq,fTime);
-					}
-				}
+				IAnimSequence *pSeq = pMovies->FindSequence(szName);
+				pMovies->PlaySequence(pSeq,false);
+				pMovies->SetPlayingTime(pSeq,fTime);
 			}
 			break;
 		case CHUNK_HUD:
@@ -3149,8 +3045,7 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 			break;  
 
 		default:
-			m_pLog->Log("CXGame::LoadFromStream_PATCH_1: unknown chunk 0x%02X at bit %d/%d, breaking chunk loop", (unsigned int)cChunk, (int)stm.GetReadPos(), (int)stm.GetSize());
-			goto end_chunks_patch1;
+			ASSERT(0);
 		};
 
 		if (bLoadBar)
@@ -3158,7 +3053,6 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 			pConsole->TickProgressBar();	// advance progress
 		}
 	}
-end_chunks_patch1:
 
 	{	// [Anton] - allow entities to restore pointer links between them during post load step 
 		// [kirill]	restore all the bindings
@@ -3195,10 +3089,6 @@ end_chunks_patch1:
 
 	GotoGame(1);
 	m_nDEBUG_TIMING = 0;
-	if (m_bMenuOverlay)
-	{
-		MenuOff();
-	}
 
 	return true;
 };

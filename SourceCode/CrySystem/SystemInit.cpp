@@ -45,10 +45,6 @@
 #include "DataProbe.h"
 #include "ApplicationHelper.h"				// CApplicationHelper
 
-#if defined(USE_SDL)
-#include <SDL3/SDL.h>
-#endif
-
 #define  PROFILE_WITH_VTUNE
 
 //////////////////////////////////////////////////////////////////////////
@@ -72,6 +68,7 @@ extern HMODULE gDLLHandle;
 #		define DLL_3DENGINE			"libCry3DEngine.so"
 #		define DLL_NULLRENDERER	"libXRenderNULL.so"
 #		define DLL_GLRENDERER "libXRenderOGL.so"
+#		define DLL_GLESRENDERER "libXRenderGLES.so"
 #		define DLL_D3D9RENDERER "libXRenderD3D9.so"
 #else
 #	define DLL_SOUND				"CrySoundSystem.dll"
@@ -85,6 +82,7 @@ extern HMODULE gDLLHandle;
 #	define DLL_3DENGINE			"Cry3DEngine.dll"
 #	define DLL_NULLRENDERER	"XRenderNULL.dll"
 #	define DLL_GLRENDERER "XRenderOGL.dll"
+#	define DLL_GLESRENDERER "XRenderGLES.dll"
 #	define DLL_D3D9RENDERER "XRenderD3D9.dll"
 #endif
 
@@ -101,7 +99,7 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
 
   int nRenderer = R_DX9_RENDERER;
 
-#ifndef __linux
+#ifndef LINUX
   if (stricmp(t_rend, "NULL") != 0)
   {
     char szVendor[256];
@@ -143,6 +141,9 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
 	if (stricmp(t_rend, "OpenGL") == 0)
     return OpenRenderLibrary(R_GL_RENDERER);
   else
+	if (stricmp(t_rend, "GLES") == 0)
+    return OpenRenderLibrary(R_GLES_RENDERER);
+  else
 	if (stricmp(t_rend, "Direct3D8") == 0)
 		return OpenRenderLibrary(R_DX8_RENDERER);
   else
@@ -180,6 +181,9 @@ bool CSystem::OpenRenderLibrary(int type)
 	if (type == R_GL_RENDERER)
 		strcpy(libname, DLL_GLRENDERER);
 	else
+	if (type == R_GLES_RENDERER)
+		strcpy(libname, DLL_GLESRENDERER);
+	else
 	if (type == R_DX8_RENDERER)
 		strcpy(libname, "XRenderD3D8.dll");
   else
@@ -195,16 +199,13 @@ bool CSystem::OpenRenderLibrary(int type)
 	}
 	m_dll.hRenderer = LoadDLL(libname);
 	if (!m_dll.hRenderer)
-	{
-		CryLogAlways("Error: OpenRenderLibrary failed to load DLL '%s'", libname);
 		return false;
-	}
 
 	typedef IRenderer *(PROCREND)(int argc, char* argv[], SCryRenderInterface *sp);
   PROCREND *Proc = (PROCREND *) CryGetProcAddress(m_dll.hRenderer, "PackageRenderConstructor");
 	if (!Proc)
 	{
-		CryLogAlways("Error: Library '%s' is missing PackageRenderConstructor entry point", libname);
+		Error( "Error: Library '%s' isn't Crytek render library", libname);
 		FreeLib(m_dll.hRenderer);
 		return false;
 	}
@@ -212,12 +213,12 @@ bool CSystem::OpenRenderLibrary(int type)
 	m_pRenderer = Proc(0, NULL, &sp);
 	if (!m_pRenderer)
 	{
-		CryLogAlways("Error: PackageRenderConstructor returned NULL for '%s'", libname);
+		Error( "Error: Couldn't construct render driver '%s'", libname);
 		FreeLib(m_dll.hRenderer);
 		return false;
 	}
-	m_pRenderer->SetType(type);
-	CryLogAlways("OpenRenderLibrary: successfully created renderer '%s'", libname);
+	// The engine only distinguishes GL from D3D; the ES module behaves as GL.
+	m_pRenderer->SetType(type == R_GLES_RENDERER ? R_GL_RENDERER : type);
 #else
   m_pRenderer = (IRenderer*)PackageRenderConstructor(0, NULL, &sp);
   m_pRenderer->SetType(type);
@@ -452,6 +453,12 @@ ICVar* CSystem::attachVariable (const char* szVarName, int* pContainer, const ch
 }
 
 /////////////////////////////////////////////////////////////////////////////////
+#ifdef __ANDROID__
+// Game surface size from the OpenTouch JNI glue in libfarcry.so.
+extern "C" int game_screen_width;
+extern "C" int game_screen_height;
+#endif
+
 bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdLine)
 {
   CreateRendererVars();
@@ -461,7 +468,12 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 		m_sSavedRDriver=m_rDriver->GetString();
 		m_rDriver->Set("NULL");
 	}
-#if defined(__linux) && !defined(__ANDROID__)
+	else if(!m_sForcedRDriver.empty())
+	{
+		m_sSavedRDriver=m_rDriver->GetString();
+		m_rDriver->Set(m_sForcedRDriver.c_str());
+	}
+#ifdef LINUX
 	string lib_name(GetModulePath());
 	FILE* fp;
 	bool real_renderer = false;
@@ -474,6 +486,11 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 	{
 		real_renderer = true;
 		lib_name += DLL_GLRENDERER;
+	}
+	else if (!stricmp(m_rDriver->GetString(), "GLES"))
+	{
+		real_renderer = true;
+		lib_name += DLL_GLESRENDERER;
 	}
 
 	if (real_renderer)
@@ -491,22 +508,28 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 				printf("Couldn't find %s, trying Direct3D9 renderer...\n", DLL_GLRENDERER);
 				m_rDriver->Set("Direct3D9");
 			}
+			else if (!stricmp(m_rDriver->GetString(), "GLES"))
+			{
+				printf("Couldn't find %s, trying OpenGL renderer...\n", DLL_GLESRENDERER);
+				m_rDriver->Set("OpenGL");
+			}
 		}
 		else
 		{
 			fclose(fp);
 		}
 	}
-#elif defined(__ANDROID__)
-	m_rDriver->Set("OpenGL");
 #endif
 
-	CryLogAlways("InitRenderer: driver='%s', resolution=%dx%d", m_rDriver->GetString(), m_rWidth->GetIVal(), m_rHeight->GetIVal());
+#ifdef __ANDROID__
+	// The window is always the whole game surface, sized by the host glue.
+	m_rWidth->Set(game_screen_width);
+	m_rHeight->Set(game_screen_height);
+	m_rFullscreen->Set(1);
+#endif
+
 	if (!OpenRenderLibrary(m_rDriver->GetString()))
-	{
-		CryLogAlways("Error: OpenRenderLibrary returned false for '%s'", m_rDriver->GetString());
 		return false;
-	}
 
 #ifdef WIN32
 
@@ -541,30 +564,9 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 
 	if (m_pRenderer)
 	{
-		CryLogAlways("InitRenderer: invoking m_pRenderer->Init...");
-#if defined(USE_SDL) && defined(__ANDROID__)
-		SDL_DisplayID dispID = SDL_GetPrimaryDisplay();
-		const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(dispID);
-		if (mode && mode->w > 0 && mode->h > 0)
-		{
-			int dw = (mode->w > mode->h) ? mode->w : mode->h;
-			int dh = (mode->w > mode->h) ? mode->h : mode->w;
-			m_rWidth->Set(dw);
-			m_rHeight->Set(dh);
-		}
-#endif
 		m_hWnd = m_pRenderer->Init(0, 0, m_rWidth->GetIVal(), m_rHeight->GetIVal(), m_rColorBits->GetIVal(), m_rDepthBits->GetIVal(), m_rStencilBits->GetIVal(), m_rFullscreen->GetIVal() ? true : false, hinst, hwnd);
 		if (m_hWnd)
-		{
-			CryLogAlways("InitRenderer: m_pRenderer->Init SUCCEEDED, handle=%p", m_hWnd);
-#ifdef USE_SDL
-			m_rWidth->Set(m_pRenderer->GetWidth());
-			m_rHeight->Set(m_pRenderer->GetHeight());
-			CryLogAlways("InitRenderer: updated resolution to %dx%d", m_pRenderer->GetWidth(), m_pRenderer->GetHeight());
-#endif
 			return true;
-		}
-		CryLogAlways("Error: m_pRenderer->Init failed and returned NULL!");
 		return (false);
 	}
 	return true;
@@ -1103,6 +1105,14 @@ public:
 		}
 
 		// ----------------------------
+		// e.g. -RENDERER:GLES (OpenGL, GLES, Direct3D9, NULL) without touching the saved r_Driver
+		if(strnicmp(inszArgument,"RENDERER:",9)==0)
+		{
+			m_sRenderer = string(&(inszArgument[9]));
+			return;
+		}
+
+		// ----------------------------
 		// Developer mode on
 		if(stricmp(inszArgument,"DEVMODE")==0)
 		{
@@ -1124,6 +1134,7 @@ public:
 	CSystem &						m_rSystem;				//!< reference to the system
 	string							m_sMod;						//!< -MOD
 	string							m_sLogFile;				//!< -LOGFILE
+	string							m_sRenderer;			//!< -RENDERER
 	bool								m_bDevMode;				//!< -DEVMODE
 	string							m_sLocalIP;				//!<
 	bool								m_bRelaunching;		//!<
@@ -1167,6 +1178,8 @@ bool CSystem::Init( const SSystemInitParams &params )
 		m_pValidator = params.pValidator;
 	}
 
+	m_sForcedRDriver = CmdlineSink.m_sRenderer;
+
 	if (!params.pLog)
 	{
 		m_pLog = new CLog(this);
@@ -1209,7 +1222,7 @@ bool CSystem::Init( const SSystemInitParams &params )
 	// FILE SYSTEM
 	//////////////////////////////////////////////////////////////////////////
 
-#if !defined(PS2) && !defined (GC) && !defined (__linux)
+#if !defined(PS2) && !defined (GC) && !defined (LINUX)
   m_pCpu = new CCpuFeatures;
   m_pCpu->Detect();
 #endif
@@ -1266,25 +1279,8 @@ bool CSystem::Init( const SSystemInitParams &params )
 	//Load config files
 	//////////////////////////////////////////////////////////////////////////
 
-#ifndef __ANDROID__
 	LoadConfiguration("system.cfg");
 	LoadConfiguration("SystemCfgOverride.Cfg");
-#else
-	CryLogAlways("Android: completely ignoring and deleting system.cfg / SystemCfgOverride.Cfg");
-	remove("system.cfg");
-	remove("System.cfg");
-	remove("SYSTEM.CFG");
-	remove("SystemCfgOverride.Cfg");
-	remove("systemcfgoverride.cfg");
-#endif
-
-#ifdef __ANDROID__
-	if (m_rDriver) m_rDriver->Set("OpenGL");
-	if (ICVar* cvNoPS20 = m_pConsole->GetCVar("r_NoPS20")) cvNoPS20->Set(0);
-	if (ICVar* cvBump = m_pConsole->GetCVar("r_Quality_BumpMapping")) cvBump->Set(3);
-	if (ICVar* cvNV30 = m_pConsole->GetCVar("r_GL_NV30_PS20")) cvNV30->Set(1);
-	if (ICVar* cvFS = m_pConsole->GetCVar("r_Fullscreen")) cvFS->Set(1);
-#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// After loading configuration.
@@ -1432,7 +1428,7 @@ bool CSystem::Init( const SSystemInitParams &params )
 		}
 	}
 
-#ifndef __linux
+#ifndef LINUX
 	m_pDownloadManager = new CDownloadManager;
 	m_pDownloadManager->Create(this);
 #endif

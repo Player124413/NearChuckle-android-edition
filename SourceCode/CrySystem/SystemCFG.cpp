@@ -294,6 +294,15 @@ void CSystem::LoadConfiguration(const string &sFilename)
 #endif
 		//m_pScriptSystem->ExecuteFile(sFilename.c_str(),false);
 		m_pLog->Log("Loading system configuration");
+#ifdef __ANDROID__
+		// The saved system.cfg lives in the user folder; the game folder's copy is only the seed.
+		string sPath = sFilename;
+		char szBuf[1024];
+		if (!strchr(sFilename.c_str(), '/') && access(CryUserFile(sFilename.c_str(), szBuf, sizeof(szBuf)), R_OK) == 0)
+			sPath = szBuf;
+		CSystemConfiguration tempConfig(sPath,this);
+#else
 		CSystemConfiguration tempConfig(sFilename,this);
+#endif
 	}
 }
