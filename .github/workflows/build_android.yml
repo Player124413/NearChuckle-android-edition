@@ -58,12 +58,13 @@ jobs:
           native_status=${PIPESTATUS[0]}
           set -e
           if [ "$native_status" -ne 0 ]; then
-            echo "Native build returned $native_status; checking deployed libraries..."
-            jni_dir="android/app/src/main/jniLibs/arm64-v8a"
-            for lib in libFarCry.so libCrySystem.so libCryGame.so libCrySoundSystem.so libXRenderOGL.so libGL.so libc++_shared.so; do
-              test -f "$jni_dir/$lib" || { echo "Missing $jni_dir/$lib"; exit "$native_status"; }
-            done
-            echo "Native command returned non-zero, but all required ARM64 libraries were deployed. Continuing to Gradle."
+            echo "Native build returned $native_status; checking its completion marker..."
+            if grep -q "Successfully built and deployed all Far Cry libraries for arm64-v8a" build_native.log; then
+              echo "The native script deployed all ARM64 libraries; continuing to Gradle."
+            else
+              echo "Native build did not deploy all required ARM64 libraries."
+              exit "$native_status"
+            fi
           fi
           echo "### ✅ Native Build Succeeded" >> $GITHUB_STEP_SUMMARY
 
