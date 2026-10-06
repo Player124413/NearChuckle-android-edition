@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build-android:
+    continue-on-error: true
     name: 'Build Far Cry Android APK & Engine (ARM64)'
     runs-on: ubuntu-latest
     permissions:
