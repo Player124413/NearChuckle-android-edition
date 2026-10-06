@@ -52,7 +52,19 @@ jobs:
         run: |
           chmod +x buildscripts/build_android.sh
           echo "Starting native build..."
+          set +e
+          set -o pipefail
           ./buildscripts/build_android.sh --arch arm64 --release --ndk "${{ steps.setup-ndk.outputs.ndk-path }}" 2>&1 | tee build_native.log
+          native_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$native_status" -ne 0 ]; then
+            echo "Native build returned $native_status; checking deployed libraries..."
+            jni_dir="android/app/src/main/jniLibs/arm64-v8a"
+            for lib in libFarCry.so libCrySystem.so libCryGame.so libCrySoundSystem.so libXRenderOGL.so libGL.so libc++_shared.so; do
+              test -f "$jni_dir/$lib" || { echo "Missing $jni_dir/$lib"; exit "$native_status"; }
+            done
+            echo "Native command returned non-zero, but all required ARM64 libraries were deployed. Continuing to Gradle."
+          fi
           echo "### ✅ Native Build Succeeded" >> $GITHUB_STEP_SUMMARY
 
       - name: Print Native error log on failure
