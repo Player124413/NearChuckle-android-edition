@@ -95,9 +95,10 @@ jobs:
             }
           fi
           echo "Ensuring ARM64 native libraries are in the Gradle jniLibs source set..."
-          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a "$RUNNER_TEMP/native-libs"
           find build_android/arm64-v8a bin/arm64-Release android/app/src/main/jniLibs/arm64-v8a \
             -type f -name '*.so' -exec cp -f {} android/app/src/main/jniLibs/arm64-v8a/ \; 2>/dev/null || true
+          cp -f android/app/src/main/jniLibs/arm64-v8a/*.so "$RUNNER_TEMP/native-libs/"
           echo "Native libraries prepared:"
           ls -lh android/app/src/main/jniLibs/arm64-v8a
           echo "Building APK with Gradle..."
@@ -112,7 +113,7 @@ jobs:
           unzip -q "$APK_PATH" -d "$STAGE"
           rm -rf "$STAGE/META-INF"
           mkdir -p "$STAGE/lib/arm64-v8a"
-          cp -f android/app/src/main/jniLibs/arm64-v8a/*.so "$STAGE/lib/arm64-v8a/"
+          cp -f "$RUNNER_TEMP/native-libs"/*.so "$STAGE/lib/arm64-v8a/"
           TMP_APK="$RUNNER_TEMP/repacked.apk"
           ALIGNED="$RUNNER_TEMP/aligned.apk"
           rm -f "$TMP_APK" "$ALIGNED"
