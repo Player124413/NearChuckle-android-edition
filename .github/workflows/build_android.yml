@@ -48,7 +48,7 @@ jobs:
           sudo apt-get install -y -qq cmake ninja-build zip unzip
 
       - name: Build Native Engine & Dependencies (ARM64)
-            shell: bash
+        shell: bash
         run: |
           chmod +x buildscripts/build_android.sh
           echo "Starting native build..."

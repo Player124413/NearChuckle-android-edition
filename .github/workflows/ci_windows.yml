@@ -32,7 +32,7 @@ jobs:
       with:
         arch: ${{ matrix.arch }}
     - name: Configure and build
-        run: |
+      run: |
         cmake --preset=ninja-${{ matrix.arch }}-${{ matrix.configuration }}
         cmake --build --preset=${{ matrix.arch }}-${{ matrix.configuration }}
     - name: Upload artifact
