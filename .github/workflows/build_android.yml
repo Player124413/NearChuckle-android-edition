@@ -61,7 +61,15 @@ jobs:
         run: |
           if [ -f build_native.log ]; then
             echo "====================== NATIVE BUILD ERROR LOG ======================"
-            grep -E -C 3 "error:|FAILED:|CMake Error" build_native.log | tail -n 120 || tail -n 120 build_native.log
+            grep -E -C 3 "error:|FAILED:|CMake Error|fatal error|undefined reference" build_native.log | tail -n 200 || tail -n 200 build_native.log
+            {
+              echo "## Native build failure (last 300 lines)"
+              echo '```text'
+              tail -n 300 build_native.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Native build failed before creating build_native.log" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Build APK with Gradle
