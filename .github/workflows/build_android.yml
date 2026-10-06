@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build-android:
-    name: 'Build Far Cry Android APK & Engine (ARM32)'
+    name: 'Build Far Cry Android APK & Engine (ARM64)'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,12 +47,12 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake ninja-build zip unzip
 
-      - name: Build Native Engine & Dependencies (ARM32)
+      - name: Build Native Engine & Dependencies (ARM64)
         shell: bash
         run: |
           chmod +x buildscripts/build_android.sh
           echo "Starting native build..."
-          ./buildscripts/build_android.sh --arch arm --release --ndk "${{ steps.setup-ndk.outputs.ndk-path }}" 2>&1 | tee build_native.log
+          ./buildscripts/build_android.sh --arch arm64 --release --ndk "${{ steps.setup-ndk.outputs.ndk-path }}" 2>&1 | tee build_native.log
           echo "### ✅ Native Build Succeeded" >> $GITHUB_STEP_SUMMARY
 
       - name: Print Native error log on failure
@@ -113,7 +113,7 @@ jobs:
           echo "### 📦 Generated APK: \`$(basename $APK_PATH)\` ($(ls -lh $APK_PATH | awk '{print $5}'))" >> $GITHUB_STEP_SUMMARY
 
           echo "=== Packaged native libraries (.so) ==="
-          unzip -l "$APK_PATH" | grep "lib/armeabi-v7a"
+          unzip -l "$APK_PATH" | grep "lib/arm64-v8a"
 
           echo "=== Verifying critical native libraries in APK ==="
           if ! unzip -l "$APK_PATH" | grep -q "libc++_shared.so"; then
@@ -144,8 +144,8 @@ jobs:
       - name: Upload Native .SO Libraries Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NearChuckle-FarCry-Native-SO-armeabi-v7a
-          path: android/app/src/main/jniLibs/armeabi-v7a/*.so
+          name: NearChuckle-FarCry-Native-SO-arm64-v8a
+          path: android/app/src/main/jniLibs/arm64-v8a/*.so
           retention-days: 30
 
       - name: Upload Build Logs
@@ -164,10 +164,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan build-log-arm32 2>/dev/null || git checkout -B build-log-arm32
+          git checkout --orphan build-log-arm64 2>/dev/null || git checkout -B build-log-arm64
           git rm -rf . >/dev/null 2>&1 || true
           [ -f build_native.log ] && tail -n 500 build_native.log > build_native_tail.txt
           [ -f build_apk.log ] && tail -n 500 build_apk.log > build_apk_tail.txt
           git add build_native_tail.txt build_apk_tail.txt 2>/dev/null || true
           git commit -m "Build logs" || true
-          git push -f origin build-log-arm32 || true
+          git push -f origin build-log-arm64 || true
