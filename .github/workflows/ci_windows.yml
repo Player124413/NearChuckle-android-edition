@@ -36,7 +36,7 @@ jobs:
         cmake --preset=ninja-${{ matrix.arch }}-${{ matrix.configuration }}
         cmake --build --preset=${{ matrix.arch }}-${{ matrix.configuration }}
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: farcry.${{ matrix.arch }}-${{ matrix.configuration }}
         path: bin/${{ matrix.arch }}-${{ matrix.configuration }}
