@@ -105,27 +105,6 @@ jobs:
           ./android/gradlew -p android :app:assembleDebug --stacktrace 2>&1 | tee build_apk.log
           echo "### ✅ Gradle Build Succeeded" >> $GITHUB_STEP_SUMMARY
 
-          # AGP may omit externally generated engine libraries when its CMake
-          # merge task has no matching target. Repack the debug APK with the
-          # ARM64 libraries produced by the native build, then re-sign it.
-          APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
-          STAGE=$(mktemp -d)
-          unzip -q "$APK_PATH" -d "$STAGE"
-          rm -rf "$STAGE/META-INF"
-          mkdir -p "$STAGE/lib/arm64-v8a"
-          cp -f "$RUNNER_TEMP/native-libs"/*.so "$STAGE/lib/arm64-v8a/"
-          TMP_APK="$RUNNER_TEMP/repacked.apk"
-          ALIGNED="$RUNNER_TEMP/aligned.apk"
-          rm -f "$TMP_APK" "$ALIGNED"
-          (cd "$STAGE" && zip -q -r "$TMP_APK" .)
-          mv "$TMP_APK" "$APK_PATH"
-          ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
-          test -x "$ZIPALIGN" && test -x "$APKSIGNER"
-          "$ZIPALIGN" -f 4 "$APK_PATH" "$ALIGNED"
-          mv "$ALIGNED" "$APK_PATH"
-          "$APKSIGNER" sign --ks android/app/farcry.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey "$APK_PATH"
-          "$APKSIGNER" verify "$APK_PATH"
 
       - name: Print Gradle error log on failure
         if: failure()
