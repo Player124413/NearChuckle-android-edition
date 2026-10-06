@@ -16,6 +16,15 @@ if (ANDROID)
     link_libraries(SDL3 log dl m)
 endif()
 
+# SDL is included by the common platform wrapper. Keep both the bundled headers
+# and the Android dependency prefix visible to every engine target.
+include_directories(${CMAKE_SOURCE_DIR}/Externals/SDL/include)
+include_directories(${CMAKE_SOURCE_DIR}/Externals/openal/include)
+if (DEFINED CMAKE_PREFIX_PATH)
+    include_directories(${CMAKE_PREFIX_PATH}/include)
+    link_directories(${CMAKE_PREFIX_PATH}/lib)
+endif()
+
 if (ANDROID)
     if (CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
         set(ARCH_TYPE "arm64")
