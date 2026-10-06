@@ -104,9 +104,28 @@ public class LauncherActivity extends Activity {
         setupGpuDetection();
         setupDriverSpinner();
         setupListeners();
+        showPatchSupportDialog();
 
         // Remove APK files left over by previous sessions (the fresh one is downloaded on demand).
         UpdateManager.clearDownloadedUpdates(this);
+    }
+
+    private void showPatchSupportDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.patch_support_title)
+                .setMessage(R.string.patch_support_message)
+                .setPositiveButton(R.string.patch_support_telegram, (dialog, which) -> openExternalLink("https://t.me/player1444ports"))
+                .setNeutralButton(R.string.patch_support_repository, (dialog, which) -> openExternalLink("https://github.com/Player124413/NearChuckle-android-edition"))
+                .setNegativeButton(R.string.close, null)
+                .show();
+    }
+
+    private void openExternalLink(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Exception ignored) {
+            Toast.makeText(this, R.string.patch_support_link_error, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

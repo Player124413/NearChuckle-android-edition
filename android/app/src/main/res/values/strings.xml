@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Far Cry Android</string>
+    <string name="patch_support_title">Thanks for the Android patch!</string>
+    <string name="patch_support_message">Huge thanks to Emile Belanger (emileb) for the Android patch and for his work on NearChuckle. Follow the launcher author for ports and find the patch repository here.</string>
+    <string name="patch_support_telegram">Telegram channel</string>
+    <string name="patch_support_repository">Patch repository</string>
+    <string name="patch_support_link_error">Unable to open the link</string>
+    <string name="close">Close</string>
     <string name="launcher_title">NearChuckle - Far Cry Launcher</string>
     <string name="launcher_subtitle">Far Cry (CryEngine 1) Android port with Mesa Zink &amp; Turnip support</string>
 
